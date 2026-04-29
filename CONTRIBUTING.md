@@ -26,7 +26,7 @@ src/
   utils/       helpers — niceScale, arrayMin/Max, escapeHtml, hexToRgba
   types/       all public TypeScript surface
 tests/         vitest specs grouped by module
-playground/    standalone Vite app showcasing every chart
+docs/          Astro Starlight documentation site (deployed to Cloudflare Pages)
 ```
 
 ## Coding rules
