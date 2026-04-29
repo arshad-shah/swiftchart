@@ -1,6 +1,58 @@
 ---
 title: SwiftChart
-description: Placeholder landing — full content authored in Task 6.
+description: Lightning-fast, zero-dependency Canvas 2D charting library with first-class React bindings.
+template: splash
+hero:
+  tagline: 12&nbsp;KB gzipped. Zero dependencies. 13 chart types. One library.
+  actions:
+    - text: Get started
+      link: /getting-started/installation/
+      icon: right-arrow
+      variant: primary
+    - text: Browse charts
+      link: /charts/line/
+      icon: external
+    - text: View on GitHub
+      link: https://github.com/ArshadShah/swiftchart
+      icon: external
+      variant: minimal
 ---
 
-Placeholder. The real landing page lands in Task 6.
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import ChartPreview from '../../components/ChartPreview';
+import { monthlySales } from '../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="line"
+  data={monthlySales}
+  mapping={{ x: 'month', y: ['revenue', 'target'] }}
+  options={{ theme: 'midnight', area: true, title: 'Monthly revenue vs target' }}
+  height={320}
+/>
+
+## Why SwiftChart?
+
+| | SwiftChart | Highcharts | Chart.js | Recharts |
+|---|---|---|---|---|
+| **Bundle** | ~12 KB gzip | ~80 KB | ~60 KB | ~45 KB |
+| **Dependencies** | 0 | 0 | 0 | 6+ |
+| **Renderer** | Canvas 2D | SVG/Canvas | Canvas | SVG |
+| **React** | Built-in | Wrapper | Wrapper | Native |
+| **Schema** | Any shape | Fixed | Fixed | Fixed |
+| **License** | MIT | Commercial | MIT | MIT |
+
+<CardGrid>
+  <Card title="Vanilla or React" icon="puzzle">
+    Use the imperative class API or the React component wrappers — same chart engine, identical output.
+  </Card>
+  <Card title="Schema-agnostic" icon="random">
+    Pass any data shape. Auto-detect fields, or map them explicitly — no rigid schema required.
+  </Card>
+  <Card title="4 themes built-in" icon="moon">
+    `midnight`, `arctic`, `ember`, `forest` — or define your own with `addTheme()`.
+  </Card>
+  <Card title="Animated by default" icon="rocket">
+    Easings, durations, and transitions tuned out of the box.
+  </Card>
+</CardGrid>
