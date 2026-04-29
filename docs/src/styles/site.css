@@ -43,23 +43,28 @@ header.header {
   height: 1.6rem;
 }
 
-header.header [data-open-modal] {
-  background: var(--sc-brand-tint);
-  border: 1px solid var(--sc-header-border);
-  color: var(--sc-header-fg-muted);
-  border-radius: 0.4rem;
-  padding-inline: 0.6rem;
-  transition: background 120ms, border-color 120ms, color 120ms;
-}
-header.header [data-open-modal]:hover {
-  background: rgba(91, 140, 255, 0.22);
-  border-color: var(--sc-brand);
-  color: var(--sc-header-fg);
-}
-header.header [data-open-modal] kbd {
-  background: var(--sc-brand-tint);
-  border: 1px solid var(--sc-header-border);
-  color: var(--sc-header-fg-muted);
+/* Starlight renders the search trigger as a borderless icon below 50rem
+   and as a full search bar at/above it. Only restyle the desktop variant
+   so the mobile icon button keeps its native compact layout. */
+@media (min-width: 50rem) {
+  header.header [data-open-modal] {
+    background: var(--sc-brand-tint);
+    border: 1px solid var(--sc-header-border);
+    color: var(--sc-header-fg-muted);
+    border-radius: 0.4rem;
+    padding-inline: 0.6rem;
+    transition: background 120ms, border-color 120ms, color 120ms;
+  }
+  header.header [data-open-modal]:hover {
+    background: rgba(91, 140, 255, 0.22);
+    border-color: var(--sc-brand);
+    color: var(--sc-header-fg);
+  }
+  header.header [data-open-modal] kbd {
+    background: var(--sc-brand-tint);
+    border: 1px solid var(--sc-header-border);
+    color: var(--sc-header-fg-muted);
+  }
 }
 
 .social-icons a {
@@ -248,37 +253,6 @@ header.header [data-open-modal] kbd {
   opacity: 0.5;
 }
 
-/* ── Browser-extension hardening ─────────────────────────────
-   XML/HTML viewer extensions inject a stylesheet that hides any
-   element matching `div.header`, `.collapsible`, `.tag`, etc.
-   (intended for their own pretty-printer DOM). Those selectors
-   collide with Starlight, which renders the page chrome as a
-   `<div class="header astro-...">` grid container with descendants
-   like `.tag` for badges. Restore the layout for the specific
-   Starlight elements rather than blanket-reverting every match. */
-html body div.header[class*="astro-"] {
-  display: grid !important;
-  visibility: visible !important;
-}
-html body :is(
-  header.header,
-  nav.sidebar,
-  nav.mobile-preferences,
-  .site-title,
-  .social-icons,
-  .social-icons a,
-  .right-sidebar-panel,
-  .sl-flex
-) {
-  visibility: visible !important;
-}
-/* Re-show Starlight's version pill / badges that ride on `.tag`. */
-html body header :is(.tag, .html-tag),
-html body .site-title :is(.tag, .html-tag) {
-  display: revert !important;
-  visibility: visible !important;
-}
-
 /* ── Comparison table on the landing page ─────────────────── */
 .sc-compare {
   margin: 2rem 0 1rem;
@@ -368,6 +342,21 @@ html body .site-title :is(.tag, .html-tag) {
   font-size: 0.78rem;
   color: var(--sl-color-gray-3);
   border-top: 1px solid color-mix(in srgb, var(--sc-header-border) 60%, transparent);
+}
+
+/* Below the desktop breakpoint, the 5-column fixed layout collapses each
+   cell to ~60-70px on a phone and labels wrap awkwardly. Drop the forced
+   100% width and let the wrapper's overflow-x: auto scroll horizontally. */
+@media (max-width: 50rem) {
+  .sc-compare table {
+    width: auto !important;
+    min-width: 36rem;
+    table-layout: auto;
+  }
+  .sc-compare colgroup col.sc-compare-label,
+  .sc-compare colgroup col {
+    width: auto;
+  }
 }
 
 :root[data-theme='light'] .sc-compare th.sc-compare-self,
