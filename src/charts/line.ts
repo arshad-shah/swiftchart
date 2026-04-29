@@ -4,6 +4,34 @@ import { niceScale, hexToRgba, clamp, arraysExtent } from '../utils/helpers';
 import { lttbIndices, autoTarget } from '../perf/lttb';
 import { visibleRange } from '../perf/viewport';
 
+/**
+ * Canvas 2D line chart with optional area fill, dots, and Bezier smoothing.
+ *
+ * Use `area: true` for an area chart, or import the `<Area>` React component.
+ * Pass any object array to `setData(data, mapping)`; the mapping picks which
+ * fields are X (labels) and Y (one or more series).
+ *
+ * @example
+ * ```ts
+ * import { LineChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new LineChart('#chart', {
+ *   theme: 'midnight',
+ *   smooth: true,
+ *   dots: true,
+ * });
+ *
+ * chart.setData(
+ *   [
+ *     { month: 'Jan', revenue: 420, target: 400 },
+ *     { month: 'Feb', revenue: 510, target: 450 },
+ *   ],
+ *   { x: 'month', y: ['revenue', 'target'] },
+ * );
+ * ```
+ *
+ * @see {@link LineChartConfig} for the full option list.
+ */
 export class LineChart extends BaseChart {
   declare config: LineChartConfig & BaseChart['config'];
 

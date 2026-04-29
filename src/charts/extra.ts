@@ -12,6 +12,17 @@ import { Quadtree } from '../perf/quadtree';
 // ═══════════════════════════════════════════════════════
 // Scatter (with Quadtree hover)
 // ═══════════════════════════════════════════════════════
+/**
+ * Canvas 2D scatter / bubble chart with grouping and optional per-point sizing.
+ *
+ * @example
+ * ```ts
+ * import { ScatterChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new ScatterChart('#chart', { theme: 'midnight' });
+ * chart.setData(points, { x: 'x', y: 'y', groupField: 'group', sizeField: 'size' });
+ * ```
+ */
 export class ScatterChart extends BaseChart {
   scatterData: ScatterGroups | null = null;
   private _qt: Quadtree | null = null;
@@ -170,6 +181,17 @@ export class ScatterChart extends BaseChart {
 // ═══════════════════════════════════════════════════════
 // Radar
 // ═══════════════════════════════════════════════════════
+/**
+ * Canvas 2D radar / spider chart for multi-axis comparison.
+ *
+ * @example
+ * ```ts
+ * import { RadarChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new RadarChart('#chart', { theme: 'midnight' });
+ * chart.setData(skills, { x: 'axis', y: ['teamA', 'teamB'] });
+ * ```
+ */
 export class RadarChart extends BaseChart {
   constructor(container: HTMLElement | string, config: BaseChartConfig = {}) {
     super(container, { padding: { top: 30, right: 40, bottom: 20, left: 40 }, ...config });
@@ -250,6 +272,26 @@ export class RadarChart extends BaseChart {
 // ═══════════════════════════════════════════════════════
 // Gauge
 // ═══════════════════════════════════════════════════════
+/**
+ * Canvas 2D gauge / meter with optional coloured threshold segments.
+ *
+ * Pass `[value]` to {@link BaseChart.setData} or set `value` in the config.
+ *
+ * @example
+ * ```ts
+ * import { GaugeChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new GaugeChart('#chart', {
+ *   min: 0, max: 100,
+ *   segments: [
+ *     { from: 0,  to: 60,  color: '#5b8cff' },
+ *     { from: 60, to: 85,  color: '#ffa45b' },
+ *     { from: 85, to: 100, color: '#ff5b5b' },
+ *   ],
+ * });
+ * chart.setData([72]);
+ * ```
+ */
 export class GaugeChart extends BaseChart {
   declare config: GaugeConfig & BaseChart['config'];
 
@@ -444,6 +486,20 @@ export class GaugeChart extends BaseChart {
 // ═══════════════════════════════════════════════════════
 // Horizontal Bar
 // ═══════════════════════════════════════════════════════
+/**
+ * Canvas 2D horizontal bar chart. Best for ranked lists or long category labels.
+ *
+ * Mapping convention: `x` is the categorical label field, `y` is the numeric
+ * value field (the bar length).
+ *
+ * @example
+ * ```ts
+ * import { HBarChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new HBarChart('#chart', { theme: 'midnight' });
+ * chart.setData(traffic, { x: 'source', y: 'visits' });
+ * ```
+ */
 export class HBarChart extends BaseChart {
   constructor(container: HTMLElement | string, config: BaseChartConfig = {}) {
     super(container, { padding: { top: 30, right: 20, bottom: 20, left: 90 }, ...config });
@@ -528,6 +584,17 @@ export class HBarChart extends BaseChart {
 // ═══════════════════════════════════════════════════════
 // Sparkline
 // ═══════════════════════════════════════════════════════
+/**
+ * Minimal axis-less inline chart, designed for tight spaces (table cells, KPIs).
+ *
+ * @example
+ * ```ts
+ * import { Sparkline } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new Sparkline('#chart', { theme: 'midnight' });
+ * chart.setData([12, 14, 13, 18, 22, 20, 26]);
+ * ```
+ */
 export class Sparkline extends BaseChart {
   declare config: { color?: string; filled?: boolean } & BaseChart['config'];
 
@@ -607,6 +674,17 @@ export class Sparkline extends BaseChart {
 // ═══════════════════════════════════════════════════════
 // Stacked Area
 // ═══════════════════════════════════════════════════════
+/**
+ * Canvas 2D stacked-area chart - shows total + per-component contribution.
+ *
+ * @example
+ * ```ts
+ * import { StackedAreaChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new StackedAreaChart('#chart', { theme: 'midnight' });
+ * chart.setData(traffic, { x: 'day', y: ['api', 'web', 'mobile'] });
+ * ```
+ */
 export class StackedAreaChart extends BaseChart {
   _onMouse(e: MouseEvent): void {
     const rect = this.canvas.getBoundingClientRect();
@@ -690,6 +768,27 @@ export class StackedAreaChart extends BaseChart {
 // ═══════════════════════════════════════════════════════
 // Waterfall
 // ═══════════════════════════════════════════════════════
+/**
+ * Canvas 2D waterfall chart - visualises incremental positive/negative changes
+ * around a running total.
+ *
+ * Each item's `value` adds (positive) or subtracts (negative) from the running
+ * total. The final running total is highlighted with the theme's `positive`
+ * colour by default.
+ *
+ * @example
+ * ```ts
+ * import { WaterfallChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new WaterfallChart('#chart', { theme: 'midnight' });
+ * chart.setData([
+ *   { label: 'Q1',    value: 120 },
+ *   { label: 'Q2 d',  value: 45 },
+ *   { label: 'Q3 d',  value: -22 },
+ *   { label: 'Q4 d',  value: 67 },
+ * ]);
+ * ```
+ */
 export class WaterfallChart extends BaseChart {
   private _wfData: WaterfallItem[] = [];
 
@@ -782,6 +881,21 @@ export class WaterfallChart extends BaseChart {
 // ═══════════════════════════════════════════════════════
 // Treemap
 // ═══════════════════════════════════════════════════════
+/**
+ * Canvas 2D squarified treemap - proportional rectangles for hierarchical data.
+ *
+ * @example
+ * ```ts
+ * import { TreemapChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new TreemapChart('#chart', { theme: 'midnight' });
+ * chart.setData([
+ *   { label: 'Compute', value: 42 },
+ *   { label: 'Storage', value: 28 },
+ *   { label: 'Network', value: 18 },
+ * ]);
+ * ```
+ */
 export class TreemapChart extends BaseChart {
   private _items: TreemapItem[] = [];
   private _rects: TreemapRect[] = [];
