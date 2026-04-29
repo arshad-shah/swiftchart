@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest a new chart type, option, or behaviour.
+title: "[Feature] "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us understand the use case before we discuss the API.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you solving?
+      description: Describe the user-facing scenario. Avoid jumping to a solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: |
+        If you have an API in mind, sketch it. Code blocks are welcome.
+      render: tsx
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing options, workarounds, or other libraries you tried.
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - New chart type
+        - New config option on an existing chart
+        - New theme / palette feature
+        - New React integration
+        - Performance / rendering primitive
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I searched existing issues and discussions for this idea.
+          required: true
+        - label: This fits within a "lightweight, zero-dependency, schema-agnostic Canvas charts" library and not a different library.
+          required: true

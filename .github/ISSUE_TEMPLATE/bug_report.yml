@@ -1,0 +1,78 @@
+name: Bug report
+description: Report something that does not work as documented.
+title: "[Bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. The more
+        specific and reproducible the report, the faster we can ship
+        a fix. Please do not file security issues here. See
+        [SECURITY.md](https://github.com/arshad-shah/swiftchart/blob/main/SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: SwiftChart version
+      description: The version from your `package.json`.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: entry
+    attributes:
+      label: Entry point
+      description: Which build are you importing from?
+      options:
+        - "@arshad-shah/swift-chart (vanilla)"
+        - "@arshad-shah/swift-chart/react"
+        - both
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Browser + version, Node version (if SSR), framework if relevant.
+      placeholder: "Chrome 134, Next.js 15.0.4 (App Router)"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: A clear, factual description of the broken behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: |
+        A code snippet, CodeSandbox link, or repository that reproduces
+        the issue. Reports without a reproduction are usually closed.
+      render: tsx
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Stack traces, screenshots, network logs.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I searched existing issues and discussions and did not find a duplicate.
+          required: true
+        - label: I am using the latest minor of `1.x` (or have included the version above).
+          required: true
+        - label: This is not a security issue.
+          required: true

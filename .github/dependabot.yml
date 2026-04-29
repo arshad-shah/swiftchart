@@ -1,0 +1,74 @@
+version: 2
+updates:
+  # Library dev dependencies
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - automerge-candidate
+    groups:
+      typescript:
+        patterns:
+          - "typescript"
+          - "@typescript-eslint/*"
+          - "tsup"
+      eslint:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@eslint/*"
+          - "globals"
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "jsdom"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+
+  # Docs site dependencies
+  - package-ecosystem: npm
+    directory: "/docs"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:30"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docs
+    groups:
+      astro:
+        patterns:
+          - "astro"
+          - "@astrojs/*"
+          - "starlight-typedoc"
+      typedoc:
+        patterns:
+          - "typedoc"
+          - "typedoc-*"
+
+  # GitHub Actions versions
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - github-actions
