@@ -1,0 +1,66 @@
+---
+title: Line chart
+description: Smooth or straight line chart with optional dots and multi-series support.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="line"
+  data={monthlySales}
+  mapping={{ x: 'month', y: ['revenue', 'target'] }}
+  options={{ theme: 'midnight' }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { LineChart } from '@arshad-shah/swift-chart';
+
+    const chart = new LineChart('#chart', { theme: 'midnight' });
+    chart.setData(monthlySales, { x: 'month', y: ['revenue', 'target'] });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Line } from '@arshad-shah/swift-chart/react';
+
+    <Line
+      data={monthlySales}
+      mapping={{ x: 'month', y: ['revenue', 'target'] }}
+      theme="midnight"
+      height={320}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Common options
+
+### `smooth`
+
+Use cubic interpolation for a curved line.
+
+<ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'midnight', smooth: true }} height={240} />
+
+### `dots`
+
+Render a dot at each data point.
+
+<ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'midnight', dots: true }} height={240} />
+
+### `lineWidth`
+
+Thicken the line stroke.
+
+<ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'midnight', lineWidth: 4 }} height={240} />
+
+## Reference
+
+- Class: [`LineChart`](/api/core/classes/linechart/)
+- React component: [`Line`](/api/react/variables/line/)
+- Config: see `LineChartConfig` in the [Core API](/api/core/).

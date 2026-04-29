@@ -1,0 +1,45 @@
+---
+title: Stacked area chart
+description: Stacked filled areas — total + per-component breakdown at a glance.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { stacked } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="stacked-area"
+  data={stacked}
+  mapping={{ x: 'day', y: ['api', 'web', 'mobile'] }}
+  options={{ theme: 'midnight' }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { StackedAreaChart } from '@arshad-shah/swift-chart';
+
+    const chart = new StackedAreaChart('#chart', { theme: 'midnight' });
+    chart.setData(stacked, { x: 'day', y: ['api', 'web', 'mobile'] });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { StackedArea } from '@arshad-shah/swift-chart/react';
+
+    <StackedArea
+      data={stacked}
+      mapping={{ x: 'day', y: ['api', 'web', 'mobile'] }}
+      theme="midnight"
+      height={320}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`StackedAreaChart`](/api/core/classes/stackedareachart/)
+- React component: [`StackedArea`](/api/react/variables/stackedarea/)

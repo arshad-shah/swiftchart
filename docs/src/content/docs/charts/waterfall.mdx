@@ -1,0 +1,39 @@
+---
+title: Waterfall chart
+description: Visualize incremental changes around a running total.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { waterfall } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="waterfall"
+  data={waterfall}
+  options={{ theme: 'midnight' }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { WaterfallChart } from '@arshad-shah/swift-chart';
+
+    const chart = new WaterfallChart('#chart', { theme: 'midnight' });
+    chart.setData(waterfallItems);
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Waterfall } from '@arshad-shah/swift-chart/react';
+
+    <Waterfall data={waterfallItems} theme="midnight" height={320} />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`WaterfallChart`](/api/core/classes/waterfallchart/)
+- React component: [`Waterfall`](/api/react/variables/waterfall/)

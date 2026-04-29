@@ -1,0 +1,51 @@
+---
+title: Bar chart
+description: Vertical bar chart with optional grouped multi-series.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales, regionPnL } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="bar"
+  data={monthlySales}
+  mapping={{ x: 'month', y: ['revenue', 'cost'] }}
+  options={{ theme: 'midnight' }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { BarChart } from '@arshad-shah/swift-chart';
+
+    const chart = new BarChart('#chart', { theme: 'midnight' });
+    chart.setData(monthlySales, { x: 'month', y: ['revenue', 'cost'] });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Bar } from '@arshad-shah/swift-chart/react';
+
+    <Bar
+      data={monthlySales}
+      mapping={{ x: 'month', y: ['revenue', 'cost'] }}
+      theme="midnight"
+      height={320}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Common options
+
+### Single-series with negatives
+
+<ChartPreview client:visible kind="bar" data={regionPnL} mapping={{ x: 'region', y: 'pnl' }} options={{ theme: 'arctic' }} height={260} />
+
+## Reference
+
+- Class: [`BarChart`](/api/core/classes/barchart/)
+- React component: [`Bar`](/api/react/variables/bar/)

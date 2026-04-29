@@ -1,0 +1,43 @@
+---
+title: Sparkline
+description: Inline mini chart — designed for tight spaces.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { sparklineSeries } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="sparkline"
+  data={sparklineSeries}
+  options={{ theme: 'midnight' }}
+  height={80}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { Sparkline } from '@arshad-shah/swift-chart';
+
+    const chart = new Sparkline('#chart', { theme: 'midnight' });
+    chart.setData([120, 132, 128, 140, 138, 152, 160, 155]);
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { SparklineComponent } from '@arshad-shah/swift-chart/react';
+
+    <SparklineComponent
+      data={[120, 132, 128, 140, 138, 152, 160, 155]}
+      theme="midnight"
+      height={80}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`Sparkline`](/api/core/classes/sparkline/)
+- React component: [`SparklineComponent`](/api/react/variables/sparklinecomponent/)

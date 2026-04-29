@@ -1,0 +1,40 @@
+---
+title: React refs
+description: Imperative access to the underlying chart instance.
+---
+
+Every React chart component forwards a `ChartRef` you can use to drive imperative operations.
+
+```tsx
+import { useRef } from 'react';
+import { Line, type ChartRef } from '@arshad-shah/swift-chart/react';
+
+function MyChart() {
+  const ref = useRef<ChartRef>(null);
+
+  function exportPng() {
+    const url = ref.current?.toDataURL('image/png');
+    if (url) window.open(url, '_blank');
+  }
+
+  return (
+    <>
+      <Line ref={ref} data={data} mapping={{ x: 'month', y: 'revenue' }} />
+      <button onClick={() => ref.current?.resize()}>Resize</button>
+      <button onClick={exportPng}>Export PNG</button>
+    </>
+  );
+}
+```
+
+The ref shape:
+
+```ts
+interface ChartRef {
+  chart: BaseChart | null;
+  resize: () => void;
+  toDataURL: (type?: string, quality?: number) => string | null;
+}
+```
+
+Reach for `ref.current.chart` only when you need something the React surface doesn't expose — most of the time, the wrapper is enough.

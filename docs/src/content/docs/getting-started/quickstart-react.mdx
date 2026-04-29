@@ -1,0 +1,46 @@
+---
+title: Quick start (React)
+description: Render charts with SwiftChart's React component bindings.
+---
+
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales } from '../../../components/ExampleData';
+
+```tsx
+import { Line } from '@arshad-shah/swift-chart/react';
+
+const sales = [
+  { month: 'Jan', revenue: 420, target: 400 },
+  { month: 'Feb', revenue: 510, target: 450 },
+  { month: 'Mar', revenue: 480, target: 500 },
+];
+
+export function Dashboard() {
+  return (
+    <Line
+      data={sales}
+      mapping={{ x: 'month', y: ['revenue', 'target'] }}
+      theme="midnight"
+      area
+      height={320}
+    />
+  );
+}
+```
+
+The result:
+
+<ChartPreview
+  client:visible
+  kind="line"
+  data={monthlySales}
+  mapping={{ x: 'month', y: ['revenue', 'target'] }}
+  options={{ theme: 'midnight', area: true }}
+  height={320}
+/>
+
+## Notes for React users
+
+- All chart components are **client-only**. In Next.js or other SSR frameworks, ensure the chart renders only in the browser (`'use client'` is already set inside the package).
+- To access the underlying chart instance imperatively (resize, export PNG), see [React refs](/guides/react-refs/).
+- Multi-series charts accept a `string[]` for `mapping.y`. The `seriesNames` option overrides the legend labels.

@@ -1,0 +1,68 @@
+---
+title: Gauge chart
+description: Gauge/meter with optional segments for thresholds.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { gaugeValue } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="gauge"
+  data={[gaugeValue]}
+  options={{
+    theme: 'midnight',
+    min: 0,
+    max: 100,
+    segments: [
+      { from: 0, to: 60, color: '#5b8cff' },
+      { from: 60, to: 85, color: '#ffa45b' },
+      { from: 85, to: 100, color: '#ff5b5b' },
+    ],
+  }}
+  height={300}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { GaugeChart } from '@arshad-shah/swift-chart';
+
+    const chart = new GaugeChart('#chart', {
+      theme: 'midnight',
+      min: 0,
+      max: 100,
+      segments: [
+        { from: 0, to: 60, color: '#5b8cff' },
+        { from: 60, to: 85, color: '#ffa45b' },
+        { from: 85, to: 100, color: '#ff5b5b' },
+      ],
+    });
+    chart.setData([72]);
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Gauge } from '@arshad-shah/swift-chart/react';
+
+    <Gauge
+      data={[72]}
+      theme="midnight"
+      min={0}
+      max={100}
+      segments={[
+        { from: 0, to: 60, color: '#5b8cff' },
+        { from: 60, to: 85, color: '#ffa45b' },
+        { from: 85, to: 100, color: '#ff5b5b' },
+      ]}
+      height={300}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`GaugeChart`](/api/core/classes/gaugechart/)
+- React component: [`Gauge`](/api/react/variables/gauge/)

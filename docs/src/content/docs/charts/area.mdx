@@ -1,0 +1,57 @@
+---
+title: Area chart
+description: Line chart with a gradient fill below.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales } from '../../../components/ExampleData';
+
+Area is a line chart with `area: true`. Use the dedicated `Area` component in React, or pass `area: true` to `LineChart` directly.
+
+<ChartPreview
+  client:visible
+  kind="area"
+  data={monthlySales}
+  mapping={{ x: 'month', y: 'revenue' }}
+  options={{ theme: 'midnight' }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { LineChart } from '@arshad-shah/swift-chart';
+
+    const chart = new LineChart('#chart', { theme: 'midnight', area: true });
+    chart.setData(monthlySales, { x: 'month', y: 'revenue' });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Area } from '@arshad-shah/swift-chart/react';
+
+    <Area
+      data={monthlySales}
+      mapping={{ x: 'month', y: 'revenue' }}
+      theme="midnight"
+      height={320}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Common options
+
+### Multi-series
+
+<ChartPreview client:visible kind="area" data={monthlySales} mapping={{ x: 'month', y: ['revenue', 'cost'] }} options={{ theme: 'ember' }} height={260} />
+
+### Smooth area
+
+<ChartPreview client:visible kind="area" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'forest', smooth: true }} height={260} />
+
+## Reference
+
+- Class: [`LineChart`](/api/core/classes/linechart/) (with `area: true`)
+- React component: [`Area`](/api/react/variables/area/)
