@@ -14,8 +14,17 @@ export default defineConfig({
       title: 'SwiftChart',
       description:
         'Lightning-fast, zero-dependency Canvas 2D charting library with React bindings.',
+      logo: {
+        src: './src/assets/logo.svg',
+        alt: 'SwiftChart logo',
+        replacesTitle: false,
+      },
+      favicon: '/favicon.svg',
       social: {
         github: 'https://github.com/ArshadShah/swiftchart',
+      },
+      components: {
+        SiteTitle: './src/components/SiteTitle.astro',
       },
       customCss: ['./src/styles/site.css'],
       plugins: [

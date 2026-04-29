@@ -1,0 +1,36 @@
+---
+import Default from '@astrojs/starlight/components/SiteTitle.astro';
+import libPkg from '../../../package.json';
+
+const version = (libPkg as { version?: string }).version ?? '0.0.0';
+---
+
+<div class="sc-title">
+  <Default><slot /></Default>
+  <a class="sc-version" href="https://github.com/ArshadShah/swiftchart/releases" title={`v${version} — release notes`}>v{version}</a>
+</div>
+
+<style>
+  .sc-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .sc-version {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--sl-color-accent-high);
+    background: color-mix(in srgb, var(--sl-color-accent) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+  }
+  .sc-version:hover {
+    background: color-mix(in srgb, var(--sl-color-accent) 28%, transparent);
+  }
+</style>

@@ -6,23 +6,72 @@
   --sl-color-accent-high: #b8c8ff;
 }
 
-/* Filled, opaque header so the top bar reads as a real chrome instead
-   of bleeding into the hero. */
+/* Filled, opaque header — solid background, real bottom border, blur. */
 :root {
-  --sl-color-bg-nav: #0f1428;
-  --header-border: 1px solid rgba(91, 140, 255, 0.18);
+  --sc-header-bg: rgba(15, 20, 40, 0.85);
+  --sc-header-border: rgba(91, 140, 255, 0.22);
+  --sc-header-fg: #e6ecff;
+  --sc-header-fg-muted: #a8b3d4;
 }
 
 :root[data-theme='light'] {
-  --sl-color-bg-nav: #f5f7ff;
-  --header-border: 1px solid rgba(91, 140, 255, 0.24);
+  --sc-header-bg: rgba(245, 247, 255, 0.92);
+  --sc-header-border: rgba(91, 140, 255, 0.32);
+  --sc-header-fg: #1a1a3e;
+  --sc-header-fg-muted: #4a4a6a;
 }
 
 header.header {
-  background: var(--sl-color-bg-nav);
-  border-bottom: var(--header-border);
-  backdrop-filter: saturate(140%) blur(6px);
-  -webkit-backdrop-filter: saturate(140%) blur(6px);
+  background: var(--sc-header-bg);
+  border-bottom: 1px solid var(--sc-header-border);
+  backdrop-filter: saturate(160%) blur(10px);
+  -webkit-backdrop-filter: saturate(160%) blur(10px);
+}
+
+/* Site title text + logo gap. */
+.site-title {
+  gap: 0.65rem;
+  color: var(--sc-header-fg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.site-title img {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+/* Search button — give it a real surface and visible affordance. */
+header.header [data-open-modal] {
+  background: color-mix(in srgb, var(--sl-color-accent) 10%, transparent);
+  border: 1px solid var(--sc-header-border);
+  color: var(--sc-header-fg-muted);
+  border-radius: 0.5rem;
+  padding-inline: 0.6rem;
+  transition: background 120ms, border-color 120ms, color 120ms;
+}
+header.header [data-open-modal]:hover {
+  background: color-mix(in srgb, var(--sl-color-accent) 22%, transparent);
+  border-color: color-mix(in srgb, var(--sl-color-accent) 50%, transparent);
+  color: var(--sc-header-fg);
+}
+header.header [data-open-modal] kbd {
+  background: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+  border: 1px solid var(--sc-header-border);
+  color: var(--sc-header-fg-muted);
+}
+
+/* Social icons (GitHub etc.) — make them visible buttons, not faint glyphs. */
+.social-icons a {
+  color: var(--sc-header-fg-muted);
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  padding: 0.4rem;
+  transition: background 120ms, border-color 120ms, color 120ms;
+}
+.social-icons a:hover {
+  background: color-mix(in srgb, var(--sl-color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--sl-color-accent) 40%, transparent);
+  color: var(--sc-header-fg);
 }
 
 /* Frame around every embedded chart preview. */
