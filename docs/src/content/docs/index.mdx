@@ -41,14 +41,65 @@ import { monthlySales } from '../../components/ExampleData';
 
 ## Why SwiftChart?
 
-| | SwiftChart | Highcharts | Chart.js | Recharts |
-|---|---|---|---|---|
-| **Bundle** | ~14 KB gzip | ~80 KB | ~60 KB | ~45 KB |
-| **Dependencies** | 0 | 0 | 0 | 6+ |
-| **Renderer** | Canvas 2D | SVG/Canvas | Canvas | SVG |
-| **React** | Built-in | Wrapper | Wrapper | Native |
-| **Schema** | Any shape | Fixed | Fixed | Fixed |
-| **License** | MIT | Commercial | MIT | MIT |
+<div class="sc-compare">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col"></th>
+        <th scope="col" class="sc-compare-self">SwiftChart</th>
+        <th scope="col">Highcharts</th>
+        <th scope="col">Chart.js</th>
+        <th scope="col">Recharts</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">Bundle (gzip)</th>
+        <td class="sc-compare-self sc-good">~14&nbsp;KB</td>
+        <td class="sc-bad">~80&nbsp;KB</td>
+        <td class="sc-meh">~60&nbsp;KB</td>
+        <td class="sc-meh">~45&nbsp;KB</td>
+      </tr>
+      <tr>
+        <th scope="row">Runtime dependencies</th>
+        <td class="sc-compare-self sc-good">0</td>
+        <td class="sc-good">0</td>
+        <td class="sc-good">0</td>
+        <td class="sc-bad">6+</td>
+      </tr>
+      <tr>
+        <th scope="row">Renderer</th>
+        <td class="sc-compare-self">Canvas&nbsp;2D</td>
+        <td>SVG&nbsp;/&nbsp;Canvas</td>
+        <td>Canvas</td>
+        <td>SVG</td>
+      </tr>
+      <tr>
+        <th scope="row">React bindings</th>
+        <td class="sc-compare-self sc-good">First-class</td>
+        <td class="sc-meh">3rd-party wrapper</td>
+        <td class="sc-meh">3rd-party wrapper</td>
+        <td class="sc-good">Native</td>
+      </tr>
+      <tr>
+        <th scope="row">Data schema</th>
+        <td class="sc-compare-self sc-good">Any shape</td>
+        <td class="sc-meh">Fixed</td>
+        <td class="sc-meh">Fixed</td>
+        <td class="sc-meh">Fixed</td>
+      </tr>
+      <tr>
+        <th scope="row">License</th>
+        <td class="sc-compare-self sc-good">MIT</td>
+        <td class="sc-bad">Commercial</td>
+        <td class="sc-good">MIT</td>
+        <td class="sc-good">MIT</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="sc-compare-foot">Sizes are min+gzip of the entry bundle. Library facts as of v1.0.</p>
+</div>
+
 
 <CardGrid>
   <Card title="Vanilla or React" icon="puzzle">

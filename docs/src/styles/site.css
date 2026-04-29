@@ -249,17 +249,116 @@ header.header [data-open-modal] kbd {
 }
 
 /* ── Browser-extension hardening ─────────────────────────────
-   Some XML/HTML viewer extensions inject pretty-printer markup
-   into our pages and break layout. Hide their nodes. */
-.webkit-xml-viewer-source-xml,
-#webkit-xml-viewer-source-xml,
-.collapsible,
-.expanded,
-.comment-node,
-.tag,
-.html-tag,
-.text-node,
-div.header,
-div.collapsible-content {
-  display: none !important;
+   XML/HTML viewer extensions inject a stylesheet that hides
+   generic class names (.tag, .collapsible, div.header, etc.)
+   meant for their own pretty-printer DOM. Those names collide
+   with Starlight elements and erase parts of our layout. We
+   force display+visibility back on so the extension's
+   `display: none !important` is overridden. The selectors are
+   no-ops on any nodes actually injected by the extension because
+   we don't render XML-viewer markup. */
+html body :is(
+  .webkit-xml-viewer-source-xml,
+  #webkit-xml-viewer-source-xml,
+  .collapsible,
+  .expanded,
+  .comment-node,
+  .tag,
+  .html-tag,
+  .text-node,
+  div.header,
+  div.collapsible-content
+) {
+  display: revert !important;
+  visibility: visible !important;
 }
+
+/* ── Comparison table on the landing page ─────────────────── */
+.sc-compare {
+  margin: 2rem 0 1rem;
+  overflow-x: auto;
+  border-radius: 0.85rem;
+  border: 1px solid var(--sc-header-border);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--sc-brand) 4%, transparent),
+    transparent 60%
+  );
+}
+.sc-compare table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  margin: 0;
+}
+.sc-compare thead th {
+  padding: 0.95rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--sl-color-white);
+  border-bottom: 1px solid var(--sc-header-border);
+  background: transparent;
+  white-space: nowrap;
+}
+.sc-compare tbody th {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--sl-color-gray-2);
+  background: transparent;
+  border-bottom: 1px solid color-mix(in srgb, var(--sc-header-border) 60%, transparent);
+  white-space: nowrap;
+}
+.sc-compare tbody td {
+  padding: 0.85rem 1rem;
+  color: var(--sl-color-gray-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--sc-header-border) 60%, transparent);
+  white-space: nowrap;
+}
+.sc-compare tbody tr:last-child th,
+.sc-compare tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* SwiftChart column — brand highlight */
+.sc-compare th.sc-compare-self,
+.sc-compare td.sc-compare-self {
+  background: var(--sc-brand-tint);
+  color: var(--sl-color-white);
+  font-weight: 600;
+  border-left: 1px solid var(--sc-brand-line);
+  border-right: 1px solid var(--sc-brand-line);
+}
+.sc-compare thead th.sc-compare-self {
+  color: var(--sc-brand);
+  border-top: 2px solid var(--sc-brand);
+  border-bottom-color: var(--sc-brand-line);
+}
+.sc-compare tbody tr:last-child td.sc-compare-self {
+  border-bottom: 1px solid var(--sc-brand-line);
+  border-bottom-left-radius: 0.6rem;
+  border-bottom-right-radius: 0.6rem;
+}
+
+/* Good / meh / bad cell tints */
+.sc-compare td.sc-good { color: #4ade80; font-weight: 600; }
+.sc-compare td.sc-meh  { color: var(--sl-color-gray-3); }
+.sc-compare td.sc-bad  { color: #f87171; font-weight: 600; }
+.sc-compare td.sc-compare-self.sc-good { color: #86efac; }
+
+.sc-compare-foot {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.78rem;
+  color: var(--sl-color-gray-3);
+  border-top: 1px solid color-mix(in srgb, var(--sc-header-border) 60%, transparent);
+}
+
+:root[data-theme='light'] .sc-compare th.sc-compare-self,
+:root[data-theme='light'] .sc-compare td.sc-compare-self {
+  color: var(--sc-header-fg);
+}
+:root[data-theme='light'] .sc-compare td.sc-good { color: #15803d; }
+:root[data-theme='light'] .sc-compare td.sc-bad  { color: #b91c1c; }
+:root[data-theme='light'] .sc-compare td.sc-compare-self.sc-good { color: #166534; }
