@@ -1,4 +1,4 @@
-# ⚡ SwiftChart
+# SwiftChart
 
 **Lightning-fast, zero-dependency Canvas 2D charting library with first-class React bindings.**
 
@@ -31,7 +31,7 @@ const chart = new LineChart('#my-chart', {
   area: true,
 });
 
-// Pass ANY data shape — SwiftChart auto-detects fields
+// Pass ANY data shape - SwiftChart auto-detects fields
 chart.setData(apiResponse, {
   x: 'date',
   y: 'revenue',
@@ -181,7 +181,7 @@ Canvas 2D + ResizeObserver: Chrome 64+, Firefox 69+, Safari 13.1+, Edge 79+.
 
 ## Documentation
 
-Full guides, live previews, and API reference: **https://swiftchart.pages.dev**
+Full guides, live previews, and API reference: **https://swiftchart.arshadshah.com**
 
 To run the docs site locally:
 

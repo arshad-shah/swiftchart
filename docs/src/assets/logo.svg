@@ -1,26 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
-  <defs>
-    <linearGradient id="sc-mark-bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#5b8cff"/>
-      <stop offset="55%" stop-color="#6e6cff"/>
-      <stop offset="100%" stop-color="#a64bff"/>
-    </linearGradient>
-    <linearGradient id="sc-mark-stroke" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
-      <stop offset="100%" stop-color="#e8efff"/>
-    </linearGradient>
-    <radialGradient id="sc-mark-glow" cx="0.78" cy="0.22" r="0.6">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="40" height="40" rx="9" fill="url(#sc-mark-bg)"/>
-  <rect width="40" height="40" rx="9" fill="url(#sc-mark-glow)"/>
-  <!-- Lightning-line chart: rises, dips, peaks -->
+  <rect width="40" height="40" rx="8" fill="#5b8cff"/>
   <path d="M6 28 L13 21 L18 24 L23 13 L28 18 L34 8"
-        stroke="url(#sc-mark-stroke)" stroke-width="3" fill="none"
+        stroke="#ffffff" stroke-width="2.8" fill="none"
         stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Apex node -->
-  <circle cx="34" cy="8" r="2.6" fill="#ffffff"/>
-  <circle cx="34" cy="8" r="2.6" fill="#fff" opacity="0.4"/>
+  <circle cx="34" cy="8" r="2.4" fill="#ffffff"/>
 </svg>
