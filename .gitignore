@@ -1,11 +1,29 @@
+# Dependencies
 node_modules/
+
+# Build artifacts
 dist/
 coverage/
-.DS_Store
-.playwright-mcp/
+
+# Logs / OS
 *.log
+.DS_Store
+
+# Local env
 .env
 .env.*
-docs/dist
-docs/.astro
-docs/src/content/docs/api
+!.env.example
+
+# Editor / tool caches
+.vscode/
+.idea/
+.playwright-mcp/
+
+# Docs site build output and TypeDoc generation
+docs/dist/
+docs/.astro/
+docs/src/content/docs/api/
+
+# pnpm / npm artifacts
+.pnpm-store/
+.npm/
