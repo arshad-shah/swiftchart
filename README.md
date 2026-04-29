@@ -179,6 +179,17 @@ interface BaseChartConfig {
 
 Canvas 2D + ResizeObserver: Chrome 64+, Firefox 69+, Safari 13.1+, Edge 79+.
 
+## Documentation
+
+Full guides, live previews, and API reference: **https://swiftchart.pages.dev**
+
+To run the docs site locally:
+
+```bash
+pnpm install
+pnpm --filter swiftchart-docs dev
+```
+
 ## License
 
 MIT © Arshad Shah
