@@ -1,0 +1,45 @@
+---
+title: Candlestick chart
+description: OHLC price chart for financial / trading data.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { candleSeries } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="candlestick"
+  data={candleSeries}
+  mapping={{ labelField: 'date' }}
+  options={{ theme: 'midnight' }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { CandlestickChart } from '@arshad-shah/swift-chart';
+
+    const chart = new CandlestickChart('#chart', { theme: 'midnight' });
+    chart.setData(ohlc, { labelField: 'date' });
+    // each row: { date, open, high, low, close }
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Candlestick } from '@arshad-shah/swift-chart/react';
+
+    <Candlestick data={ohlc} mapping={{ labelField: 'date' }} theme="midnight" height={320} />
+    ```
+  </TabItem>
+</Tabs>
+
+## Custom up / down colours
+
+<ChartPreview client:visible kind="candlestick" data={candleSeries} mapping={{ labelField: 'date' }} options={{ theme: 'arctic', upColor: '#16a34a', downColor: '#dc2626' }} height={260} />
+
+## Reference
+
+- Class: [`CandlestickChart`](/api/core/classes/candlestickchart/)
+- React component: [`Candlestick`](/api/react/variables/candlestick/)

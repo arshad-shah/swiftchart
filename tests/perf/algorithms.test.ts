@@ -365,7 +365,7 @@ describe('Treemap squarify — area conservation', () => {
   // then assert the rendered _rects sum to the input area and each
   // rect's area is proportional to its value.
   it('rect areas are proportional to item values', async () => {
-    const { TreemapChart } = await import('../../src/charts/extra');
+    const { TreemapChart } = await import('../../src/charts/treemap');
     const div = document.createElement('div');
     div.style.cssText = 'width:600px;height:400px';
     document.body.appendChild(div);
@@ -401,7 +401,7 @@ describe('Treemap squarify — area conservation', () => {
   });
 
   it('rectangles do not overlap', async () => {
-    const { TreemapChart } = await import('../../src/charts/extra');
+    const { TreemapChart } = await import('../../src/charts/treemap');
     const div = document.createElement('div');
     div.style.cssText = 'width:600px;height:400px';
     document.body.appendChild(div);

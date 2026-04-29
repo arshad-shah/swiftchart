@@ -8,6 +8,11 @@ export { BaseChart } from './core/base';
 export { Animator, EASINGS } from './core/animator';
 export { Tooltip, type TooltipContent, type TooltipRow } from './core/tooltip';
 export { THEMES, resolveTheme, addTheme } from './core/themes';
+export {
+  seriesColor, yProj, xProj,
+  applyHoverGlow, clearHoverGlow,
+  roundedBar, type RoundedBarOpts,
+} from './core/draw';
 
 // Charts
 export {
@@ -22,6 +27,18 @@ export {
   StackedAreaChart,
   WaterfallChart,
   TreemapChart,
+  StackedBarChart,
+  BubbleChart,
+  HeatmapChart,
+  CandlestickChart,
+  BoxplotChart,
+  FunnelChart,
+  SankeyChart,
+  ComboChart,
+  RadialBarChart,
+  BulletChart,
+  MarimekkoChart,
+  NetworkChart,
 } from './charts';
 
 // Utilities
@@ -33,6 +50,7 @@ export {
   niceScale,
   shortNum,
   hexToRgba,
+  lerpColor,
   escapeHtml,
   arrayMin,
   arrayMax,
@@ -56,6 +74,10 @@ export {
   executeCommands,
   StreamBuffer,
   StreamDataset,
+  simulateForce,
+  layoutSankey,
+  fiveNumberSummary,
+  squarify,
 } from './perf';
 
 export type {
@@ -64,6 +86,19 @@ export type {
   ViewportBounds,
   DrawCommand,
   PathSegment,
+  ForceNode,
+  ForceLink,
+  ForceOptions,
+  RawSankeyNode,
+  RawSankeyLink,
+  LaidOutSankeyNode,
+  LaidOutSankeyLink,
+  SankeyLayout,
+  SankeyLayoutOptions,
+  FiveNum,
+  SquarifyItem,
+  SquarifiedRect,
+  SquarifyRect,
 } from './perf';
 
 // Types
@@ -89,4 +124,24 @@ export type {
   PlotArea,
   NiceScale,
   TooltipFormatter,
+  StackedBarChartConfig,
+  BubbleChartConfig,
+  HeatmapChartConfig,
+  CandlestickChartConfig,
+  CandlestickItem,
+  BoxplotChartConfig,
+  BoxplotItem,
+  FunnelChartConfig,
+  FunnelItem,
+  SankeyChartConfig,
+  SankeyNode,
+  SankeyLink,
+  ComboChartConfig,
+  RadialBarChartConfig,
+  BulletChartConfig,
+  BulletItem,
+  MarimekkoChartConfig,
+  NetworkChartConfig,
+  NetworkNode,
+  NetworkLink,
 } from './types';

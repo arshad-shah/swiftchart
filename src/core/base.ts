@@ -466,6 +466,31 @@ export abstract class BaseChart {
   }
 
   /**
+   * Map a mouse event to a discrete slot index along the X axis. Used by
+   * categorical charts (bar, stacked-bar, waterfall, candlestick, funnel,
+   * etc.) — `n` slots evenly distributed across `plotArea.w`.
+   * Returns -1 outside the plot area.
+   */
+  protected _idxFromX(e: MouseEvent, n: number): number {
+    const rect = this.canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const p = this.plotArea;
+    if (!n) return -1;
+    const idx = Math.floor((mx - p.x) / (p.w / n));
+    return idx >= 0 && idx < n ? idx : -1;
+  }
+
+  /** Same as {@link _idxFromX} but for vertical layouts (hbar, bullet, funnel). */
+  protected _idxFromY(e: MouseEvent, n: number): number {
+    const rect = this.canvas.getBoundingClientRect();
+    const my = e.clientY - rect.top;
+    const p = this.plotArea;
+    if (!n) return -1;
+    const idx = Math.floor((my - p.y) / (p.h / n));
+    return idx >= 0 && idx < n ? idx : -1;
+  }
+
+  /**
    * Draw a vertical indicator at the given index.
    * `centered`=true positions the line in the slot centre (bar layouts);
    * `centered`=false aligns to the point index (line layouts).

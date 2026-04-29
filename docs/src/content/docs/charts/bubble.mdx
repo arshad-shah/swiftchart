@@ -1,0 +1,49 @@
+---
+title: Bubble chart
+description: Scatter chart where each point also encodes a magnitude in its radius.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { gdpHealth } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="bubble"
+  data={gdpHealth}
+  mapping={{ x: 'gdp', y: 'life', sizeField: 'pop', groupField: 'region' }}
+  options={{ theme: 'midnight' }}
+  height={360}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { BubbleChart } from '@arshad-shah/swift-chart';
+
+    const chart = new BubbleChart('#chart', { theme: 'midnight' });
+    chart.setData(rows, {
+      x: 'gdp', y: 'life',
+      sizeField: 'pop',
+      groupField: 'region',
+    });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Bubble } from '@arshad-shah/swift-chart/react';
+
+    <Bubble
+      data={rows}
+      mapping={{ x: 'gdp', y: 'life', sizeField: 'pop', groupField: 'region' }}
+      theme="midnight"
+      height={360}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`BubbleChart`](/api/core/classes/bubblechart/)
+- React component: [`Bubble`](/api/react/variables/bubble/)

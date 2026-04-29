@@ -1,0 +1,77 @@
+# Automated release powered by Changesets.
+#
+# How it works:
+# 1. Contributors run `pnpm changeset` and commit a `.changeset/*.md` file
+#    on their PR describing the change (patch/minor/major).
+# 2. When that PR merges into `main`, this workflow runs.
+# 3. If pending changesets exist, the action opens (or updates) a "Version
+#    Packages" PR that bumps `package.json`, regenerates `CHANGELOG.md`, and
+#    deletes the consumed changeset files.
+# 4. When the maintainer merges the "Version Packages" PR, this workflow
+#    runs again and publishes the new version to npm + creates a GitHub
+#    release.
+#
+# Required repo secrets:
+#   NPM_TOKEN — npm automation token with publish permission for the
+#               @arshad-shah scope
+# (`GITHUB_TOKEN` is provided automatically by Actions.)
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# Cancel in-flight runs when a new commit arrives — only the latest matters.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write       # create release PRs / tags / GitHub releases
+  pull-requests: write  # open the "Version Packages" PR
+  id-token: write       # npm provenance
+
+jobs:
+  release:
+    name: Version & publish
+    runs-on: ubuntu-latest
+    # Only run on the canonical repo; forks shouldn't try to publish.
+    if: github.repository == 'arshad-shah/swiftchart'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so changesets can compute changelogs against tags.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate (typecheck + lint + test + build + size)
+        run: pnpm --filter @arshad-shah/swift-chart validate
+
+      - name: Create release PR or publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          # `pnpm release` runs `pnpm build && changeset publish` so the
+          # tarball is fresh.
+          publish: pnpm release
+          # Title and commit message for the auto-PR.
+          title: 'chore(release): version packages'
+          commit: 'chore(release): version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Provenance attestation for npm.
+          NPM_CONFIG_PROVENANCE: 'true'

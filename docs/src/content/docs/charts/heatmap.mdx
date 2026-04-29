@@ -1,0 +1,52 @@
+---
+title: Heatmap
+description: Two-axis grid where colour encodes magnitude — perfect for activity matrices.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { trafficGrid } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="heatmap"
+  data={trafficGrid}
+  mapping={{ x: 'hour', y: 'day', valueField: 'visits' }}
+  options={{ theme: 'midnight' }}
+  height={300}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { HeatmapChart } from '@arshad-shah/swift-chart';
+
+    const chart = new HeatmapChart('#chart', { theme: 'midnight' });
+    chart.setData(rows, { x: 'hour', y: 'day', valueField: 'visits' });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Heatmap } from '@arshad-shah/swift-chart/react';
+
+    <Heatmap
+      data={rows}
+      mapping={{ x: 'hour', y: 'day', valueField: 'visits' }}
+      theme="midnight"
+      height={300}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Custom colour ramp
+
+Pass a two-stop ramp via `colorScale`. Values interpolate linearly between the
+stops.
+
+<ChartPreview client:visible kind="heatmap" data={trafficGrid} mapping={{ x: 'hour', y: 'day', valueField: 'visits' }} options={{ theme: 'arctic', colorScale: ['#eef2ff', '#4338ca'], showValues: false }} height={300} />
+
+## Reference
+
+- Class: [`HeatmapChart`](/api/core/classes/heatmapchart/)
+- React component: [`Heatmap`](/api/react/variables/heatmap/)

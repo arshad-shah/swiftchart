@@ -53,7 +53,7 @@ describe('Tooltip', () => {
     const tooltip = new Tooltip(canvas);
     tooltip.show(100, 100, 'Test');
     tooltip.hide();
-    expect(tooltip.el.style.opacity).toBe('0');
+    expect(tooltip.el!.style.opacity).toBe('0');
     tooltip.destroy();
   });
 
@@ -67,9 +67,39 @@ describe('Tooltip', () => {
     const tooltip = new Tooltip(canvas);
     // Show near edge — should still position within viewport
     tooltip.show(590, 10, 'Edge test');
-    const left = parseFloat(tooltip.el.style.left);
+    const left = parseFloat(tooltip.el!.style.left);
     expect(left).toBeLessThan(window.innerWidth);
     tooltip.destroy();
+  });
+
+  it('hides on document scroll', () => {
+    const tooltip = new Tooltip(canvas);
+    tooltip.show(100, 100, 'Test');
+    expect(tooltip.el!.style.opacity).toBe('1');
+    // Trigger a scroll event — tooltip is positioned `fixed`, so any
+    // scroll visually disconnects it from the chart and it should hide.
+    window.dispatchEvent(new Event('scroll'));
+    expect(tooltip.el!.style.opacity).toBe('0');
+    expect(tooltip.el!.getAttribute('aria-hidden')).toBe('true');
+    tooltip.destroy();
+  });
+
+  it('hides on window resize', () => {
+    const tooltip = new Tooltip(canvas);
+    tooltip.show(100, 100, 'Test');
+    window.dispatchEvent(new Event('resize'));
+    expect(tooltip.el!.style.opacity).toBe('0');
+    tooltip.destroy();
+  });
+
+  it('cleans up scroll/resize listeners on destroy', () => {
+    const tooltip = new Tooltip(canvas);
+    tooltip.show(100, 100, 'Test');
+    tooltip.destroy();
+    // After destroy, dispatching scroll on the window must not throw
+    // (e.g. by reading from a null `el`).
+    expect(() => window.dispatchEvent(new Event('scroll'))).not.toThrow();
+    expect(() => window.dispatchEvent(new Event('resize'))).not.toThrow();
   });
 });
 

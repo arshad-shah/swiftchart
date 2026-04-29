@@ -95,7 +95,10 @@
     "attw": "attw --pack .",
     "validate": "npm run typecheck && npm run lint && npm run test && npm run build && npm run publint && npm run attw && npm run size",
     "prepublishOnly": "npm run validate",
-    "clean": "rm -rf dist coverage"
+    "clean": "rm -rf dist coverage",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -111,6 +114,8 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.0",
+    "@changesets/changelog-github": "0.6.0",
+    "@changesets/cli": "2.31.0",
     "@eslint/js": "^9.17.0",
     "@size-limit/preset-small-lib": "^11.1.6",
     "@testing-library/jest-dom": "^6.6.3",
@@ -136,14 +141,32 @@
   },
   "size-limit": [
     {
-      "name": "core (esm, gzipped)",
+      "name": "tree-shaken: LineChart only",
       "path": "dist/esm/index.js",
-      "limit": "13 KB"
+      "import": "{ LineChart }",
+      "limit": "7 KB"
     },
     {
-      "name": "react bundle (esm, gzipped)",
+      "name": "tree-shaken: LineChart + BarChart",
+      "path": "dist/esm/index.js",
+      "import": "{ LineChart, BarChart }",
+      "limit": "7 KB"
+    },
+    {
+      "name": "tree-shaken: 6 common charts",
+      "path": "dist/esm/index.js",
+      "import": "{ LineChart, BarChart, PieChart, ScatterChart, GaugeChart, RadarChart }",
+      "limit": "10 KB"
+    },
+    {
+      "name": "full barrel (all 23 chart classes + helpers)",
+      "path": "dist/esm/index.js",
+      "limit": "21 KB"
+    },
+    {
+      "name": "full react bundle",
       "path": "dist/esm/react/index.js",
-      "limit": "13 KB"
+      "limit": "20 KB"
     }
   ],
   "volta": {

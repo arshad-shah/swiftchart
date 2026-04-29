@@ -59,6 +59,14 @@ Thicken the line stroke.
 
 <ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'midnight', lineWidth: 4 }} height={240} />
 
+### `step`
+
+Render as a step line. Useful for state-change or staircase data. Accepts
+`'before' | 'after' | 'middle'` (or `true` for the default `'after'`); steps
+are mutually exclusive with `smooth`.
+
+<ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'midnight', step: 'after', dots: true }} height={240} />
+
 ## Reference
 
 - Class: [`LineChart`](/api/core/classes/linechart/)

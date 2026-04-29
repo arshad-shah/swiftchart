@@ -91,6 +91,7 @@ export default defineConfig({
             { label: 'Animations', link: '/guides/animations/' },
             { label: 'Responsive', link: '/guides/responsive/' },
             { label: 'React refs', link: '/guides/react-refs/' },
+            { label: 'Building custom charts', link: '/guides/custom-charts/' },
           ],
         },
         {

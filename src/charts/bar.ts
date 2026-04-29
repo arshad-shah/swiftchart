@@ -1,6 +1,7 @@
 import type { BaseChartConfig } from '../types';
 import { BaseChart } from '../core/base';
-import { niceScale, hexToRgba, arraysExtent, safeRadius } from '../utils/helpers';
+import { niceScale, hexToRgba, arraysExtent } from '../utils/helpers';
+import { roundedBar, seriesColor } from '../core/draw';
 
 /**
  * Canvas 2D vertical bar chart. Pass multiple Y fields for grouped bars.
@@ -27,18 +28,13 @@ export class BarChart extends BaseChart {
   }
 
   _onMouse(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const p = this.plotArea;
     const n = this.resolved.labels.length;
-    if (n === 0) return;
-    const barW = p.w / n;
-    const idx = Math.floor((mx - p.x) / barW);
-    this.hoverIndex = idx >= 0 && idx < n ? idx : -1;
-
+    this.hoverIndex = this._idxFromX(e, n);
     if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      const barW = p.w / n;
       this.tooltip.showStructured(
-        p.x + (idx + 0.5) * barW,
+        p.x + (this.hoverIndex + 0.5) * barW,
         p.y + p.h / 2,
         this._tooltipContent(this.hoverIndex),
       );
@@ -76,39 +72,20 @@ export class BarChart extends BaseChart {
     const zeroY = p.y + p.h - ((0 - scale.min) / range) * p.h;
 
     datasets.forEach((ds, si) => {
-      const color = ds.color || this.theme.colors[si % this.theme.colors.length];
+      const color = seriesColor(this.theme, ds, si);
       ds.data.forEach((val, i) => {
         const xStart = p.x + i * groupW + groupPad + si * (barW + barGap);
         const rawH = (Math.abs(val) / range) * p.h * t;
         const rawY = val >= 0 ? zeroY - rawH : zeroY;
         const isHover = i === this.hoverIndex;
-
-        this.ctx.fillStyle = isHover ? hexToRgba(color, 1) : hexToRgba(color, 0.8);
-        if (isHover) {
-          this.ctx.shadowColor = hexToRgba(color, 0.4);
-          this.ctx.shadowBlur = 12;
-        }
-
-        const r = safeRadius(Math.min(4, barW / 2, Math.abs(rawH) / 2));
-        this.ctx.beginPath();
-        if (val >= 0) {
-          this.ctx.moveTo(xStart, rawY + rawH);
-          this.ctx.lineTo(xStart, rawY + r);
-          this.ctx.quadraticCurveTo(xStart, rawY, xStart + r, rawY);
-          this.ctx.lineTo(xStart + barW - r, rawY);
-          this.ctx.quadraticCurveTo(xStart + barW, rawY, xStart + barW, rawY + r);
-          this.ctx.lineTo(xStart + barW, rawY + rawH);
-        } else {
-          this.ctx.moveTo(xStart, rawY);
-          this.ctx.lineTo(xStart, rawY + rawH - r);
-          this.ctx.quadraticCurveTo(xStart, rawY + rawH, xStart + r, rawY + rawH);
-          this.ctx.lineTo(xStart + barW - r, rawY + rawH);
-          this.ctx.quadraticCurveTo(xStart + barW, rawY + rawH, xStart + barW, rawY + rawH - r);
-          this.ctx.lineTo(xStart + barW, rawY);
-        }
-        this.ctx.closePath();
-        this.ctx.fill();
-        this.ctx.shadowBlur = 0;
+        const r = Math.min(4, Math.abs(rawH) / 2);
+        // Round only the *outward* corners (top for positive bars, bottom for
+        // negative) so adjacent bars in a group still butt cleanly.
+        const radii: [number, number, number, number] =
+          val >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
+        roundedBar(this.ctx, xStart, rawY, barW, rawH,
+          isHover ? hexToRgba(color, 1) : hexToRgba(color, 0.8),
+          { radii, hover: isHover, glowColor: color });
       });
     });
   }
