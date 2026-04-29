@@ -292,15 +292,23 @@ html body .site-title :is(.tag, .html-tag) {
   );
 }
 .sc-compare table {
+  /* Starlight markdown defaults set tables to `display: block`
+     for horizontal scrolling — that disables table-layout and
+     causes the table to shrink to content. Force it back. */
+  display: table !important;
   width: 100% !important;
   min-width: 100%;
+  max-width: none;
   table-layout: fixed;
   border-collapse: collapse;
+  border-spacing: 0;
   font-size: 0.95rem;
   margin: 0;
 }
 .sc-compare colgroup col.sc-compare-label { width: 22%; }
 .sc-compare colgroup col { width: 19.5%; }
+.sc-compare th,
+.sc-compare td { box-sizing: border-box; }
 .sc-compare thead th {
   padding: 0.95rem 1rem;
   text-align: left;
