@@ -4,7 +4,7 @@ import { render, cleanup, act } from '@testing-library/react';
 import {
   Line, Area, Bar, Pie, Donut, Scatter, Radar,
   Gauge, HBar, SparklineComponent, StackedArea,
-  Waterfall, Treemap,
+  Waterfall, Treemap, Sankey, Network,
   type ChartRef,
 } from '../../src/react';
 
@@ -366,5 +366,45 @@ describe('React data updates', () => {
     }
     await settle();
     expect(container.querySelector('canvas')).toBeTruthy();
+  });
+
+  // Regression: graph charts (Sankey, Network) carry their data via
+  // `nodes`/`links` rather than `data`+`mapping`. The inline-data guard in
+  // `useChart` previously only matched the `{labels, datasets}` shape, so
+  // setData was skipped for these and the canvas rendered empty.
+  it('Sankey renders when only nodes+links are passed (no data prop)', async () => {
+    const nodes = [{ id: 'A' }, { id: 'B' }, { id: 'C' }];
+    const links = [
+      { source: 'A', target: 'B', value: 5 },
+      { source: 'A', target: 'C', value: 3 },
+    ];
+    const ref = createRef<ChartRef>();
+    const { container } = render(
+      <Sankey ref={ref} nodes={nodes} links={links} animate={false} />,
+      { wrapper: createWrapper() },
+    );
+    await settle();
+    expect(container.querySelector('canvas')).toBeTruthy();
+    // Resolved labels reflect the graph nodes — proves setData ran.
+    const chart = ref.current?.chart as any;
+    expect(chart?.resolved.labels.length).toBe(3);
+  });
+
+  it('Network renders when only nodes+links are passed (no data prop)', async () => {
+    const nodes = [
+      { id: 'A', group: 1 }, { id: 'B', group: 1 }, { id: 'C', group: 2 },
+    ];
+    const links = [
+      { source: 'A', target: 'B' }, { source: 'B', target: 'C' },
+    ];
+    const ref = createRef<ChartRef>();
+    const { container } = render(
+      <Network ref={ref} nodes={nodes} links={links} animate={false} iterations={20} />,
+      { wrapper: createWrapper() },
+    );
+    await settle();
+    expect(container.querySelector('canvas')).toBeTruthy();
+    const chart = ref.current?.chart as any;
+    expect(chart?.resolved.labels.length).toBe(3);
   });
 });

@@ -77,11 +77,16 @@ function useChart<T extends BaseChart>(
   const mappingSig = shallowKey(mapping);
   const mappingKey = useMemo(() => mappingSig, [mappingSig]);
 
-  // Pre-built data is sometimes carried entirely on `mapping`
-  // (e.g. streaming: mapping={{ labels, datasets }}). Treat that as the
-  // signal that setData should fire even if `data` is undefined.
-  const mappingHasInlineData =
-    !!(mapping && (mapping as any).labels && (mapping as any).datasets);
+  // Pre-built data is sometimes carried entirely on `mapping`:
+  //   - streaming / Chart.js-style: { labels, datasets }
+  //   - graph charts (Sankey, Network):  { nodes, links }
+  // Either shape should fire setData even when `data` is undefined.
+  const mappingHasInlineData = !!(
+    mapping && (
+      ((mapping as any).labels && (mapping as any).datasets) ||
+      ((mapping as any).nodes && (mapping as any).links)
+    )
+  );
 
   // Forward every non-data, non-mount config field to chart.update()
   // so chart-specific props (donut, donutWidth, area, smooth, dots,
