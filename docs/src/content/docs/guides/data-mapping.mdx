@@ -1,0 +1,54 @@
+---
+title: Data mapping
+description: How SwiftChart accepts any data shape.
+---
+
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales } from '../../../components/ExampleData';
+
+SwiftChart accepts data in three forms. Pick whichever matches the shape you already have — no transformation required.
+
+## 1. Auto-detect
+
+```ts
+chart.setData([
+  { month: 'Jan', sales: 420, cost: 280 },
+  { month: 'Feb', sales: 510, cost: 320 },
+]);
+```
+
+The first string field becomes the X axis. All number fields become series.
+
+## 2. Explicit mapping
+
+```ts
+chart.setData(data, {
+  x: 'timestamp',
+  y: ['metric_a', 'metric_b'],
+  seriesNames: ['CPU', 'Memory'],
+});
+```
+
+Use this when your X field isn't a string, or when you want to pick specific Y fields.
+
+<ChartPreview
+  client:visible
+  kind="line"
+  data={monthlySales}
+  mapping={{ x: 'month', y: ['revenue', 'cost'], seriesNames: ['Revenue', 'Cost'] }}
+  options={{ theme: 'midnight' }}
+  height={300}
+/>
+
+## 3. Pre-built `{ labels, datasets }`
+
+```ts
+chart.setData([], {
+  labels: ['Q1', 'Q2', 'Q3'],
+  datasets: [{ label: 'Revenue', data: [100, 200, 350] }],
+});
+```
+
+The escape hatch — useful when migrating from Chart.js or building data on the fly.
+
+See `DataMapping` and `ResolvedData` in the [Core API reference](/api/core/).

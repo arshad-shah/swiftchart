@@ -1,0 +1,45 @@
+---
+title: Scatter chart
+description: XY scatter with grouping and per-point sizing.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { scatterClusters } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="scatter"
+  data={scatterClusters}
+  mapping={{ x: 'x', y: 'y', group: 'group', size: 'size' }}
+  options={{ theme: 'midnight' }}
+  height={360}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { ScatterChart } from '@arshad-shah/swift-chart';
+
+    const chart = new ScatterChart('#chart', { theme: 'midnight' });
+    chart.setData(points, { x: 'x', y: 'y', group: 'group', size: 'size' });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Scatter } from '@arshad-shah/swift-chart/react';
+
+    <Scatter
+      data={points}
+      mapping={{ x: 'x', y: 'y', group: 'group', size: 'size' }}
+      theme="midnight"
+      height={360}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`ScatterChart`](/api/core/classes/scatterchart/)
+- React component: [`Scatter`](/api/react/variables/scatter/)

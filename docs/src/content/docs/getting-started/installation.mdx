@@ -1,0 +1,39 @@
+---
+title: Installation
+description: Install SwiftChart from npm.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+SwiftChart is published as `@arshad-shah/swift-chart`. React is an **optional** peer dependency — install it only if you plan to use the `/react` entry point.
+
+<Tabs syncKey="pkg">
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add @arshad-shah/swift-chart
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```bash
+    npm install @arshad-shah/swift-chart
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add @arshad-shah/swift-chart
+    ```
+  </TabItem>
+</Tabs>
+
+## Browser support
+
+Canvas 2D + ResizeObserver: Chrome 64+, Firefox 69+, Safari 13.1+, Edge 79+.
+
+## Bundle size
+
+| Entry | Gzipped |
+|---|---|
+| Core (`@arshad-shah/swift-chart`) | ≤ 13 KB |
+| React (`@arshad-shah/swift-chart/react`) | ≤ 13 KB |
+
+The two entry points share most of their code; importing both does not double the bundle.

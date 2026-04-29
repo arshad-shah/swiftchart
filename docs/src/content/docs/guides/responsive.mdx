@@ -1,0 +1,21 @@
+---
+title: Responsive
+description: Auto-resize behavior.
+---
+
+Charts auto-resize by default — `responsive: true` is the default. SwiftChart attaches a `ResizeObserver` to the container and re-renders on size changes.
+
+```ts
+new LineChart('#chart', { responsive: true }); // default
+new LineChart('#chart', { responsive: false }); // pin to initial size
+```
+
+When `responsive` is off, you can still trigger a resize manually:
+
+```ts
+chart.resize();
+```
+
+In React, call `ref.current?.resize()` — see [React refs](/guides/react-refs/).
+
+The chart respects `devicePixelRatio` automatically, so output stays crisp on Retina displays.

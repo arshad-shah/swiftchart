@@ -1,0 +1,38 @@
+---
+title: Theming
+description: Built-in themes and custom theme registration.
+---
+
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales } from '../../../components/ExampleData';
+
+SwiftChart ships with four built-in themes. Each is a complete palette covering background, surface, grid, axes, and series colors.
+
+## Built-in themes
+
+<ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'midnight', title: 'midnight' }} height={220} />
+<ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'arctic', title: 'arctic' }} height={220} />
+<ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'ember', title: 'ember' }} height={220} />
+<ChartPreview client:visible kind="line" data={monthlySales} mapping={{ x: 'month', y: 'revenue' }} options={{ theme: 'forest', title: 'forest' }} height={220} />
+
+## Custom themes
+
+Register your own palette and reference it by name from anywhere:
+
+```ts
+import { addTheme } from '@arshad-shah/swift-chart';
+
+addTheme('neon', {
+  bg: '#0a0a0f',
+  surface: '#111118',
+  grid: '#ffffff08',
+  text: '#e0e0ff',
+  textMuted: '#6060a0',
+  axis: '#2a2a4a',
+  colors: ['#ff00ff', '#00ffff', '#ffff00', '#ff6600'],
+});
+
+new LineChart('#chart', { theme: 'neon' });
+```
+
+You can also pass an inline `Theme` object instead of a name. See the [Core API reference](/api/core/) for the full `Theme` shape.

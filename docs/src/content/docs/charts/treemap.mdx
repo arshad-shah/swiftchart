@@ -1,0 +1,39 @@
+---
+title: Treemap chart
+description: Squarified treemap — proportional rectangles for hierarchical data.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { treemap } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="treemap"
+  data={treemap}
+  options={{ theme: 'midnight' }}
+  height={360}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { TreemapChart } from '@arshad-shah/swift-chart';
+
+    const chart = new TreemapChart('#chart', { theme: 'midnight' });
+    chart.setData(items);
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Treemap } from '@arshad-shah/swift-chart/react';
+
+    <Treemap data={items} theme="midnight" height={360} />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`TreemapChart`](/api/core/classes/treemapchart/)
+- React component: [`Treemap`](/api/react/variables/treemap/)

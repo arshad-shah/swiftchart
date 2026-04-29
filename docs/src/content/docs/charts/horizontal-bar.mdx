@@ -1,0 +1,45 @@
+---
+title: Horizontal bar chart
+description: Horizontal bars with category labels — ideal for ranked lists.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { traffic } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="hbar"
+  data={traffic}
+  mapping={{ x: 'visits', y: 'source' }}
+  options={{ theme: 'midnight' }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { HBarChart } from '@arshad-shah/swift-chart';
+
+    const chart = new HBarChart('#chart', { theme: 'midnight' });
+    chart.setData(traffic, { x: 'visits', y: 'source' });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { HBar } from '@arshad-shah/swift-chart/react';
+
+    <HBar
+      data={traffic}
+      mapping={{ x: 'visits', y: 'source' }}
+      theme="midnight"
+      height={320}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`HBarChart`](/api/core/classes/hbarchart/)
+- React component: [`HBar`](/api/react/variables/hbar/)

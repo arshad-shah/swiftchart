@@ -1,0 +1,45 @@
+---
+title: Pie chart
+description: Classic pie chart with sliceable categories.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { traffic } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="pie"
+  data={traffic}
+  mapping={{ labelField: 'source', valueField: 'visits' }}
+  options={{ theme: 'midnight' }}
+  height={340}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { PieChart } from '@arshad-shah/swift-chart';
+
+    const chart = new PieChart('#chart', { theme: 'midnight' });
+    chart.setData(traffic, { labelField: 'source', valueField: 'visits' });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Pie } from '@arshad-shah/swift-chart/react';
+
+    <Pie
+      data={traffic}
+      mapping={{ labelField: 'source', valueField: 'visits' }}
+      theme="midnight"
+      height={340}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`PieChart`](/api/core/classes/piechart/)
+- React component: [`Pie`](/api/react/variables/pie/)

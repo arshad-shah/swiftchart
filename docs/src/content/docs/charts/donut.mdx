@@ -1,0 +1,58 @@
+---
+title: Donut chart
+description: Pie chart with a center cutout — supports custom donut width.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { traffic } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="donut"
+  data={traffic}
+  mapping={{ labelField: 'source', valueField: 'visits' }}
+  options={{ theme: 'midnight' }}
+  height={340}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { PieChart } from '@arshad-shah/swift-chart';
+
+    const chart = new PieChart('#chart', {
+      theme: 'midnight',
+      donut: true,
+      donutWidth: 0.55,
+    });
+    chart.setData(traffic, { labelField: 'source', valueField: 'visits' });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Donut } from '@arshad-shah/swift-chart/react';
+
+    <Donut
+      data={traffic}
+      mapping={{ labelField: 'source', valueField: 'visits' }}
+      theme="midnight"
+      donutWidth={0.55}
+      height={340}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Common options
+
+### `donutWidth`
+
+The cutout ratio (0–1). Lower values produce a thicker ring.
+
+<ChartPreview client:visible kind="donut" data={traffic} mapping={{ labelField: 'source', valueField: 'visits' }} options={{ theme: 'arctic', donutWidth: 0.3 }} height={260} />
+
+## Reference
+
+- Class: [`PieChart`](/api/core/classes/piechart/) (with `donut: true`)
+- React component: [`Donut`](/api/react/variables/donut/)

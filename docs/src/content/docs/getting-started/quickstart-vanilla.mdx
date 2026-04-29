@@ -1,0 +1,46 @@
+---
+title: Quick start (Vanilla JS)
+description: Render your first SwiftChart with the imperative class API.
+---
+
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales } from '../../../components/ExampleData';
+
+```html
+<div id="my-chart" style="height: 320px"></div>
+<script type="module">
+  import { LineChart } from '@arshad-shah/swift-chart';
+
+  const chart = new LineChart('#my-chart', {
+    title: 'Revenue',
+    theme: 'midnight',
+    area: true,
+  });
+
+  chart.setData([
+    { month: 'Jan', revenue: 420 },
+    { month: 'Feb', revenue: 510 },
+    { month: 'Mar', revenue: 480 },
+    { month: 'Apr', revenue: 620 },
+  ], { x: 'month', y: 'revenue' });
+</script>
+```
+
+The result:
+
+<ChartPreview
+  client:visible
+  kind="line"
+  data={monthlySales.slice(0, 4)}
+  mapping={{ x: 'month', y: 'revenue' }}
+  options={{ theme: 'midnight', area: true, title: 'Revenue' }}
+  height={320}
+/>
+
+## What just happened?
+
+1. `new LineChart(selector, config)` mounts a chart inside the matched element (or `HTMLElement`).
+2. `chart.setData(data, mapping)` accepts any object array; the mapping tells SwiftChart which fields are X and Y.
+3. The chart auto-resizes when its container changes size — no manual resize handling needed.
+
+See [Data mapping](/guides/data-mapping/) for the full set of accepted shapes.

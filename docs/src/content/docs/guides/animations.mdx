@@ -1,0 +1,31 @@
+---
+title: Animations
+description: Animation timing and easing.
+---
+
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales } from '../../../components/ExampleData';
+
+Animations are on by default. Three options control them:
+
+| Option | Default | Effect |
+|---|---|---|
+| `animate` | `true` | Set to `false` to disable all animation. |
+| `animDuration` | `600` | Duration in milliseconds. |
+| `animEasing` | `'easeOutCubic'` | Easing curve from `EASINGS`. |
+
+<ChartPreview
+  client:visible
+  kind="bar"
+  data={monthlySales}
+  mapping={{ x: 'month', y: 'revenue' }}
+  options={{ theme: 'midnight', animDuration: 1200, animEasing: 'easeOutBounce' }}
+  height={300}
+/>
+
+The full list of easing names lives in `EASINGS`. Common picks:
+
+- `linear` — uniform speed
+- `easeOutCubic` — gentle deceleration (default)
+- `easeOutQuart` — sharper deceleration
+- `easeOutBounce` — playful overshoot
