@@ -1,6 +1,6 @@
 import type { StackedBarChartConfig } from '../types';
 import { BaseChart } from '../core/base';
-import { niceScale, hexToRgba, arrayMax, safeRadius } from '../utils/helpers';
+import { niceScale, hexToRgba, arrayMax, safeRadius, safeDim } from '../utils/helpers';
 
 /**
  * Vertical stacked bar chart. Each label slot stacks the series values.
@@ -74,39 +74,44 @@ export class StackedBarChart extends BaseChart {
     const t = this.animProgress;
     const range = scale.max - scale.min || 1;
 
-    // Single pass per slot: accumulate y position and draw segments bottom→top.
+    // Two-pass per slot: first compute the top-segment index (so we know which
+    // segment owns the rounded top corners), then draw bottom-up. Hover glow
+    // wraps the whole stack — matches BarChart's polish.
     for (let i = 0; i < n; i++) {
       const xStart = p.x + i * slot + groupPad;
       const denom = this._percent ? totals[i] || 1 : 1;
-      let yCursor = p.y + p.h;
       const isHover = i === this.hoverIndex;
+
+      // Find topmost (last-positive) series in this slot.
+      let topSeries = -1;
+      for (let si = datasets.length - 1; si >= 0; si--) {
+        if ((datasets[si].data[i] ?? 0) > 0) { topSeries = si; break; }
+      }
+
+      let yCursor = p.y + p.h;
+      const cornerR = safeRadius(Math.min(3, barW / 2));
+
       for (let si = 0; si < datasets.length; si++) {
         const v = datasets[si].data[i] ?? 0;
         if (v <= 0) continue;
         const seg = this._percent ? (v / denom) * 100 : v;
         const h = (seg / range) * p.h * t;
         if (h <= 0) continue;
+
         const color = datasets[si].color || this.theme.colors[si % this.theme.colors.length];
+        const isTop = si === topSeries;
         this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
-        this.ctx.fillRect(xStart, yCursor - h, barW, h);
+        if (isHover && isTop) {
+          this.ctx.shadowColor = hexToRgba(color, 0.35);
+          this.ctx.shadowBlur = 12;
+        }
+        // Round only the top corners — and only on the topmost segment of the stack.
+        const r = isTop ? cornerR : 0;
+        this.ctx.beginPath();
+        this.ctx.roundRect(xStart, yCursor - h, safeDim(barW), safeDim(h), [r, r, 0, 0]);
+        this.ctx.fill();
+        this.ctx.shadowBlur = 0;
         yCursor -= h;
-      }
-      // Subtle rounded cap on the topmost segment.
-      const r = safeRadius(Math.min(3, barW / 2));
-      if (r > 0 && yCursor < p.y + p.h) {
-        this.ctx.fillStyle = this.theme.bg;
-        this.ctx.beginPath();
-        this.ctx.moveTo(xStart, yCursor);
-        this.ctx.lineTo(xStart, yCursor - r);
-        this.ctx.lineTo(xStart + r, yCursor - r);
-        this.ctx.closePath();
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.moveTo(xStart + barW, yCursor);
-        this.ctx.lineTo(xStart + barW, yCursor - r);
-        this.ctx.lineTo(xStart + barW - r, yCursor - r);
-        this.ctx.closePath();
-        this.ctx.fill();
       }
     }
   }

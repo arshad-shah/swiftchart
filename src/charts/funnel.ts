@@ -106,8 +106,13 @@ export class FunnelChart extends BaseChart {
       this.ctx.lineTo(cx + wBot / 2, yBot);
       this.ctx.lineTo(cx - wBot / 2, yBot);
       this.ctx.closePath();
-      this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
-      if (isHover) { this.ctx.shadowColor = hexToRgba(color, 0.4); this.ctx.shadowBlur = 12; }
+      // Vertical gradient for depth — matches the soft fill style of LineChart's
+      // area mode and PieChart's hover slices.
+      const grad = this.ctx.createLinearGradient(0, yTop, 0, yBot);
+      grad.addColorStop(0, isHover ? color : hexToRgba(color, 0.92));
+      grad.addColorStop(1, isHover ? hexToRgba(color, 0.85) : hexToRgba(color, 0.7));
+      this.ctx.fillStyle = grad;
+      if (isHover) { this.ctx.shadowColor = hexToRgba(color, 0.4); this.ctx.shadowBlur = 14; }
       this.ctx.fill();
       this.ctx.shadowBlur = 0;
 

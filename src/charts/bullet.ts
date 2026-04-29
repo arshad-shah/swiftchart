@@ -1,6 +1,6 @@
 import type { BulletChartConfig, BulletItem, DataMapping } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba, arrayMax } from '../utils/helpers';
+import { hexToRgba, arrayMax, safeRadius, safeDim } from '../utils/helpers';
 
 /**
  * Bullet chart (Stephen Few). One row per KPI: a current measure, a target
@@ -84,30 +84,53 @@ export class BulletChart extends BaseChart {
       );
       const xFor = (v: number) => p.x + (v / lim) * p.w * t;
 
-      // Range bands (light → dark from low to high).
+      // Qualitative range bands (light → dark from low to high). Rounded
+      // ends on the outermost band, square joins between adjacent bands.
       if (d.ranges?.length) {
-        let prev = 0;
         const rs = d.ranges.slice().sort((a, b) => a - b);
+        const trackR = safeRadius(barH * 0.45);
+        let prev = 0;
         rs.forEach((r, ri) => {
           const x0 = xFor(prev);
           const w = xFor(r) - x0;
-          this.ctx.fillStyle = ri === rs.length - 1 ? rangeColor : hexToRgba(this.theme.text, 0.08 + ri * 0.04);
-          this.ctx.fillRect(x0, yC - barH * 0.7, w, barH * 1.4);
+          if (w <= 0) { prev = r; return; }
+          this.ctx.fillStyle = ri === rs.length - 1
+            ? rangeColor
+            : hexToRgba(this.theme.text, 0.08 + ri * 0.04);
+          const isFirst = ri === 0;
+          const isLast = ri === rs.length - 1;
+          const tl = isFirst ? trackR : 0;
+          const bl = isFirst ? trackR : 0;
+          const tr = isLast ? trackR : 0;
+          const br = isLast ? trackR : 0;
+          this.ctx.beginPath();
+          this.ctx.roundRect(x0, yC - barH * 0.7, safeDim(w), safeDim(barH * 1.4), [tl, tr, br, bl] as any);
+          this.ctx.fill();
           prev = r;
         });
       }
 
-      // Value bar.
+      // Value bar — rounded right end, hover glow.
       const isHover = i === this.hoverIndex;
       const color = this.theme.colors[i % this.theme.colors.length];
+      const valW = xFor(d.value) - p.x;
       this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.9);
-      this.ctx.fillRect(p.x, yC - barH / 2, xFor(d.value) - p.x, barH);
+      if (isHover) {
+        this.ctx.shadowColor = hexToRgba(color, 0.35);
+        this.ctx.shadowBlur = 10;
+      }
+      const valR = safeRadius(Math.min(barH / 2, valW / 2));
+      this.ctx.beginPath();
+      this.ctx.roundRect(p.x, yC - barH / 2, safeDim(valW), safeDim(barH), valR);
+      this.ctx.fill();
+      this.ctx.shadowBlur = 0;
 
-      // Target tick.
+      // Target tick — extends slightly above and below the value bar.
       if (d.target != null) {
         const tx = xFor(d.target);
         this.ctx.strokeStyle = this.theme.text;
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = 2.5;
+        this.ctx.lineCap = 'round';
         this.ctx.beginPath();
         this.ctx.moveTo(tx, yC - barH * 0.85);
         this.ctx.lineTo(tx, yC + barH * 0.85);

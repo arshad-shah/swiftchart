@@ -104,7 +104,12 @@ export class MarimekkoChart extends BaseChart {
     for (const cell of layout.cells) {
       const isHover = this.hoverIndex === cell.colIdx * 1000 + cell.rowIdx;
       this.ctx.fillStyle = isHover ? cell.color : hexToRgba(cell.color, 0.85);
+      if (isHover) {
+        this.ctx.shadowColor = hexToRgba(cell.color, 0.35);
+        this.ctx.shadowBlur = 10;
+      }
       this.ctx.fillRect(cell.x + 0.5, cell.y + 0.5, Math.max(0, cell.w - 1), Math.max(0, cell.h - 1));
+      this.ctx.shadowBlur = 0;
       if (showLabels && cell.w > 36 && cell.h > 18) {
         const colTotal = layout.colTotals[cell.colIdx] || 1;
         const pct = ((cell.value / colTotal) * 100).toFixed(0);

@@ -1,6 +1,6 @@
 import type { BoxplotChartConfig, BoxplotItem, DataMapping } from '../types';
 import { BaseChart } from '../core/base';
-import { niceScale, hexToRgba, safeDim } from '../utils/helpers';
+import { niceScale, hexToRgba, safeDim, safeRadius } from '../utils/helpers';
 import { fiveNumberSummary } from '../perf/layout/boxplot';
 
 type ResolvedBox = BoxplotItem;
@@ -106,9 +106,10 @@ export class BoxplotChart extends BaseChart {
       const yQ3 = yFor(d.q3);
       const yMed = yFor(d.median);
 
-      // Whisker line.
+      // Whisker line — rounded caps for crispness.
       this.ctx.strokeStyle = hexToRgba(color, 0.85);
-      this.ctx.lineWidth = 1.2;
+      this.ctx.lineWidth = 1.4;
+      this.ctx.lineCap = 'round';
       this.ctx.beginPath();
       this.ctx.moveTo(cx, yMax);
       this.ctx.lineTo(cx, yMin);
@@ -120,21 +121,32 @@ export class BoxplotChart extends BaseChart {
       this.ctx.moveTo(cx - boxW / 4, yMin); this.ctx.lineTo(cx + boxW / 4, yMin);
       this.ctx.stroke();
 
-      // Box (Q1 → Q3).
+      // Box (Q1 → Q3) — rounded corners, hover glow.
+      const boxTop = Math.min(yQ1, yQ3);
+      const boxH = safeDim(Math.abs(yQ1 - yQ3));
+      const r = safeRadius(Math.min(3, boxW / 2, boxH / 2));
       this.ctx.fillStyle = hexToRgba(color, isHover ? 0.45 : 0.28);
       this.ctx.strokeStyle = color;
       this.ctx.lineWidth = isHover ? 2 : 1.2;
-      const boxTop = Math.min(yQ1, yQ3);
-      const boxH = safeDim(Math.abs(yQ1 - yQ3));
-      this.ctx.fillRect(cx - boxW / 2, boxTop, boxW, boxH);
-      this.ctx.strokeRect(cx - boxW / 2, boxTop, boxW, boxH);
-
-      // Median.
-      this.ctx.strokeStyle = color;
-      this.ctx.lineWidth = 2;
+      if (isHover) {
+        this.ctx.shadowColor = hexToRgba(color, 0.35);
+        this.ctx.shadowBlur = 12;
+      }
       this.ctx.beginPath();
-      this.ctx.moveTo(cx - boxW / 2, yMed);
-      this.ctx.lineTo(cx + boxW / 2, yMed);
+      this.ctx.roundRect(cx - boxW / 2, boxTop, boxW, boxH, r);
+      this.ctx.fill();
+      this.ctx.shadowBlur = 0;
+      this.ctx.beginPath();
+      this.ctx.roundRect(cx - boxW / 2, boxTop, boxW, boxH, r);
+      this.ctx.stroke();
+
+      // Median — short rounded line across the box.
+      this.ctx.strokeStyle = color;
+      this.ctx.lineWidth = 2.2;
+      this.ctx.lineCap = 'round';
+      this.ctx.beginPath();
+      this.ctx.moveTo(cx - boxW / 2 + 1, yMed);
+      this.ctx.lineTo(cx + boxW / 2 - 1, yMed);
       this.ctx.stroke();
 
       // Outliers.

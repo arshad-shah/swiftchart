@@ -1,6 +1,6 @@
 import type { SankeyChartConfig, SankeyNode, SankeyLink } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba } from '../utils/helpers';
+import { hexToRgba, safeRadius, safeDim } from '../utils/helpers';
 import { layoutSankey, type SankeyLayout } from '../perf/layout/sankey';
 
 /**
@@ -125,13 +125,22 @@ export class SankeyChart extends BaseChart {
       this.ctx.stroke();
     }
 
-    // Nodes.
+    // Nodes — rounded rectangles, hover glow matches BarChart.
     for (let i = 0; i < layout.nodes.length; i++) {
       const n = layout.nodes[i];
       const color = n.color || this.theme.colors[i % this.theme.colors.length];
       const isHover = i === this.hoverIndex;
+      const h = n.h * t;
       this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
-      this.ctx.fillRect(n.x, n.y, n.w, n.h * t);
+      if (isHover) {
+        this.ctx.shadowColor = hexToRgba(color, 0.4);
+        this.ctx.shadowBlur = 12;
+      }
+      const r = safeRadius(Math.min(n.w / 2, h / 2, 3));
+      this.ctx.beginPath();
+      this.ctx.roundRect(n.x, n.y, safeDim(n.w), safeDim(h), r);
+      this.ctx.fill();
+      this.ctx.shadowBlur = 0;
 
       // Label outside the node rect, on whichever side has more room.
       this.ctx.fillStyle = this.theme.text;

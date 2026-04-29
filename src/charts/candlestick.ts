@@ -95,22 +95,25 @@ export class CandlestickChart extends BaseChart {
       const color = up ? upColor : downColor;
       const isHover = i === this.hoverIndex;
 
-      // Wick.
+      // Wick — rounded line caps so it doesn't look pixel-y.
       this.ctx.strokeStyle = hexToRgba(color, isHover ? 1 : 0.85);
-      this.ctx.lineWidth = 1.2;
+      this.ctx.lineWidth = isHover ? 1.6 : 1.2;
+      this.ctx.lineCap = 'round';
       this.ctx.beginPath();
       this.ctx.moveTo(cx, yh);
       this.ctx.lineTo(cx, yl);
       this.ctx.stroke();
 
-      // Body.
+      // Body. Hover gets full saturation + soft glow for parity with BarChart.
       const top = Math.min(yo, yc);
       const h = safeDim(Math.abs(yo - yc) || 1);
       this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.7);
-      this.ctx.fillRect(cx - bodyW / 2, top, bodyW, h);
-      if (!up) {
-        // Hollow body for down candles can be busy on small ranges; stick with filled.
+      if (isHover) {
+        this.ctx.shadowColor = hexToRgba(color, 0.35);
+        this.ctx.shadowBlur = 10;
       }
+      this.ctx.fillRect(cx - bodyW / 2, top, bodyW, h);
+      this.ctx.shadowBlur = 0;
     }
   }
 }
