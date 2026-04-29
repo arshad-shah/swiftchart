@@ -33,7 +33,11 @@ export class HeatmapChart extends BaseChart {
 
   constructor(container: HTMLElement | string, config: HeatmapChartConfig = {}) {
     super(container, {
-      padding: { top: 30, right: 64, bottom: 38, left: 60 },
+      // The colour-scale legend lives *inside* the plot area (carved out via
+      // `_heatArea`), so the canvas-level right padding only needs space for
+      // the min/max numeric labels next to the legend bar (≈ 24 px). Left
+      // padding fits a 3–4 char y-axis label like "Mon"/"Sun".
+      padding: { top: 8, right: 28, bottom: 26, left: 44 },
       showLegend: false,
       ...config,
     });
