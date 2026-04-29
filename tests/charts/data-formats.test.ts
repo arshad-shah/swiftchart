@@ -457,6 +457,41 @@ describe('BubbleChart — data robustness', () => {
     ])).not.toThrow();
     c.destroy();
   });
+
+  it('hover query radius scales with maxRadius (regression: was fixed at 24px)', () => {
+    // We need a bubble whose painted radius is > 24 px so the old code
+    // would miss it. Use two points so the size-range is non-degenerate
+    // and the larger bubble actually renders at maxRadius.
+    const c = new BubbleChart(div, { animate: false, maxRadius: 60, sizeScale: 4 });
+    c.canvas.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 600, bottom: 400, width: 600, height: 400, x: 0, y: 0,
+        toJSON: () => ({}) } as DOMRect);
+    c.setData(
+      [{ x: 0, y: 0, s: 1 }, { x: 100, y: 100, s: 100 }],
+      { x: 'x', y: 'y', sizeField: 's' },
+    );
+    (c as any)._draw();
+    const flat = (c as any)._flat as Array<{ sx: number; sy: number; r: number }>;
+    expect(flat.length).toBe(2);
+    const big = flat[1];
+    // The big bubble must render larger than the old 24-px hover window
+    // for this regression to be meaningful.
+    expect(big.r).toBeGreaterThan(24);
+
+    // Cursor inside the big bubble but > 24 px from its centre. The old
+    // fixed-24-px query would have returned no hit; the new query window
+    // (maxRadius + 4 = 64 px) finds it, and the per-radius check accepts it.
+    const inside = Math.min(big.r - 2, 35);
+    (c as any)._onMouse({ clientX: big.sx + inside, clientY: big.sy } as any);
+    expect(c.hoverIndex).toBe(1);
+
+    // Cursor far past the bubble's actual radius — quadtree may still
+    // return it as nearest within the 64 px window, but the per-radius
+    // check now rejects it.
+    (c as any)._onMouse({ clientX: big.sx + big.r + 50, clientY: big.sy } as any);
+    expect(c.hoverIndex).toBe(-1);
+    c.destroy();
+  });
 });
 
 // ════════════════════════════════════════════════════════════════════════
@@ -683,6 +718,37 @@ describe('SankeyChart — data robustness', () => {
     expect(() => c.setSankey([{ id: 'lonely' }], [])).not.toThrow();
     c.destroy();
   });
+
+  it('caches the layout across redraws of the same size (regression: was recomputed every frame)', () => {
+    const c = new SankeyChart(div, { animate: false });
+    c.setSankey(
+      [{ id: 'A' }, { id: 'B' }, { id: 'C' }],
+      [{ source: 'A', target: 'B', value: 5 }, { source: 'B', target: 'C', value: 3 }],
+    );
+    // Render once to populate the cache.
+    (c as any)._draw();
+    const firstLayout = (c as any)._layout;
+    expect(firstLayout).not.toBeNull();
+    // Render again with no resize → cached layout object should be reused.
+    (c as any)._draw();
+    expect((c as any)._layout).toBe(firstLayout);
+    c.destroy();
+  });
+
+  it('invalidates the cached layout when setSankey is called again', () => {
+    const c = new SankeyChart(div, { animate: false });
+    c.setSankey([{ id: 'A' }], []);
+    (c as any)._draw();
+    const firstLayout = (c as any)._layout;
+    c.setSankey(
+      [{ id: 'X' }, { id: 'Y' }],
+      [{ source: 'X', target: 'Y', value: 1 }],
+    );
+    (c as any)._draw();
+    expect((c as any)._layout).not.toBe(firstLayout);
+    expect((c as any)._layout.nodes.length).toBe(2);
+    c.destroy();
+  });
 });
 
 describe('NetworkChart — data robustness', () => {
@@ -731,6 +797,30 @@ describe('NetworkChart — data robustness', () => {
       target: `n${Math.floor(Math.random() * 100)}`,
     }));
     expect(() => c.setGraph(nodes, links)).not.toThrow();
+    c.destroy();
+  });
+
+  it('seeds nodes within plotArea, not the full canvas (regression: was using width/height)', () => {
+    // Chart with a tall title bar — title is rendered above the plot area,
+    // so seeding against the full canvas would scatter some nodes onto the
+    // title. plotArea-based seeding keeps every initial position inside
+    // the drawable region.
+    const c = new NetworkChart(div, {
+      animate: false, iterations: 0,         // no iterations → seeded position is final
+      title: 'Network of Things', subtitle: 'subtitle',
+    });
+    c.setGraph(
+      Array.from({ length: 12 }, (_, i) => ({ id: `n${i}` })),
+      [],
+    );
+    const p = c.plotArea;
+    const nodes = (c as any)._nodes as Array<{ x: number; y: number }>;
+    for (const node of nodes) {
+      expect(node.x).toBeGreaterThanOrEqual(p.x);
+      expect(node.x).toBeLessThanOrEqual(p.x + p.w);
+      expect(node.y).toBeGreaterThanOrEqual(p.y);
+      expect(node.y).toBeLessThanOrEqual(p.y + p.h);
+    }
     c.destroy();
   });
 });

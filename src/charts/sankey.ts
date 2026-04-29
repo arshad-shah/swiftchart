@@ -26,6 +26,9 @@ export class SankeyChart extends BaseChart {
   private _nodes: SankeyNode[] = [];
   private _links: SankeyLink[] = [];
   private _layout: SankeyLayout | null = null;
+  /** Plot-area dimensions the cached `_layout` was computed against. */
+  private _layoutW = -1;
+  private _layoutH = -1;
 
   constructor(container: HTMLElement | string, config: SankeyChartConfig = {}) {
     super(container, {
@@ -39,7 +42,7 @@ export class SankeyChart extends BaseChart {
   setSankey(nodes: SankeyNode[], links: SankeyLink[]): void {
     this._nodes = nodes;
     this._links = links;
-    this._layout = null;
+    this._invalidateLayout();
     this.resolved = { labels: nodes.map((n) => n.label || n.id), datasets: [] };
     this._animate();
   }
@@ -49,21 +52,39 @@ export class SankeyChart extends BaseChart {
     if (mapping?.nodes && mapping?.links) {
       this.setSankey(mapping.nodes, mapping.links);
     } else {
-      this._nodes = []; this._links = []; this._layout = null;
+      this._nodes = []; this._links = [];
+      this._invalidateLayout();
       this.resolved = { labels: [], datasets: [] };
       this._animate();
     }
   }
 
+  /** `update({ nodeWidth: ... })` etc. — invalidate so the next draw re-lays out. */
+  update(arg: any, mapping?: any): void {
+    super.update(arg, mapping);
+    if (!Array.isArray(arg)) this._invalidateLayout();
+  }
+
+  private _invalidateLayout(): void {
+    this._layout = null;
+    this._layoutW = -1;
+    this._layoutH = -1;
+  }
+
   private _ensureLayout(): SankeyLayout | null {
     if (!this._nodes.length) return null;
     const p = this.plotArea;
-    if (this._layout) return this._layout;
+    // Cache hit: same plot area as the last layout we computed.
+    if (this._layout && this._layoutW === p.w && this._layoutH === p.h) {
+      return this._layout;
+    }
     this._layout = layoutSankey(this._nodes, this._links, {
       x: p.x, y: p.y, w: p.w, h: p.h,
       nodeWidth: this.config.nodeWidth ?? 14,
       nodePadding: this.config.nodePadding ?? 12,
     });
+    this._layoutW = p.w;
+    this._layoutH = p.h;
     return this._layout;
   }
 
@@ -98,7 +119,9 @@ export class SankeyChart extends BaseChart {
     if (!this._nodes.length) return;
     this._drawBg();
     this._drawTitle();
-    this._layout = null; // invalidate; size may have changed
+    // `_ensureLayout` re-uses the cached layout when plot-area size is
+    // unchanged — only triggers a fresh `layoutSankey` on resize / data
+    // change. Hover-driven redraws don't pay the layout cost.
     const layout = this._ensureLayout();
     if (!layout) return;
     const t = this.animProgress;

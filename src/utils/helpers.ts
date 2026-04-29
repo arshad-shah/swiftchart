@@ -132,8 +132,29 @@ export function hexToRgba(input: string, a: number): string {
 }
 
 /**
- * Parse any CSS-ish colour into [r, g, b] (alpha discarded).
- * Returns black on parse failure. Allocation-free for canonical hex.
+ * Lazily-instantiated 1×1 canvas used to normalise CSS colour strings the
+ * fast paths can't decode (named colours, `hsl()`, `oklch()`, `color-mix()`,
+ * etc.). The browser's parser is the source of truth, and reading
+ * `ctx.fillStyle` back yields a canonical `#hex` or `rgba()` string.
+ *
+ * SSR-safe: stays `null` when there's no `document`.
+ */
+let _colourParser: CanvasRenderingContext2D | null | undefined;
+function colourParser(): CanvasRenderingContext2D | null {
+  if (_colourParser !== undefined) return _colourParser;
+  if (typeof document === 'undefined') { _colourParser = null; return null; }
+  const c = document.createElement('canvas');
+  c.width = c.height = 1;
+  _colourParser = c.getContext('2d');
+  return _colourParser;
+}
+
+/**
+ * Parse any CSS colour string into [r, g, b] (alpha discarded).
+ * Returns black on parse failure. Hex and `rgb()/rgba()` take a fast path
+ * with zero allocations. Anything else (named colours, `hsl(...)`,
+ * `oklch(...)`, `color-mix(...)`, etc.) is delegated to the browser via a
+ * cached 1×1 canvas, then re-parsed through the fast path.
  */
 function parseRgb(input: string): [number, number, number] {
   if (!input) return [0, 0, 0];
@@ -148,17 +169,33 @@ function parseRgb(input: string): [number, number, number] {
     const b = parseInt(hex.slice(4, 6), 16);
     return [isNaN(r) ? 0 : r, isNaN(g) ? 0 : g, isNaN(b) ? 0 : b];
   }
-  const m = s.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+  const m = s.match(/^rgba?\(\s*([\d.]+)\s*,?\s*([\d.]+)\s*,?\s*([\d.]+)/i);
   if (m) return [+m[1] | 0, +m[2] | 0, +m[3] | 0];
+
+  // Slow path for everything else: let the browser parse it.
+  const ctx = colourParser();
+  if (ctx) {
+    // `fillStyle` setter validates+normalises; invalid input is silently
+    // discarded, leaving the previous value in place — so reset first.
+    ctx.fillStyle = '#000';
+    ctx.fillStyle = s;
+    const normalised = ctx.fillStyle as string;
+    if (normalised !== s) return parseRgb(normalised);
+  }
   return [0, 0, 0];
 }
 
 /**
  * Linear-RGB interpolation between two CSS colours.
- * `t` is clamped to [0, 1]. Result is a `rgb()` string.
+ * `t` is clamped to [0, 1]. Result is an `rgb()` string.
  *
- * Hot path: heatmap / choropleth fills. Per-cell allocation is unavoidable
- * (canvas needs a string), but we keep parsing branch-light.
+ * Accepts every colour syntax the host browser understands: hex (`#rgb`,
+ * `#rrggbb`, `#rrggbbaa`), `rgb()/rgba()`, named colours (`red`, `salmon`),
+ * `hsl()/hsla()`, `oklch()`, `color()`, `color-mix()`, etc. Falls back to
+ * black for empty / unrecognised input.
+ *
+ * Hot path: heatmap / choropleth fills. The fast hex/rgb paths allocate
+ * nothing per call.
  */
 export function lerpColor(a: string, b: string, t: number): string {
   const tt = t < 0 ? 0 : t > 1 ? 1 : t;

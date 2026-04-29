@@ -199,4 +199,66 @@ describe('squarify', () => {
       }
     }
   });
+
+  it('does not allocate via slicing on large input — runs in well under O(n²)', () => {
+    // 5000 items in O(n²) worst case (the previous implementation) means
+    // ~25M sumValues touches plus 25M slice copies — easily multi-hundred ms.
+    // The new index-cursor + running-total implementation is bound by the
+    // squarified algorithm's actual work, which is closer to linear.
+    const items = Array.from({ length: 5000 }, (_, i) => ({
+      label: `n${i}`,
+      value: (5000 - i) * 0.5 + 1,
+    }));
+    const t0 = performance.now();
+    const rects = squarify(items, { x: 0, y: 0, w: 1200, h: 800 });
+    const dt = performance.now() - t0;
+    expect(rects.length).toBe(5000);
+    // Generous bound — V8 + this code finishes in single-digit ms locally;
+    // CI noise can push it but never within an order of magnitude of O(n²).
+    expect(dt).toBeLessThan(500);
+  });
+
+  it('does not mutate the input array', () => {
+    const items = [
+      { label: 'A', value: 100 },
+      { label: 'B', value: 50 },
+      { label: 'C', value: 30 },
+    ];
+    const snapshot = items.map((i) => ({ ...i }));
+    squarify(items, { x: 0, y: 0, w: 500, h: 500 });
+    expect(items).toEqual(snapshot);
+  });
+});
+
+// ─── layoutSankey perf + clamps ─────────────────────────────────────────
+
+describe('layoutSankey — perf and edge cases', () => {
+  it('column-walk is O(n + links) on 1000-node DAG (was O(n²) with queue.shift)', () => {
+    const N = 1000;
+    const nodes = Array.from({ length: N }, (_, i) => ({ id: String(i) }));
+    // Long chain: each node points at the next. The previous queue.shift()
+    // implementation made this O(N²) walk; cursor-based it's O(N).
+    const links = Array.from({ length: N - 1 }, (_, i) => ({
+      source: String(i), target: String(i + 1), value: 1,
+    }));
+    const t0 = performance.now();
+    const layout = layoutSankey(nodes, links, { x: 0, y: 0, w: 800, h: 600 });
+    const dt = performance.now() - t0;
+    expect(layout.nodes.length).toBe(N);
+    expect(dt).toBeLessThan(500);
+  });
+
+  it('clamps node heights to >= 0 when the available rect is shorter than padding', () => {
+    // 10 nodes in a single column, 12 px padding, height = 50. Total padding
+    // alone is 9 × 12 = 108 px which exceeds 50, so the unclamped formula
+    // would have given negative `ky` and negative node heights.
+    const nodes = Array.from({ length: 10 }, (_, i) => ({ id: String(i) }));
+    const links: Array<{ source: string; target: string; value: number }> = [];
+    const layout = layoutSankey(nodes, links, {
+      x: 0, y: 0, w: 200, h: 50, nodePadding: 12,
+    });
+    for (const n of layout.nodes) {
+      expect(n.h).toBeGreaterThanOrEqual(0);
+    }
+  });
 });

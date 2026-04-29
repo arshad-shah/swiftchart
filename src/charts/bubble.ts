@@ -68,8 +68,21 @@ export class BubbleChart extends BaseChart {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     if (!this._qt) return;
-    const hit = this._qt.nearest(mx, my, 24);
-    this.hoverIndex = hit ? hit.index : -1;
+    // Query with the largest possible bubble radius so we never miss a
+    // hover on a big bubble whose centre is > 24 px from the cursor.
+    // Then verify the cursor is actually inside the *rendered* radius of
+    // the candidate — quadtree returned the centre-nearest point, but
+    // that doesn't guarantee the cursor lies inside its painted disc.
+    const queryR = Math.max(24, this._maxRadius + 4);
+    const hit = this._qt.nearest(mx, my, queryR);
+    if (hit) {
+      const f = this._flat[hit.index];
+      const dx = mx - f.sx;
+      const dy = my - f.sy;
+      this.hoverIndex = (dx * dx + dy * dy) <= f.r * f.r ? hit.index : -1;
+    } else {
+      this.hoverIndex = -1;
+    }
     if (this.hoverIndex >= 0 && this.tooltip) {
       const f = this._flat[this.hoverIndex];
       const p = this._points[f.idx];

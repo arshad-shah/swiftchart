@@ -34,11 +34,15 @@ export class NetworkChart extends BaseChart {
   setGraph(nodes: NetworkNode[], links: NetworkLink[]): void {
     const idIdx = new Map<string, number>();
     nodes.forEach((n, i) => idIdx.set(n.id, i));
-    // Seed positions on a circle for stable, deterministic layouts.
+    // Seed and centre forces against the *plot area*, not the full canvas.
+    // The full canvas includes title / padding / legend space, so seeding
+    // there would scatter nodes into chart chrome and let the centring
+    // force pull them toward the wrong centre.
     const N = nodes.length;
-    const cx = this.width / 2;
-    const cy = this.height / 2;
-    const r = Math.min(this.width, this.height) * 0.35;
+    const p = this.plotArea;
+    const cx = p.x + p.w / 2;
+    const cy = p.y + p.h / 2;
+    const r = Math.min(p.w, p.h) * 0.35;
     this._nodes = nodes.map((n, i) => ({
       id: n.id,
       label: n.label || n.id,

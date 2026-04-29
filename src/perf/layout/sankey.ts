@@ -105,13 +105,15 @@ export function layoutSankey(
     nodes[t].valueIn += l.value;
   }
 
-  // Column assignment: longest path from any source.
+  // Column assignment: longest path from any source. Use a cursor instead
+  // of `queue.shift()` (which is O(n) per pop and would make the walk
+  // O(n²) in the number of nodes); push-only access keeps this O(n + links).
   const N = nodes.length;
   const indeg = inLinks.map((a) => a.length);
   const queue: number[] = [];
   for (let i = 0; i < N; i++) if (indeg[i] === 0) queue.push(i);
-  while (queue.length) {
-    const i = queue.shift() as number;
+  for (let qi = 0; qi < queue.length; qi++) {
+    const i = queue[qi];
     for (const li of outLinks[i]) {
       const t = links[li].target;
       const tcol = nodes[i].col + 1;
@@ -144,8 +146,14 @@ export function layoutSankey(
     col.reduce((s, i) => s + Math.max(nodes[i].valueIn, nodes[i].valueOut), 0),
   );
   const tallestSum = Math.max(...valueByCol, 1);
-  const ky =
-    (opts.h - nodePadding * Math.max(...columns.map((c) => c.length - 1), 0)) / tallestSum;
+  // Maximum number of inter-node gaps in any single column.
+  const maxGaps = Math.max(...columns.map((c) => c.length - 1), 0);
+  // Available pixel height for *node bands* after subtracting per-column
+  // padding gaps. Clamp to 0 so we never produce negative `ky` (which would
+  // give negative node heights and broken layout) when the requested rect
+  // is shorter than the padding alone requires.
+  const availableH = Math.max(0, opts.h - nodePadding * maxGaps);
+  const ky = availableH / tallestSum;
 
   for (let c = 0; c < colCount; c++) {
     let yy = opts.y;
