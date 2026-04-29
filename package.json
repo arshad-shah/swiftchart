@@ -1,0 +1,153 @@
+{
+  "name": "@arshad-shah/swift-chart",
+  "version": "1.0.0",
+  "description": "Lightning-fast, zero-dependency Canvas 2D charting library with React bindings. Schema-agnostic, themeable, animated.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Arshad Shah",
+  "license": "MIT",
+  "keywords": [
+    "chart",
+    "charts",
+    "charting",
+    "graph",
+    "canvas",
+    "react",
+    "visualization",
+    "data-viz",
+    "line-chart",
+    "bar-chart",
+    "pie-chart",
+    "donut-chart",
+    "radar-chart",
+    "scatter-chart",
+    "treemap",
+    "gauge",
+    "sparkline",
+    "waterfall",
+    "lightweight",
+    "fast"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArshadShah/swiftchart.git"
+  },
+  "homepage": "https://github.com/ArshadShah/swiftchart#readme",
+  "bugs": {
+    "url": "https://github.com/ArshadShah/swiftchart/issues"
+  },
+  "type": "module",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/esm/react/index.d.ts",
+        "default": "./dist/esm/react/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/index.d.cts",
+        "default": "./dist/cjs/react/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "react": [
+        "./dist/esm/react/index.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": "^18.18.0 || ^20.0.0 || >=22.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit",
+    "size": "size-limit",
+    "publint": "publint",
+    "attw": "attw --pack .",
+    "validate": "npm run typecheck && npm run lint && npm run test && npm run build && npm run publint && npm run attw && npm run size",
+    "prepublishOnly": "npm run validate",
+    "clean": "rm -rf dist coverage"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.17.0",
+    "@eslint/js": "^9.17.0",
+    "@size-limit/preset-small-lib": "^11.1.6",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "canvas": "^2.11.2",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
+    "jsdom": "^25.0.1",
+    "publint": "^0.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "size-limit": "^11.1.6",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8"
+  },
+  "size-limit": [
+    {
+      "name": "core (esm, gzipped)",
+      "path": "dist/esm/index.js",
+      "limit": "13 KB"
+    },
+    {
+      "name": "react bundle (esm, gzipped)",
+      "path": "dist/esm/react/index.js",
+      "limit": "13 KB"
+    }
+  ],
+  "volta": {
+    "node": "24.15.0",
+    "pnpm": "10.33.2"
+  }
+}

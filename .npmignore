@@ -1,0 +1,14 @@
+src/
+tests/
+playground/
+examples/
+*.config.ts
+*.config.js
+tsconfig.json
+.github/
+.vscode/
+coverage/
+node_modules/
+.DS_Store
+CONTRIBUTING.md
+eslint.config.js

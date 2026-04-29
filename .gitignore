@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+.playwright-mcp/
+*.log
+.env
+.env.*
+docs/dist
+docs/.astro
+docs/src/content/docs/api

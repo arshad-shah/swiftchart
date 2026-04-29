@@ -1,0 +1,29 @@
+{
+  "name": "swiftchart-docs",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "pnpm --filter @arshad-shah/swift-chart build && typedoc && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "typedoc": "typedoc"
+  },
+  "dependencies": {
+    "@arshad-shah/swift-chart": "workspace:*",
+    "@astrojs/react": "^4.0.0",
+    "@astrojs/starlight": "^0.30.0",
+    "astro": "^5.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.33.5",
+    "starlight-typedoc": "^0.18.0",
+    "typedoc": "^0.28.0",
+    "typedoc-plugin-markdown": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1"
+  }
+}
