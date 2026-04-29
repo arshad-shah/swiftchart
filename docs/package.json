@@ -13,7 +13,7 @@
     "@arshad-shah/swift-chart": "workspace:*",
     "@astrojs/react": "^4.0.0",
     "@astrojs/starlight": "^0.32.0",
-    "astro": "^5.0.0",
+    "astro": "^6.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sharp": "^0.33.5",
