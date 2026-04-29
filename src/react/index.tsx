@@ -159,6 +159,22 @@ function makeImperative<T extends BaseChart>(chartRef: RefObject<T | null>): Cha
 // React Components
 // ═══════════════════════════════════════════════════════
 
+/**
+ * Line chart React component. Forwards a {@link ChartRef} for imperative ops.
+ *
+ * @example
+ * ```tsx
+ * import { Line } from '@arshad-shah/swift-chart/react';
+ *
+ * <Line
+ *   data={salesData}
+ *   mapping={{ x: 'month', y: ['revenue', 'target'] }}
+ *   theme="midnight"
+ *   smooth dots
+ *   height={320}
+ * />
+ * ```
+ */
 export const Line = forwardRef<ChartRef, LineComponentProps>(function Line(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -167,6 +183,14 @@ export const Line = forwardRef<ChartRef, LineComponentProps>(function Line(props
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Area chart React component. Equivalent to `<Line area />`.
+ *
+ * @example
+ * ```tsx
+ * <Area data={salesData} mapping={{ x: 'month', y: 'revenue' }} theme="midnight" height={300} />
+ * ```
+ */
 export const Area = forwardRef<ChartRef, LineComponentProps>(function Area(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -179,6 +203,14 @@ export const Area = forwardRef<ChartRef, LineComponentProps>(function Area(props
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Bar chart React component. Pass a `string[]` to `mapping.y` for grouped bars.
+ *
+ * @example
+ * ```tsx
+ * <Bar data={rows} mapping={{ x: 'region', y: ['sales', 'target'] }} theme="arctic" />
+ * ```
+ */
 export const Bar = forwardRef<ChartRef, BarComponentProps>(function Bar(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -187,6 +219,14 @@ export const Bar = forwardRef<ChartRef, BarComponentProps>(function Bar(props, r
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Pie chart React component. Use {@link Donut} for the ring variant.
+ *
+ * @example
+ * ```tsx
+ * <Pie data={traffic} mapping={{ labelField: 'source', valueField: 'visits' }} />
+ * ```
+ */
 export const Pie = forwardRef<ChartRef, PieComponentProps>(function Pie(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -195,6 +235,20 @@ export const Pie = forwardRef<ChartRef, PieComponentProps>(function Pie(props, r
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Donut chart React component. Equivalent to `<Pie donut />`.
+ *
+ * Tune `donutWidth` (0 to 1) for ring thickness; lower values produce a thicker ring.
+ *
+ * @example
+ * ```tsx
+ * <Donut
+ *   data={traffic}
+ *   mapping={{ labelField: 'source', valueField: 'visits' }}
+ *   donutWidth={0.55}
+ * />
+ * ```
+ */
 export const Donut = forwardRef<ChartRef, PieComponentProps>(function Donut(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -207,6 +261,20 @@ export const Donut = forwardRef<ChartRef, PieComponentProps>(function Donut(prop
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Scatter / bubble chart React component.
+ *
+ * Use `mapping.groupField` to colour points by category and `mapping.sizeField`
+ * to vary point radius.
+ *
+ * @example
+ * ```tsx
+ * <Scatter
+ *   data={points}
+ *   mapping={{ x: 'x', y: 'y', groupField: 'group', sizeField: 'size' }}
+ * />
+ * ```
+ */
 export const Scatter = forwardRef<ChartRef, ScatterComponentProps>(function Scatter(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -215,6 +283,14 @@ export const Scatter = forwardRef<ChartRef, ScatterComponentProps>(function Scat
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Radar / spider chart React component for multi-axis comparison.
+ *
+ * @example
+ * ```tsx
+ * <Radar data={skills} mapping={{ x: 'axis', y: ['teamA', 'teamB'] }} />
+ * ```
+ */
 export const Radar = forwardRef<ChartRef, RadarComponentProps>(function Radar(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -223,6 +299,23 @@ export const Radar = forwardRef<ChartRef, RadarComponentProps>(function Radar(pr
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Gauge / meter React component. Updates the needle imperatively when `value`
+ * changes, without recreating the chart.
+ *
+ * @example
+ * ```tsx
+ * <Gauge
+ *   value={72}
+ *   min={0} max={100}
+ *   segments={[
+ *     { from: 0,  to: 60,  color: '#5b8cff' },
+ *     { from: 60, to: 85,  color: '#ffa45b' },
+ *     { from: 85, to: 100, color: '#ff5b5b' },
+ *   ]}
+ * />
+ * ```
+ */
 export const Gauge = forwardRef<ChartRef, GaugeComponentProps>(function Gauge(props, ref) {
   const { data, mapping, width, height, className, style, value, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -244,6 +337,16 @@ export const Gauge = forwardRef<ChartRef, GaugeComponentProps>(function Gauge(pr
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Horizontal bar chart React component.
+ *
+ * Mapping: `x` is the categorical label field, `y` is the numeric value field.
+ *
+ * @example
+ * ```tsx
+ * <HBar data={traffic} mapping={{ x: 'source', y: 'visits' }} theme="midnight" />
+ * ```
+ */
 export const HBar = forwardRef<ChartRef, HBarComponentProps>(function HBar(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -252,6 +355,16 @@ export const HBar = forwardRef<ChartRef, HBarComponentProps>(function HBar(props
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Inline sparkline React component - axis-less mini chart for KPI rows.
+ *
+ * Accepts a plain `number[]` for `data` (no mapping needed).
+ *
+ * @example
+ * ```tsx
+ * <SparklineComponent data={[12, 14, 13, 18, 22]} color="#5b8cff" filled height={32} />
+ * ```
+ */
 export const SparklineComponent = forwardRef<ChartRef, SparklineComponentProps>(
   function SparklineComponent(props, ref) {
     const { data, color, filled, animate, animDuration, width, height, className, style, theme } = props;
@@ -272,6 +385,14 @@ export const SparklineComponent = forwardRef<ChartRef, SparklineComponentProps>(
   }
 );
 
+/**
+ * Stacked area chart React component.
+ *
+ * @example
+ * ```tsx
+ * <StackedArea data={traffic} mapping={{ x: 'day', y: ['api', 'web', 'mobile'] }} />
+ * ```
+ */
 export const StackedArea = forwardRef<ChartRef, StackedAreaComponentProps>(function StackedArea(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -280,6 +401,21 @@ export const StackedArea = forwardRef<ChartRef, StackedAreaComponentProps>(funct
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Waterfall chart React component for incremental positive/negative changes.
+ *
+ * @example
+ * ```tsx
+ * <Waterfall
+ *   data={[
+ *     { label: 'Q1',   value: 120 },
+ *     { label: 'Q2',   value: 45 },
+ *     { label: 'Q3',   value: -22 },
+ *     { label: 'Q4',   value: 67 },
+ *   ]}
+ * />
+ * ```
+ */
 export const Waterfall = forwardRef<ChartRef, WaterfallComponentProps>(function Waterfall(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -288,6 +424,17 @@ export const Waterfall = forwardRef<ChartRef, WaterfallComponentProps>(function 
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });
 
+/**
+ * Treemap React component - squarified rectangles proportional to value.
+ *
+ * @example
+ * ```tsx
+ * <Treemap data={[
+ *   { label: 'Compute', value: 42 },
+ *   { label: 'Storage', value: 28 },
+ * ]} />
+ * ```
+ */
 export const Treemap = forwardRef<ChartRef, TreemapComponentProps>(function Treemap(props, ref) {
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);

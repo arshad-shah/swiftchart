@@ -2,6 +2,25 @@ import type { BaseChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { niceScale, hexToRgba, arraysExtent, safeRadius } from '../utils/helpers';
 
+/**
+ * Canvas 2D vertical bar chart. Pass multiple Y fields for grouped bars.
+ *
+ * @example
+ * ```ts
+ * import { BarChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new BarChart('#chart', { theme: 'arctic' });
+ * chart.setData(
+ *   [
+ *     { region: 'NA', sales: 240 },
+ *     { region: 'EU', sales: 180 },
+ *   ],
+ *   { x: 'region', y: 'sales' },
+ * );
+ * ```
+ *
+ * @see {@link BaseChartConfig}
+ */
 export class BarChart extends BaseChart {
   constructor(container: HTMLElement | string, config: BaseChartConfig = {}) {
     super(container, config);

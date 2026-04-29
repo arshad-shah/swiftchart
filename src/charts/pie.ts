@@ -2,6 +2,27 @@ import type { PieChartConfig, DataMapping } from '../types';
 import { BaseChart } from '../core/base';
 import { hexToRgba, resolveData, safeRadius } from '../utils/helpers';
 
+/**
+ * Canvas 2D pie or donut chart.
+ *
+ * Set `donut: true` and tune `donutWidth` (0 to 1) to render a ring.
+ *
+ * @example
+ * ```ts
+ * import { PieChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new PieChart('#chart', { donut: true, donutWidth: 0.55 });
+ * chart.setData(
+ *   [
+ *     { source: 'Organic', visits: 4200 },
+ *     { source: 'Direct',  visits: 3100 },
+ *   ],
+ *   { labelField: 'source', valueField: 'visits' },
+ * );
+ * ```
+ *
+ * @see {@link PieChartConfig}
+ */
 export class PieChart extends BaseChart {
   declare config: PieChartConfig & BaseChart['config'];
 
