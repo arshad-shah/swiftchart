@@ -19,25 +19,23 @@ const version = (libPkg as { version?: string }).version ?? '0.0.0';
   .sc-title {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.55rem;
   }
   .sc-version {
     display: inline-flex;
     align-items: center;
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
+    padding: 0.18rem 0.5rem;
+    border-radius: 4px;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1;
     color: #ffffff;
-    background: linear-gradient(135deg, #5b8cff, #6e6cff 55%, #a64bff);
+    background: #5b8cff;
     text-decoration: none;
     letter-spacing: 0.01em;
-    box-shadow: 0 4px 12px -4px rgba(91, 140, 255, 0.5);
-    transition: filter 120ms, transform 120ms;
+    transition: background 120ms;
   }
   .sc-version:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
+    background: #4a78e8;
   }
 </style>

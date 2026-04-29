@@ -1,14 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
-  <defs>
-    <linearGradient id="fv-bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#5b8cff"/>
-      <stop offset="55%" stop-color="#6e6cff"/>
-      <stop offset="100%" stop-color="#a64bff"/>
-    </linearGradient>
-  </defs>
-  <rect width="40" height="40" rx="9" fill="url(#fv-bg)"/>
+  <rect width="40" height="40" rx="8" fill="#5b8cff"/>
   <path d="M6 28 L13 21 L18 24 L23 13 L28 18 L34 8"
-        stroke="#ffffff" stroke-width="3" fill="none"
+        stroke="#ffffff" stroke-width="2.8" fill="none"
         stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="34" cy="8" r="2.6" fill="#ffffff"/>
+  <circle cx="34" cy="8" r="2.4" fill="#ffffff"/>
 </svg>

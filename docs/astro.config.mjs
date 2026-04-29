@@ -7,7 +7,7 @@ const [coreTypeDoc, coreSidebar] = createStarlightTypeDocPlugin();
 const [reactTypeDoc, reactSidebar] = createStarlightTypeDocPlugin();
 
 export default defineConfig({
-  site: 'https://swiftchart.pages.dev',
+  site: 'https://swiftchart.arshadshah.com',
   integrations: [
     react(),
     starlight({
@@ -30,7 +30,7 @@ export default defineConfig({
       head: [
         {
           tag: 'meta',
-          attrs: { property: 'og:image', content: 'https://swiftchart.pages.dev/og-image.svg' },
+          attrs: { property: 'og:image', content: 'https://swiftchart.arshadshah.com/og-image.svg' },
         },
         {
           tag: 'meta',
@@ -50,7 +50,7 @@ export default defineConfig({
         },
         {
           tag: 'meta',
-          attrs: { name: 'twitter:image', content: 'https://swiftchart.pages.dev/og-image.svg' },
+          attrs: { name: 'twitter:image', content: 'https://swiftchart.arshadshah.com/og-image.svg' },
         },
         {
           tag: 'meta',
