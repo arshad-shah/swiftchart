@@ -1,0 +1,53 @@
+---
+import logo from '../assets/logo.svg';
+import libPkg from '../../../package.json';
+
+const version = (libPkg as { version?: string }).version ?? '0.0.0';
+const year = new Date().getFullYear();
+---
+
+<footer class="sc-footer">
+  <div class="sc-footer-grid">
+    <div>
+      <div class="sc-footer-brand">
+        <img src={logo.src} width={logo.width} height={logo.height} alt="" />
+        <span>SwiftChart</span>
+      </div>
+      <p class="sc-footer-tag">
+        Lightning-fast, zero-dependency Canvas&nbsp;2D charting library
+        with first-class React bindings.
+      </p>
+    </div>
+    <div>
+      <h4>Docs</h4>
+      <ul>
+        <li><a href="/getting-started/installation/">Install</a></li>
+        <li><a href="/getting-started/quickstart-react/">React quickstart</a></li>
+        <li><a href="/guides/data-mapping/">Data mapping</a></li>
+        <li><a href="/guides/theming/">Theming</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Charts</h4>
+      <ul>
+        <li><a href="/charts/line/">Line &amp; Area</a></li>
+        <li><a href="/charts/bar/">Bar &amp; HBar</a></li>
+        <li><a href="/charts/pie/">Pie &amp; Donut</a></li>
+        <li><a href="/charts/scatter/">Scatter / Radar / Gauge</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><a href="https://github.com/ArshadShah/swiftchart" target="_blank" rel="noopener">GitHub</a></li>
+        <li><a href="https://github.com/ArshadShah/swiftchart/releases" target="_blank" rel="noopener">Releases</a></li>
+        <li><a href="https://github.com/ArshadShah/swiftchart/issues" target="_blank" rel="noopener">Issues</a></li>
+        <li><a href="https://www.npmjs.com/package/@arshad-shah/swift-chart" target="_blank" rel="noopener">npm</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="sc-footer-bottom">
+    <span>© {year} Arshad Shah · MIT licensed</span>
+    <span><code>@arshad-shah/swift-chart@{version}</code></span>
+  </div>
+</footer>

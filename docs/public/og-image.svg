@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="og-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0e22"/>
+      <stop offset="100%" stop-color="#161a3a"/>
+    </linearGradient>
+    <linearGradient id="og-mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5b8cff"/>
+      <stop offset="55%" stop-color="#6e6cff"/>
+      <stop offset="100%" stop-color="#a64bff"/>
+    </linearGradient>
+    <radialGradient id="og-glow" cx="0.18" cy="0.3" r="0.55">
+      <stop offset="0%" stop-color="#5b8cff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="og-glow-2" cx="0.85" cy="0.85" r="0.5">
+      <stop offset="0%" stop-color="#a64bff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#a64bff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#og-bg)"/>
+  <rect width="1200" height="630" fill="url(#og-glow)"/>
+  <rect width="1200" height="630" fill="url(#og-glow-2)"/>
+
+  <!-- Logo mark -->
+  <g transform="translate(96 96)">
+    <rect width="120" height="120" rx="26" fill="url(#og-mark)"/>
+    <path d="M22 88 L42 67 L56 76 L72 41 L86 56 L104 23"
+          stroke="#fff" stroke-width="9" fill="none"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="104" cy="23" r="8" fill="#fff"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="96" y="338" font-family="-apple-system, 'SF Pro Display', 'Inter', system-ui, sans-serif"
+        font-size="124" font-weight="800" fill="#ffffff" letter-spacing="-3">
+    SwiftChart
+  </text>
+
+  <!-- Tagline -->
+  <text x="96" y="402" font-family="-apple-system, 'SF Pro Text', 'Inter', system-ui, sans-serif"
+        font-size="36" font-weight="500" fill="#a8b3d4">
+    Lightning-fast Canvas charts. Zero deps. 13 chart types.
+  </text>
+
+  <!-- Stats row -->
+  <g font-family="-apple-system, 'SF Mono', 'JetBrains Mono', monospace" font-weight="600">
+    <g transform="translate(96 488)">
+      <text font-size="46" fill="#5b8cff">12 KB</text>
+      <text y="32" font-size="20" fill="#a8b3d4">gzipped</text>
+    </g>
+    <g transform="translate(296 488)">
+      <text font-size="46" fill="#7a4bff">0 deps</text>
+      <text y="32" font-size="20" fill="#a8b3d4">pure Canvas 2D</text>
+    </g>
+    <g transform="translate(516 488)">
+      <text font-size="46" fill="#a64bff">13</text>
+      <text y="32" font-size="20" fill="#a8b3d4">chart types</text>
+    </g>
+    <g transform="translate(676 488)">
+      <text font-size="46" fill="#22d3ee">React</text>
+      <text y="32" font-size="20" fill="#a8b3d4">first-class bindings</text>
+    </g>
+  </g>
+
+  <!-- Decorative chart on right -->
+  <g transform="translate(740 80)" stroke="#5b8cff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
+    <path d="M0 280 L40 240 L80 250 L120 200 L160 220 L200 160 L240 180 L280 130 L320 150 L360 80"/>
+    <g fill="#5b8cff" stroke="none">
+      <circle cx="0" cy="280" r="5"/>
+      <circle cx="40" cy="240" r="5"/>
+      <circle cx="80" cy="250" r="5"/>
+      <circle cx="120" cy="200" r="5"/>
+      <circle cx="160" cy="220" r="5"/>
+      <circle cx="200" cy="160" r="5"/>
+      <circle cx="240" cy="180" r="5"/>
+      <circle cx="280" cy="130" r="5"/>
+      <circle cx="320" cy="150" r="5"/>
+      <circle cx="360" cy="80" r="6" fill="#fff"/>
+    </g>
+  </g>
+
+  <!-- domain pill -->
+  <g transform="translate(96 562)">
+    <rect width="220" height="36" rx="18" fill="rgba(91,140,255,0.14)" stroke="rgba(91,140,255,0.34)"/>
+    <text x="20" y="24" font-family="-apple-system, 'SF Mono', 'JetBrains Mono', monospace"
+          font-size="18" fill="#b8c8ff" font-weight="600">
+      swiftchart.pages.dev
+    </text>
+  </g>
+</svg>
