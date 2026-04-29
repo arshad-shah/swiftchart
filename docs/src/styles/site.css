@@ -249,26 +249,32 @@ header.header [data-open-modal] kbd {
 }
 
 /* ── Browser-extension hardening ─────────────────────────────
-   XML/HTML viewer extensions inject a stylesheet that hides
-   generic class names (.tag, .collapsible, div.header, etc.)
-   meant for their own pretty-printer DOM. Those names collide
-   with Starlight elements and erase parts of our layout. We
-   force display+visibility back on so the extension's
-   `display: none !important` is overridden. The selectors are
-   no-ops on any nodes actually injected by the extension because
-   we don't render XML-viewer markup. */
+   XML/HTML viewer extensions inject a stylesheet that hides any
+   element matching `div.header`, `.collapsible`, `.tag`, etc.
+   (intended for their own pretty-printer DOM). Those selectors
+   collide with Starlight, which renders the page chrome as a
+   `<div class="header astro-...">` grid container with descendants
+   like `.tag` for badges. Restore the layout for the specific
+   Starlight elements rather than blanket-reverting every match. */
+html body div.header[class*="astro-"] {
+  display: grid !important;
+  visibility: visible !important;
+}
 html body :is(
-  .webkit-xml-viewer-source-xml,
-  #webkit-xml-viewer-source-xml,
-  .collapsible,
-  .expanded,
-  .comment-node,
-  .tag,
-  .html-tag,
-  .text-node,
-  div.header,
-  div.collapsible-content
+  header.header,
+  nav.sidebar,
+  nav.mobile-preferences,
+  .site-title,
+  .social-icons,
+  .social-icons a,
+  .right-sidebar-panel,
+  .sl-flex
 ) {
+  visibility: visible !important;
+}
+/* Re-show Starlight's version pill / badges that ride on `.tag`. */
+html body header :is(.tag, .html-tag),
+html body .site-title :is(.tag, .html-tag) {
   display: revert !important;
   visibility: visible !important;
 }
@@ -286,11 +292,15 @@ html body :is(
   );
 }
 .sc-compare table {
-  width: 100%;
+  width: 100% !important;
+  min-width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.95rem;
   margin: 0;
 }
+.sc-compare colgroup col.sc-compare-label { width: 22%; }
+.sc-compare colgroup col { width: 19.5%; }
 .sc-compare thead th {
   padding: 0.95rem 1rem;
   text-align: left;
@@ -299,7 +309,6 @@ html body :is(
   color: var(--sl-color-white);
   border-bottom: 1px solid var(--sc-header-border);
   background: transparent;
-  white-space: nowrap;
 }
 .sc-compare tbody th {
   padding: 0.85rem 1rem;
@@ -308,13 +317,11 @@ html body :is(
   color: var(--sl-color-gray-2);
   background: transparent;
   border-bottom: 1px solid color-mix(in srgb, var(--sc-header-border) 60%, transparent);
-  white-space: nowrap;
 }
 .sc-compare tbody td {
   padding: 0.85rem 1rem;
   color: var(--sl-color-gray-3);
   border-bottom: 1px solid color-mix(in srgb, var(--sc-header-border) 60%, transparent);
-  white-space: nowrap;
 }
 .sc-compare tbody tr:last-child th,
 .sc-compare tbody tr:last-child td {
