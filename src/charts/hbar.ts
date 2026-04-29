@@ -1,6 +1,7 @@
 import type { BaseChartConfig } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba, arraysExtent, safeRadius } from '../utils/helpers';
+import { hexToRgba, arraysExtent } from '../utils/helpers';
+import { roundedBar, seriesColor } from '../core/draw';
 
 /**
  * Canvas 2D horizontal bar chart. Best for ranked lists or long category labels.
@@ -61,25 +62,17 @@ export class HBarChart extends BaseChart {
       this.ctx.fillText(display, p.x - 8, yCenter);
 
       datasets.forEach((ds, si) => {
-        const color = ds.color || this.theme.colors[si % this.theme.colors.length];
+        const color = seriesColor(this.theme, ds, si);
         const val = ds.data[i];
         const w = (val / maxVal) * p.w * t;
         const y = p.y + i * slot + gap / 2;
         const isHover = i === this.hoverIndex;
-
-        this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.75);
-        if (isHover) { this.ctx.shadowColor = hexToRgba(color, 0.3); this.ctx.shadowBlur = 10; }
-        const r = safeRadius(Math.min(4, barH / 2));
-        this.ctx.beginPath();
-        this.ctx.moveTo(p.x, y);
-        this.ctx.lineTo(p.x + w - r, y);
-        this.ctx.quadraticCurveTo(p.x + w, y, p.x + w, y + r);
-        this.ctx.lineTo(p.x + w, y + barH - r);
-        this.ctx.quadraticCurveTo(p.x + w, y + barH, p.x + w - r, y + barH);
-        this.ctx.lineTo(p.x, y + barH);
-        this.ctx.closePath();
-        this.ctx.fill();
-        this.ctx.shadowBlur = 0;
+        const r = Math.min(4, barH / 2);
+        // Round only the right end (the bar-tip) so adjacent bars in groups
+        // stay visually anchored to the y-axis.
+        roundedBar(this.ctx, p.x, y, w, barH,
+          isHover ? color : hexToRgba(color, 0.75),
+          { radii: [0, r, r, 0], hover: isHover, glowColor: color });
 
         if (w > 40) {
           this.ctx.fillStyle = this.theme.onAccent;

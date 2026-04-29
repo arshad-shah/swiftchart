@@ -1,6 +1,7 @@
 import type { BaseChartConfig, DataMapping, TreemapItem, TreemapRect } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba, safeRadius, safeDim } from '../utils/helpers';
+import { hexToRgba, safeDim } from '../utils/helpers';
+import { roundedBar, seriesColor } from '../core/draw';
 import { squarify } from '../perf/layout/squarify';
 
 /**
@@ -76,19 +77,15 @@ export class TreemapChart extends BaseChart {
     const ff = this._fontFamily();
 
     this._rects.forEach((r, i) => {
-      const color = this.theme.colors[i % this.theme.colors.length];
+      const color = seriesColor(this.theme, undefined, i);
       const isHover = i === this.hoverIndex;
       const pad = 1.5;
-      this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.75);
-      if (isHover) { this.ctx.shadowColor = hexToRgba(color, 0.4); this.ctx.shadowBlur = 12; }
       const animW = safeDim(r.rw * t), animH = safeDim(r.rh * t);
       const drawW = safeDim(animW - pad * 2);
       const drawH = safeDim(animH - pad * 2);
-      const cr = safeRadius(Math.min(4, drawW / 2, drawH / 2));
-      this.ctx.beginPath();
-      this.ctx.roundRect(r.rx + pad, r.ry + pad, drawW, drawH, cr);
-      this.ctx.fill();
-      this.ctx.shadowBlur = 0;
+      roundedBar(this.ctx, r.rx + pad, r.ry + pad, drawW, drawH,
+        isHover ? color : hexToRgba(color, 0.75),
+        { radii: 4, hover: isHover, glowColor: color });
 
       if (r.rw > 40 && r.rh > 24 && t > 0.5) {
         this.ctx.fillStyle = this.theme.onAccent;

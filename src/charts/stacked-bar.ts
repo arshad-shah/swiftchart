@@ -1,6 +1,7 @@
 import type { StackedBarChartConfig } from '../types';
 import { BaseChart } from '../core/base';
-import { niceScale, hexToRgba, arrayMax, safeRadius, safeDim } from '../utils/helpers';
+import { niceScale, hexToRgba, arrayMax } from '../utils/helpers';
+import { roundedBar, seriesColor } from '../core/draw';
 
 /**
  * Vertical stacked bar chart. Each label slot stacks the series values.
@@ -30,7 +31,7 @@ export class StackedBarChart extends BaseChart {
       const rows = this.resolved.datasets.map((d, i) => ({
         label: d.label || `Series ${i + 1}`,
         value: this._fmtVal(d.data[this.hoverIndex] ?? 0),
-        color: d.color || this.theme.colors[i % this.theme.colors.length],
+        color: seriesColor(this.theme, d, i),
       }));
       this.tooltip.showStructured(p.x + (this.hoverIndex + 0.5) * slot, p.y + p.h / 2, {
         title: this.resolved.labels[this.hoverIndex],
@@ -89,7 +90,7 @@ export class StackedBarChart extends BaseChart {
       }
 
       let yCursor = p.y + p.h;
-      const cornerR = safeRadius(Math.min(3, barW / 2));
+      const cornerR = Math.min(3, barW / 2);
 
       for (let si = 0; si < datasets.length; si++) {
         const v = datasets[si].data[i] ?? 0;
@@ -98,19 +99,14 @@ export class StackedBarChart extends BaseChart {
         const h = (seg / range) * p.h * t;
         if (h <= 0) continue;
 
-        const color = datasets[si].color || this.theme.colors[si % this.theme.colors.length];
+        const color = seriesColor(this.theme, datasets[si], si);
         const isTop = si === topSeries;
-        this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
-        if (isHover && isTop) {
-          this.ctx.shadowColor = hexToRgba(color, 0.35);
-          this.ctx.shadowBlur = 12;
-        }
-        // Round only the top corners — and only on the topmost segment of the stack.
+        // Round only the top corners — and only on the topmost segment of
+        // the stack — so the rest butt cleanly together.
         const r = isTop ? cornerR : 0;
-        this.ctx.beginPath();
-        this.ctx.roundRect(xStart, yCursor - h, safeDim(barW), safeDim(h), [r, r, 0, 0]);
-        this.ctx.fill();
-        this.ctx.shadowBlur = 0;
+        roundedBar(this.ctx, xStart, yCursor - h, barW, h,
+          isHover ? color : hexToRgba(color, 0.85),
+          { radii: [r, r, 0, 0], hover: isHover && isTop, glowColor: color });
         yCursor -= h;
       }
     }

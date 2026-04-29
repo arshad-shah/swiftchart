@@ -1,8 +1,7 @@
 import type { ComboChartConfig } from '../types';
 import { BaseChart } from '../core/base';
-import {
-  niceScale, hexToRgba, arraysExtent, safeRadius, safeDim,
-} from '../utils/helpers';
+import { niceScale, hexToRgba, arraysExtent, safeRadius } from '../utils/helpers';
+import { roundedBar, seriesColor, yProj } from '../core/draw';
 
 /**
  * Combo chart — bars + an overlay line series. List the series labels that
@@ -61,8 +60,8 @@ export class ComboChart extends BaseChart {
     const n = labels.length;
     const slot = p.w / n;
     const t = this.animProgress;
-    const range = scale.max - scale.min || 1;
-    const zeroY = p.y + p.h - ((0 - scale.min) / range) * p.h;
+    const yOf = yProj(scale, p);
+    const zeroY = yOf(0);
     const { bars, lines } = this._classify();
 
     // Bars first so the line draws on top.
@@ -72,51 +71,44 @@ export class ComboChart extends BaseChart {
     const barW = Math.max(1, (slot - groupPad * 2 - barGap * (barCount - 1)) / barCount);
     bars.forEach((si, k) => {
       const ds = datasets[si];
-      const color = ds.color || this.theme.colors[si % this.theme.colors.length];
+      const color = seriesColor(this.theme, ds, si);
       for (let i = 0; i < n; i++) {
         const v = ds.data[i] ?? 0;
         if (v === 0) continue;
         const xStart = p.x + i * slot + groupPad + k * (barW + barGap);
+        const range = scale.max - scale.min || 1;
         const h = (Math.abs(v) / range) * p.h * t;
         const y = v >= 0 ? zeroY - h : zeroY;
         const isHover = i === this.hoverIndex;
-
-        this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
-        if (isHover) {
-          this.ctx.shadowColor = hexToRgba(color, 0.35);
-          this.ctx.shadowBlur = 12;
-        }
-        // Round the *outward* corners (top for positive, bottom for negative).
-        const r = safeRadius(Math.min(3, barW / 2, h / 2));
-        this.ctx.beginPath();
-        const radii = v >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
-        this.ctx.roundRect(xStart, y, safeDim(barW), safeDim(h), radii as any);
-        this.ctx.fill();
-        this.ctx.shadowBlur = 0;
+        const r = Math.min(3, h / 2);
+        const radii: [number, number, number, number] =
+          v >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
+        roundedBar(this.ctx, xStart, y, barW, h,
+          isHover ? color : hexToRgba(color, 0.85),
+          { radii, hover: isHover, glowColor: color });
       }
     });
 
     // Line series.
     const lineW = this.config.lineWidth ?? 2.25;
+    const yOfNoT = yProj(scale, p); // line ignores t — values are already final
     lines.forEach((si) => {
       const ds = datasets[si];
-      const color = ds.color || this.theme.colors[si % this.theme.colors.length];
+      const color = seriesColor(this.theme, ds, si);
       this.ctx.strokeStyle = color;
       this.ctx.lineWidth = lineW;
       this.ctx.lineJoin = 'round';
       this.ctx.beginPath();
       for (let i = 0; i < n; i++) {
-        const v = ds.data[i] ?? 0;
         const x = p.x + (i + 0.5) * slot;
-        const y = p.y + p.h - ((v - scale.min) / range) * p.h;
+        const y = yOfNoT(ds.data[i] ?? 0);
         if (i === 0) this.ctx.moveTo(x, y); else this.ctx.lineTo(x, y);
       }
       this.ctx.stroke();
       // Dots.
       for (let i = 0; i < n; i++) {
-        const v = ds.data[i] ?? 0;
         const x = p.x + (i + 0.5) * slot;
-        const y = p.y + p.h - ((v - scale.min) / range) * p.h;
+        const y = yOfNoT(ds.data[i] ?? 0);
         this.ctx.beginPath();
         this.ctx.arc(x, y, safeRadius(i === this.hoverIndex ? 4 : 2.5), 0, Math.PI * 2);
         this.ctx.fillStyle = color;

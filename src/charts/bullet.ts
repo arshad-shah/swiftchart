@@ -1,6 +1,7 @@
 import type { BulletChartConfig, BulletItem, DataMapping } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba, arrayMax, safeRadius, safeDim } from '../utils/helpers';
+import { hexToRgba, arrayMax, safeRadius } from '../utils/helpers';
+import { roundedBar, seriesColor } from '../core/draw';
 
 /**
  * Bullet chart (Stephen Few). One row per KPI: a current measure, a target
@@ -84,8 +85,7 @@ export class BulletChart extends BaseChart {
       );
       const xFor = (v: number) => p.x + (v / lim) * p.w * t;
 
-      // Qualitative range bands (light → dark from low to high). Rounded
-      // ends on the outermost band, square joins between adjacent bands.
+      // Qualitative range bands forming a single rounded "track" pill.
       if (d.ranges?.length) {
         const rs = d.ranges.slice().sort((a, b) => a - b);
         const trackR = safeRadius(barH * 0.45);
@@ -94,36 +94,28 @@ export class BulletChart extends BaseChart {
           const x0 = xFor(prev);
           const w = xFor(r) - x0;
           if (w <= 0) { prev = r; return; }
-          this.ctx.fillStyle = ri === rs.length - 1
+          const fill = ri === rs.length - 1
             ? rangeColor
             : hexToRgba(this.theme.text, 0.08 + ri * 0.04);
           const isFirst = ri === 0;
           const isLast = ri === rs.length - 1;
-          const tl = isFirst ? trackR : 0;
-          const bl = isFirst ? trackR : 0;
-          const tr = isLast ? trackR : 0;
-          const br = isLast ? trackR : 0;
-          this.ctx.beginPath();
-          this.ctx.roundRect(x0, yC - barH * 0.7, safeDim(w), safeDim(barH * 1.4), [tl, tr, br, bl] as any);
-          this.ctx.fill();
+          roundedBar(this.ctx, x0, yC - barH * 0.7, w, barH * 1.4, fill, {
+            radii: [
+              isFirst ? trackR : 0, isLast ? trackR : 0,
+              isLast ? trackR : 0,  isFirst ? trackR : 0,
+            ],
+          });
           prev = r;
         });
       }
 
-      // Value bar — rounded right end, hover glow.
+      // Value bar — rounded ends, hover glow.
       const isHover = i === this.hoverIndex;
-      const color = this.theme.colors[i % this.theme.colors.length];
+      const color = seriesColor(this.theme, undefined, i);
       const valW = xFor(d.value) - p.x;
-      this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.9);
-      if (isHover) {
-        this.ctx.shadowColor = hexToRgba(color, 0.35);
-        this.ctx.shadowBlur = 10;
-      }
-      const valR = safeRadius(Math.min(barH / 2, valW / 2));
-      this.ctx.beginPath();
-      this.ctx.roundRect(p.x, yC - barH / 2, safeDim(valW), safeDim(barH), valR);
-      this.ctx.fill();
-      this.ctx.shadowBlur = 0;
+      roundedBar(this.ctx, p.x, yC - barH / 2, valW, barH,
+        isHover ? color : hexToRgba(color, 0.9),
+        { radii: barH / 2, hover: isHover, glowColor: color });
 
       // Target tick — extends slightly above and below the value bar.
       if (d.target != null) {

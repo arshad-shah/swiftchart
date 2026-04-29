@@ -8,6 +8,11 @@ export { BaseChart } from './core/base';
 export { Animator, EASINGS } from './core/animator';
 export { Tooltip, type TooltipContent, type TooltipRow } from './core/tooltip';
 export { THEMES, resolveTheme, addTheme } from './core/themes';
+export {
+  seriesColor, yProj, xProj,
+  applyHoverGlow, clearHoverGlow,
+  roundedBar, type RoundedBarOpts,
+} from './core/draw';
 
 // Charts
 export {

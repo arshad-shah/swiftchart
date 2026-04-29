@@ -1,6 +1,7 @@
 import type { SankeyChartConfig, SankeyNode, SankeyLink } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba, safeRadius, safeDim } from '../utils/helpers';
+import { hexToRgba } from '../utils/helpers';
+import { roundedBar, seriesColor } from '../core/draw';
 import { layoutSankey, type SankeyLayout } from '../perf/layout/sankey';
 
 /**
@@ -114,7 +115,7 @@ export class SankeyChart extends BaseChart {
       const y1 = tn.y + link.ty0 + link.width / 2;
       const cx = (x0 + x1) / 2;
 
-      const color = s.color || this.theme.colors[link.source % this.theme.colors.length];
+      const color = s.color ?? seriesColor(this.theme, undefined, link.source);
       const isHover = this.hoverIndex === link.source || this.hoverIndex === link.target;
       this.ctx.strokeStyle = hexToRgba(color, isHover ? 0.55 : 0.28);
       this.ctx.lineWidth = link.width * t;
@@ -128,19 +129,13 @@ export class SankeyChart extends BaseChart {
     // Nodes — rounded rectangles, hover glow matches BarChart.
     for (let i = 0; i < layout.nodes.length; i++) {
       const n = layout.nodes[i];
-      const color = n.color || this.theme.colors[i % this.theme.colors.length];
+      const color = n.color
+        ?? seriesColor(this.theme, undefined, i);
       const isHover = i === this.hoverIndex;
       const h = n.h * t;
-      this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
-      if (isHover) {
-        this.ctx.shadowColor = hexToRgba(color, 0.4);
-        this.ctx.shadowBlur = 12;
-      }
-      const r = safeRadius(Math.min(n.w / 2, h / 2, 3));
-      this.ctx.beginPath();
-      this.ctx.roundRect(n.x, n.y, safeDim(n.w), safeDim(h), r);
-      this.ctx.fill();
-      this.ctx.shadowBlur = 0;
+      roundedBar(this.ctx, n.x, n.y, n.w, h,
+        isHover ? color : hexToRgba(color, 0.85),
+        { radii: 3, hover: isHover, glowColor: color });
 
       // Label outside the node rect, on whichever side has more room.
       this.ctx.fillStyle = this.theme.text;

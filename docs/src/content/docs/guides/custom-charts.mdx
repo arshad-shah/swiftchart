@@ -1,0 +1,159 @@
+---
+title: Building custom charts
+description: Compose your own chart type from SwiftChart's drawing primitives — same visual language as the built-ins, no reinventing.
+---
+
+Every built-in chart in SwiftChart is just a subclass of `BaseChart` that
+draws to a 2D canvas. The drawing primitives are exported, so you can build
+your own chart type that fits the same visual language without re-deriving
+the conventions (rounded bars, hover glow, value projection, palette
+cycling, etc.).
+
+## What's exported
+
+```ts
+import {
+  // The base class — handles canvas + DPR + animation + tooltip + theme.
+  BaseChart,
+  // Composable drawing primitives.
+  seriesColor,
+  yProj, xProj,
+  applyHoverGlow, clearHoverGlow,
+  roundedBar,
+  // Math helpers.
+  niceScale, hexToRgba, lerpColor,
+  arrayMin, arrayMax, arraysExtent,
+  // Layout algorithms (pure functions — no canvas).
+  squarify, layoutSankey, simulateForce, fiveNumberSummary,
+} from '@arshad-shah/swift-chart';
+```
+
+## A 60-line custom chart
+
+This example draws a "lollipop" chart — a horizontal bar with a circle on
+the end, useful for ranked lists where the magnitude is often small. It
+reuses every visual convention of the built-ins.
+
+```ts
+import {
+  BaseChart, niceScale, arrayMax,
+  seriesColor, applyHoverGlow, clearHoverGlow, hexToRgba,
+} from '@arshad-shah/swift-chart';
+
+export class LollipopChart extends BaseChart {
+  _onMouse(e: MouseEvent) {
+    const n = this.resolved.labels.length;
+    this.hoverIndex = this._idxFromY(e, n);
+    if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      this.tooltip.showStructured(
+        p.x + p.w / 2, p.y + (this.hoverIndex + 0.5) * (p.h / n),
+        this._tooltipContent(this.hoverIndex),
+      );
+    }
+    this._draw();
+  }
+
+  _draw() {
+    const { labels, datasets } = this.resolved;
+    if (!labels.length) return;
+    this._drawBg();
+    this._drawTitle();
+    this._drawLegend();
+
+    const ds = datasets[0];
+    const max = arrayMax(ds.data) || 1;
+    const p = this.plotArea;
+    const slot = p.h / labels.length;
+    const t = this.animProgress;
+
+    labels.forEach((label, i) => {
+      const v = ds.data[i];
+      const x1 = p.x + (v / max) * p.w * t;
+      const yC = p.y + (i + 0.5) * slot;
+      const color = seriesColor(this.theme, ds, i);
+      const isHover = i === this.hoverIndex;
+
+      // Stick — a thin line from the y-axis to the value.
+      this.ctx.strokeStyle = hexToRgba(color, 0.55);
+      this.ctx.lineWidth = isHover ? 3 : 2;
+      this.ctx.lineCap = 'round';
+      this.ctx.beginPath();
+      this.ctx.moveTo(p.x, yC);
+      this.ctx.lineTo(x1, yC);
+      this.ctx.stroke();
+
+      // Lollipop head — a circle at the value, with the same hover glow
+      // every other rectangle-based chart in the library uses.
+      if (isHover) applyHoverGlow(this.ctx, color);
+      this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
+      this.ctx.beginPath();
+      this.ctx.arc(x1, yC, isHover ? 8 : 6, 0, Math.PI * 2);
+      this.ctx.fill();
+      if (isHover) clearHoverGlow(this.ctx);
+
+      // Label on the left.
+      this.ctx.fillStyle = isHover ? this.theme.text : this.theme.textMuted;
+      this.ctx.font = `500 11px ${this._fontFamily()}`;
+      this.ctx.textAlign = 'right';
+      this.ctx.textBaseline = 'middle';
+      this.ctx.fillText(this._truncate(String(label), 14), p.x - 8, yC);
+    });
+  }
+}
+```
+
+That's it. You get DPR scaling, theming, animation, tooltips, hover state,
+keyboard accessibility, and `chart.toDataURL()` for free. No fork
+required.
+
+## Primitive reference
+
+| Primitive | What it does |
+| --- | --- |
+| `seriesColor(theme, ds, idx)` | Picks `dataset.color` if set, otherwise cycles `theme.colors[idx % length]`. Use this *every* time you need a series colour. |
+| `yProj(scale, plotArea, t?)` | Returns `(value) => yPx`. `t` is the animation progress (defaults to 1). |
+| `xProj(scale, plotArea, t?)` | Same but for horizontal layouts. |
+| `applyHoverGlow(ctx, color, intensity?)` | Sets `shadowColor` (30 % alpha) and `shadowBlur` (12 px at intensity 1). |
+| `clearHoverGlow(ctx)` | Resets `shadowBlur` to 0. |
+| `roundedBar(ctx, x, y, w, h, fill, opts)` | Filled rectangle with optional per-corner radii (`number` or `[tl, tr, br, bl]`) and inline hover glow. |
+
+## Inherited helpers from `BaseChart`
+
+Every subclass also gets these `protected` helpers for free:
+
+- `_drawBg()` — paint the canvas background with `theme.bg`.
+- `_drawTitle()` / `_drawLegend()` — render the title/subtitle/legend block.
+- `_drawGrid(scale)` — horizontal grid lines with formatted Y ticks.
+- `_drawXLabels(labels, centered)` — X-axis labels with rotation /
+  truncation when crowded.
+- `_drawCrosshair(index, centered?)` — vertical crosshair at the hovered slot.
+- `_idxFromX(e, n)` / `_idxFromY(e, n)` — map a `MouseEvent` to a slot index.
+- `_tooltipContent(index)` — build a default `{title, rows[]}` payload from
+  the resolved data.
+- `_fmtVal(v)` — applies `config.formatValue` if set, else `shortNum`.
+- `_truncate(s, max)` — ellipsis-truncate strings.
+- `_fontFamily()` — the system font stack used everywhere in the library.
+
+## Layout algorithms
+
+Three of the chart classes' layout algorithms are exported as plain
+functions, so you can reuse them in your own visualisations even if you're
+not subclassing `BaseChart`.
+
+```ts
+import { squarify, layoutSankey, simulateForce, fiveNumberSummary }
+  from '@arshad-shah/swift-chart';
+
+// Treemap rectangles (Bruls/Huijsen/van Wijk squarified algorithm).
+const rects = squarify(items, { x: 0, y: 0, w: 600, h: 400 });
+
+// Sankey column placement + iterative y-relaxation.
+const layout = layoutSankey(nodes, links, { x: 0, y: 0, w: 800, h: 400 });
+
+// Force-directed graph (deterministic, O(iters × n²) — fine to ~300 nodes).
+simulateForce(simNodes, simLinks, { cx: 400, cy: 300, iterations: 200 });
+
+// Tukey-whisker five-number summary for boxplots.
+const stats = fiveNumberSummary([12, 18, 19, 22, 25, 28, 33, 41, 55]);
+```

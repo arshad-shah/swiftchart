@@ -1,8 +1,7 @@
 import type { DataMapping, WaterfallItem } from '../types';
 import { BaseChart } from '../core/base';
-import {
-  niceScale, hexToRgba, arrayMin, arrayMax, safeRadius, safeDim,
-} from '../utils/helpers';
+import { niceScale, hexToRgba, arrayMin, arrayMax } from '../utils/helpers';
+import { roundedBar } from '../core/draw';
 
 /**
  * Canvas 2D waterfall chart - visualises incremental positive/negative changes
@@ -84,15 +83,11 @@ export class WaterfallChart extends BaseChart {
       const isHover = i === this.hoverIndex;
       const h = (base - top) * t;
       const y = d.value >= 0 ? base - h : base;
-      this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.75);
-      if (isHover) { this.ctx.shadowColor = hexToRgba(color, 0.3); this.ctx.shadowBlur = 10; }
       const x = p.x + i * groupW + (groupW - barW) / 2;
       const absH = Math.abs(h);
-      const r = safeRadius(Math.min(3, barW / 2, absH / 2));
-      this.ctx.beginPath();
-      this.ctx.roundRect(x, y, safeDim(barW), safeDim(absH), r);
-      this.ctx.fill();
-      this.ctx.shadowBlur = 0;
+      roundedBar(this.ctx, x, y, barW, absH,
+        isHover ? color : hexToRgba(color, 0.75),
+        { radii: 3, hover: isHover, glowColor: color });
       if (i < n - 1) {
         const nextX = p.x + (i + 1) * groupW + (groupW - barW) / 2;
         this.ctx.strokeStyle = hexToRgba(this.theme.textMuted, 0.4);
