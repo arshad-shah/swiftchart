@@ -18,11 +18,14 @@ import { BaseChart } from '../core/base';
 import { LineChart } from '../charts/line';
 import { BarChart } from '../charts/bar';
 import { PieChart } from '../charts/pie';
-import {
-  ScatterChart, RadarChart, GaugeChart, HBarChart,
-  Sparkline as SparklineChart, StackedAreaChart,
-  WaterfallChart, TreemapChart,
-} from '../charts/extra';
+import { ScatterChart } from '../charts/scatter';
+import { RadarChart } from '../charts/radar';
+import { GaugeChart } from '../charts/gauge';
+import { HBarChart } from '../charts/hbar';
+import { Sparkline as SparklineChart } from '../charts/sparkline';
+import { StackedAreaChart } from '../charts/stacked-area';
+import { WaterfallChart } from '../charts/waterfall';
+import { TreemapChart } from '../charts/treemap';
 import { StackedBarChart } from '../charts/stacked-bar';
 import { BubbleChart } from '../charts/bubble';
 import { HeatmapChart } from '../charts/heatmap';

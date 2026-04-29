@@ -1,16 +1,14 @@
 export { BarChart } from './bar';
 export { LineChart } from './line';
 export { PieChart } from './pie';
-export {
-  ScatterChart,
-  RadarChart,
-  GaugeChart,
-  HBarChart,
-  Sparkline,
-  StackedAreaChart,
-  WaterfallChart,
-  TreemapChart,
-} from './extra';
+export { ScatterChart } from './scatter';
+export { RadarChart } from './radar';
+export { GaugeChart } from './gauge';
+export { HBarChart } from './hbar';
+export { Sparkline } from './sparkline';
+export { StackedAreaChart } from './stacked-area';
+export { WaterfallChart } from './waterfall';
+export { TreemapChart } from './treemap';
 export { StackedBarChart } from './stacked-bar';
 export { BubbleChart } from './bubble';
 export { HeatmapChart } from './heatmap';

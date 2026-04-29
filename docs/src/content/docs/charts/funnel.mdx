@@ -41,7 +41,8 @@ import { conversionFunnel } from '../../../components/ExampleData';
 
 ## Pyramid orientation
 
-Set `pyramid: true` to flip the funnel and place the largest stage at the top.
+Set `pyramid: true` to invert the chart vertically: a narrow apex at the top
+widens into the largest stage at the bottom.
 
 <ChartPreview client:visible kind="funnel" data={conversionFunnel} mapping={{ labelField: 'stage', valueField: 'value' }} options={{ theme: 'arctic', pyramid: true }} height={300} />
 

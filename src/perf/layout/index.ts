@@ -8,3 +8,5 @@ export type {
 } from './sankey';
 export { fiveNumberSummary } from './boxplot';
 export type { FiveNum } from './boxplot';
+export { squarify } from './squarify';
+export type { SquarifyItem, SquarifiedRect, SquarifyRect } from './squarify';

@@ -72,6 +72,7 @@ export {
   simulateForce,
   layoutSankey,
   fiveNumberSummary,
+  squarify,
 } from './perf';
 
 export type {
@@ -90,6 +91,9 @@ export type {
   SankeyLayout,
   SankeyLayoutOptions,
   FiveNum,
+  SquarifyItem,
+  SquarifiedRect,
+  SquarifyRect,
 } from './perf';
 
 // Types

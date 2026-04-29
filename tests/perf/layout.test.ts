@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  simulateForce, layoutSankey, fiveNumberSummary,
+  simulateForce, layoutSankey, fiveNumberSummary, squarify,
   type ForceNode,
 } from '../../src/perf/layout';
 
@@ -144,5 +144,59 @@ describe('layoutSankey', () => {
     const b = layout.nodes.find((n) => n.id === 'b')!;
     // a carries 10, b carries 6 → a should be taller than b.
     expect(a.h).toBeGreaterThan(b.h);
+  });
+});
+
+// ─── squarify ───────────────────────────────────────────────────────────
+
+describe('squarify', () => {
+  it('returns one rect per item and fills the requested area', () => {
+    const items = [
+      { label: 'A', value: 50 },
+      { label: 'B', value: 30 },
+      { label: 'C', value: 20 },
+    ];
+    const rects = squarify(items, { x: 0, y: 0, w: 600, h: 400 });
+    expect(rects.length).toBe(items.length);
+    const totalArea = rects.reduce((s, r) => s + r.rw * r.rh, 0);
+    expect(totalArea).toBeCloseTo(600 * 400, 0);
+  });
+
+  it('preserves area proportionality to value', () => {
+    const items = [
+      { label: 'A', value: 60 },
+      { label: 'B', value: 30 },
+      { label: 'C', value: 10 },
+    ];
+    const rects = squarify(items, { x: 0, y: 0, w: 1000, h: 1000 });
+    const total = items.reduce((s, i) => s + i.value, 0);
+    for (let i = 0; i < items.length; i++) {
+      const expected = (items[i].value / total) * 1000 * 1000;
+      const actual = rects[i].rw * rects[i].rh;
+      expect(actual / expected).toBeGreaterThan(0.99);
+      expect(actual / expected).toBeLessThan(1.01);
+    }
+  });
+
+  it('rectangles do not overlap', () => {
+    const items = Array.from({ length: 12 }, (_, i) => ({
+      label: `n${i}`,
+      value: 10 + i,
+    })).sort((a, b) => b.value - a.value);
+    const rects = squarify(items, { x: 0, y: 0, w: 800, h: 500 });
+    for (let i = 0; i < rects.length; i++) {
+      for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i], b = rects[j];
+        const overlap =
+          a.rx < b.rx + b.rw && b.rx < a.rx + a.rw &&
+          a.ry < b.ry + b.rh && b.ry < a.ry + a.rh;
+        // Allow 0.0001 px tolerance for floating-point boundary touches.
+        if (overlap) {
+          const overlapW = Math.min(a.rx + a.rw, b.rx + b.rw) - Math.max(a.rx, b.rx);
+          const overlapH = Math.min(a.ry + a.rh, b.ry + b.rh) - Math.max(a.ry, b.ry);
+          expect(overlapW * overlapH).toBeLessThan(0.001);
+        }
+      }
+    }
   });
 });

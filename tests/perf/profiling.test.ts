@@ -4,7 +4,7 @@ import { Quadtree } from '../../src/perf/quadtree';
 import { visibleRange, filterVisible } from '../../src/perf/viewport';
 import { StreamBuffer, StreamDataset } from '../../src/perf/streaming';
 import { LineChart, BarChart } from '../../src/charts';
-import { ScatterChart } from '../../src/charts/extra';
+import { ScatterChart } from '../../src/charts/scatter';
 
 function createContainer(): HTMLDivElement {
   const div = document.createElement('div');

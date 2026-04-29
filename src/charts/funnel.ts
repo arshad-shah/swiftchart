@@ -6,7 +6,9 @@ import { hexToRgba } from '../utils/helpers';
  * Conversion funnel chart. Each stage is drawn as a centred trapezoid whose
  * width is proportional to its value relative to the first stage.
  *
- * Set `pyramid: true` to point the funnel downward (largest at top).
+ * Default orientation: largest at the top, narrowing downward (a standard
+ * funnel). Set `pyramid: true` to invert vertically so the chart grows from
+ * a narrow apex at the top into a wide base at the bottom.
  *
  * @example
  * ```ts
@@ -85,20 +87,28 @@ export class FunnelChart extends BaseChart {
     for (let i = 0; i < n; i++) {
       const d = this._items[i];
       const next = this._items[i + 1];
-      const w0 = (d.value / top) * p.w * t;
-      const w1 = ((next ? next.value : d.value * 0.6) / top) * p.w * t;
+      // `wWide` = this stage's width; `wNarrow` = the next (smaller) stage's
+      // width, or a tail taper for the final row.
+      const wWide = (d.value / top) * p.w * t;
+      const wNarrow = ((next ? next.value : d.value * 0.6) / top) * p.w * t;
       const idxFromTop = pyramid ? n - 1 - i : i;
-      const y0 = p.y + idxFromTop * slotH;
-      const y1 = y0 + slotH - 2;
+      const yTop = p.y + idxFromTop * slotH;
+      const yBot = yTop + slotH - 2;
       const cx = p.x + p.w / 2;
       const color = this.theme.colors[i % this.theme.colors.length];
       const isHover = i === this.hoverIndex;
 
+      // In pyramid mode the wide edge sits at the *bottom* of each slot so
+      // adjacent stages join cleanly (small edge of stage `i` aligns with the
+      // small edge of stage `i+1` directly above).
+      const wTop = pyramid ? wNarrow : wWide;
+      const wBot = pyramid ? wWide : wNarrow;
+
       this.ctx.beginPath();
-      this.ctx.moveTo(cx - w0 / 2, y0);
-      this.ctx.lineTo(cx + w0 / 2, y0);
-      this.ctx.lineTo(cx + w1 / 2, y1);
-      this.ctx.lineTo(cx - w1 / 2, y1);
+      this.ctx.moveTo(cx - wTop / 2, yTop);
+      this.ctx.lineTo(cx + wTop / 2, yTop);
+      this.ctx.lineTo(cx + wBot / 2, yBot);
+      this.ctx.lineTo(cx - wBot / 2, yBot);
       this.ctx.closePath();
       this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
       if (isHover) { this.ctx.shadowColor = hexToRgba(color, 0.4); this.ctx.shadowBlur = 12; }
@@ -111,12 +121,12 @@ export class FunnelChart extends BaseChart {
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'middle';
       const labelMain = `${d.label}  ${this._fmtVal(d.value)}`;
-      this.ctx.fillText(labelMain, cx, y0 + slotH / 2 - (showPct ? 7 : 0));
+      this.ctx.fillText(labelMain, cx, yTop + slotH / 2 - (showPct ? 7 : 0));
       if (showPct) {
         const pct = ((d.value / top) * 100).toFixed(1);
         this.ctx.font = `400 10px ${ff}`;
         this.ctx.fillStyle = hexToRgba(this.theme.onAccent, 0.7);
-        this.ctx.fillText(`${pct}%`, cx, y0 + slotH / 2 + 8);
+        this.ctx.fillText(`${pct}%`, cx, yTop + slotH / 2 + 8);
       }
     }
   }
