@@ -1,0 +1,69 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: 'Where to publish'
+        required: true
+        default: 'github'
+        type: choice
+        options:
+          - github
+          - npm
+          - both
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  publish-github-packages:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'release' || github.event.inputs.registry == 'github' || github.event.inputs.registry == 'both' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@arshad-shah'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @arshad-shah/swift-chart build
+      - run: pnpm --filter @arshad-shah/swift-chart publint
+      - run: pnpm --filter @arshad-shah/swift-chart attw
+      - name: Publish to GitHub Packages
+        run: pnpm --filter @arshad-shah/swift-chart publish --no-git-checks --access public --registry https://npm.pkg.github.com
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.registry == 'npm' || github.event.inputs.registry == 'both' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @arshad-shah/swift-chart build
+      - run: pnpm --filter @arshad-shah/swift-chart publint
+      - run: pnpm --filter @arshad-shah/swift-chart attw
+      - name: Publish to npm
+        run: pnpm --filter @arshad-shah/swift-chart publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
