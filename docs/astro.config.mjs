@@ -21,7 +21,7 @@ export default defineConfig({
       },
       favicon: '/favicon.svg',
       social: {
-        github: 'https://github.com/ArshadShah/swiftchart',
+        github: 'https://github.com/arshad-shah/swiftchart',
       },
       components: {
         SiteTitle: './src/components/SiteTitle.astro',

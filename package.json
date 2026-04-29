@@ -31,11 +31,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ArshadShah/swiftchart.git"
+    "url": "git+https://github.com/arshad-shah/swiftchart.git"
   },
-  "homepage": "https://github.com/ArshadShah/swiftchart#readme",
+  "homepage": "https://github.com/arshad-shah/swiftchart#readme",
   "bugs": {
-    "url": "https://github.com/ArshadShah/swiftchart/issues"
+    "url": "https://github.com/arshad-shah/swiftchart/issues"
   },
   "type": "module",
   "main": "./dist/cjs/index.cjs",

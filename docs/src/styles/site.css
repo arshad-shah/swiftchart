@@ -247,3 +247,19 @@ header.header [data-open-modal] kbd {
 .sc-footer-slim .sc-footer-slim-spacer {
   opacity: 0.5;
 }
+
+/* ── Browser-extension hardening ─────────────────────────────
+   Some XML/HTML viewer extensions inject pretty-printer markup
+   into our pages and break layout. Hide their nodes. */
+.webkit-xml-viewer-source-xml,
+#webkit-xml-viewer-source-xml,
+.collapsible,
+.expanded,
+.comment-node,
+.tag,
+.html-tag,
+.text-node,
+div.header,
+div.collapsible-content {
+  display: none !important;
+}

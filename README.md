@@ -10,7 +10,7 @@ npm install @arshad-shah/swift-chart
 
 | | SwiftChart | Highcharts | Chart.js | Recharts |
 |---|---|---|---|---|
-| **Bundle** | ~12KB gzip | ~80KB | ~60KB | ~45KB |
+| **Bundle** | ~14KB gzip | ~80KB | ~60KB | ~45KB |
 | **Dependencies** | 0 | 0 | 0 | 6+ |
 | **Renderer** | Canvas 2D | SVG/Canvas | Canvas | SVG |
 | **React** | Built-in | Wrapper | Wrapper | Native |
