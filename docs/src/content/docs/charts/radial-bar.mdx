@@ -1,0 +1,51 @@
+---
+title: Radial bar / rose
+description: Polar chart where each category is a wedge — bar length or radius encodes value.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { traffic } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="radial-bar"
+  data={traffic}
+  mapping={{ labelField: 'source', valueField: 'visits' }}
+  options={{ theme: 'midnight' }}
+  height={340}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { RadialBarChart } from '@arshad-shah/swift-chart';
+
+    new RadialBarChart('#chart', { theme: 'midnight' })
+      .setData(traffic, { labelField: 'source', valueField: 'visits' });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { RadialBar } from '@arshad-shah/swift-chart/react';
+
+    <RadialBar
+      data={traffic}
+      mapping={{ labelField: 'source', valueField: 'visits' }}
+      theme="midnight"
+      height={340}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Rose / Coxcomb / Nightingale
+
+Set `rose: true` and the wedge *radius* (rather than its inset) encodes value.
+
+<ChartPreview client:visible kind="radial-bar" data={traffic} mapping={{ labelField: 'source', valueField: 'visits' }} options={{ theme: 'arctic', rose: true }} height={300} />
+
+## Reference
+
+- Class: [`RadialBarChart`](/api/core/classes/radialbarchart/)
+- React component: [`RadialBar`](/api/react/variables/radialbar/)

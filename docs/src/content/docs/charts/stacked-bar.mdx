@@ -1,0 +1,52 @@
+---
+title: Stacked bar chart
+description: Vertical stacked bars — absolute totals or 100 %-normalised.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { stacked } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="stacked-bar"
+  data={stacked}
+  mapping={{ x: 'day', y: ['api', 'web', 'mobile'] }}
+  options={{ theme: 'midnight' }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { StackedBarChart } from '@arshad-shah/swift-chart';
+
+    const chart = new StackedBarChart('#chart', { theme: 'midnight' });
+    chart.setData(stacked, { x: 'day', y: ['api', 'web', 'mobile'] });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { StackedBar } from '@arshad-shah/swift-chart/react';
+
+    <StackedBar
+      data={stacked}
+      mapping={{ x: 'day', y: ['api', 'web', 'mobile'] }}
+      theme="midnight"
+      height={320}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Percent (100 %-stacked)
+
+Pass `percent: true` to normalise every column to 100 % so each segment shows
+its share of the total instead of an absolute value.
+
+<ChartPreview client:visible kind="stacked-bar" data={stacked} mapping={{ x: 'day', y: ['api', 'web', 'mobile'] }} options={{ theme: 'arctic', percent: true }} height={260} />
+
+## Reference
+
+- Class: [`StackedBarChart`](/api/core/classes/stackedbarchart/)
+- React component: [`StackedBar`](/api/react/variables/stackedbar/)

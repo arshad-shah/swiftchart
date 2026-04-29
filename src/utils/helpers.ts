@@ -132,6 +132,45 @@ export function hexToRgba(input: string, a: number): string {
 }
 
 /**
+ * Parse any CSS-ish colour into [r, g, b] (alpha discarded).
+ * Returns black on parse failure. Allocation-free for canonical hex.
+ */
+function parseRgb(input: string): [number, number, number] {
+  if (!input) return [0, 0, 0];
+  const s = input.trim();
+  if (s.startsWith('#')) {
+    let hex = s.slice(1);
+    if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    if (hex.length === 8) hex = hex.slice(0, 6);
+    if (hex.length !== 6) return [0, 0, 0];
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return [isNaN(r) ? 0 : r, isNaN(g) ? 0 : g, isNaN(b) ? 0 : b];
+  }
+  const m = s.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+  if (m) return [+m[1] | 0, +m[2] | 0, +m[3] | 0];
+  return [0, 0, 0];
+}
+
+/**
+ * Linear-RGB interpolation between two CSS colours.
+ * `t` is clamped to [0, 1]. Result is a `rgb()` string.
+ *
+ * Hot path: heatmap / choropleth fills. Per-cell allocation is unavoidable
+ * (canvas needs a string), but we keep parsing branch-light.
+ */
+export function lerpColor(a: string, b: string, t: number): string {
+  const tt = t < 0 ? 0 : t > 1 ? 1 : t;
+  const [ar, ag, ab] = parseRgb(a);
+  const [br, bg, bb] = parseRgb(b);
+  const r = (ar + (br - ar) * tt) | 0;
+  const g = (ag + (bg - ag) * tt) | 0;
+  const bl = (ab + (bb - ab) * tt) | 0;
+  return `rgb(${r},${g},${bl})`;
+}
+
+/**
  * Escape a string for safe insertion into HTML.
  * Used at every tooltip interpolation site.
  */

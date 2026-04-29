@@ -247,6 +247,13 @@ export interface LineChartConfig extends BaseChartConfig {
   dots?: boolean;
   /** Stroke width in pixels. Default `2`. */
   lineWidth?: number;
+  /**
+   * Render as a step line. Mutually exclusive with `smooth`.
+   * - `'before'` — value changes at the leading edge of each segment
+   * - `'after'`  — value holds, then changes at the trailing edge (default)
+   * - `'middle'` — change occurs at the segment midpoint
+   */
+  step?: boolean | 'before' | 'after' | 'middle';
 }
 
 /**
@@ -325,6 +332,79 @@ export interface TreemapItem {
   value: number;
 }
 
+/** A single OHLC candle. */
+export interface CandlestickItem {
+  /** Categorical label (date, period, etc.). */
+  label: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+/** Pre-computed five-number summary for a boxplot category. */
+export interface BoxplotItem {
+  label: string;
+  /** Lower whisker (typically min or Q1 - 1.5*IQR). */
+  min: number;
+  /** First quartile (25th percentile). */
+  q1: number;
+  /** Median (50th percentile). */
+  median: number;
+  /** Third quartile (75th percentile). */
+  q3: number;
+  /** Upper whisker. */
+  max: number;
+  /** Optional individual outlier values rendered as points. */
+  outliers?: number[];
+}
+
+/** A single funnel stage. */
+export interface FunnelItem {
+  label: string;
+  value: number;
+}
+
+/** A node in a Sankey diagram. */
+export interface SankeyNode {
+  id: string;
+  label?: string;
+  color?: string;
+}
+
+/** A flow between two Sankey nodes. */
+export interface SankeyLink {
+  source: string;
+  target: string;
+  value: number;
+}
+
+/** A node in a network / force-directed graph. */
+export interface NetworkNode {
+  id: string;
+  label?: string;
+  group?: string | number;
+  size?: number;
+}
+
+/** An edge in a network / force-directed graph. */
+export interface NetworkLink {
+  source: string;
+  target: string;
+  value?: number;
+}
+
+/** A single bullet-chart row. */
+export interface BulletItem {
+  label: string;
+  /** Current measure (the dark bar). */
+  value: number;
+  /** Target marker (the small tick). */
+  target?: number;
+  /** Qualitative band stops (e.g. `[60, 80, 100]` for poor / good / excellent). */
+  ranges?: number[];
+}
+
 /** A treemap rect with computed pixel coordinates (internal use). */
 export interface TreemapRect extends TreemapItem {
   rx: number;
@@ -394,10 +474,130 @@ export interface ChartComponentProps {
   onPointClick?: (index: number, data: ResolvedData) => void;
 }
 
+/** Stacked-bar chart configuration. */
+export interface StackedBarChartConfig extends BaseChartConfig {
+  /** Render each bar normalised to 100 % of the stack total. */
+  percent?: boolean;
+}
+
+/** Bubble chart configuration (scatter with size mapping). */
+export interface BubbleChartConfig extends BaseChartConfig {
+  /** Multiplier applied to the raw size value. Default `1`. */
+  sizeScale?: number;
+  /** Cap the rendered radius (pixels). Default `40`. */
+  maxRadius?: number;
+}
+
+/** Heatmap configuration. */
+export interface HeatmapChartConfig extends BaseChartConfig {
+  /** Two-stop colour ramp (low → high). Falls back to theme accent. */
+  colorScale?: [string, string];
+  /** Show the cell value inside each tile. */
+  showValues?: boolean;
+}
+
+/** Candlestick configuration. */
+export interface CandlestickChartConfig extends BaseChartConfig {
+  /** Colour for closes >= opens. Defaults to `theme.positive`. */
+  upColor?: string;
+  /** Colour for closes < opens. Defaults to `theme.negative`. */
+  downColor?: string;
+}
+
+/** Boxplot configuration. */
+export interface BoxplotChartConfig extends BaseChartConfig {
+  /** Show outlier dots (data points outside whiskers). Default `true`. */
+  showOutliers?: boolean;
+}
+
+/** Funnel-chart configuration. */
+export interface FunnelChartConfig extends BaseChartConfig {
+  /** Display drop-off percentage between stages. Default `true`. */
+  showPercent?: boolean;
+  /** Render as a triangular pyramid (point at the bottom). */
+  pyramid?: boolean;
+}
+
+/** Sankey configuration. */
+export interface SankeyChartConfig extends BaseChartConfig {
+  /** Pixel gap between nodes in a column. */
+  nodePadding?: number;
+  /** Pixel width of each node rectangle. */
+  nodeWidth?: number;
+}
+
+/** Combo (bar + line) chart configuration. */
+export interface ComboChartConfig extends BaseChartConfig {
+  /** Series labels to render as a line on top of the bars. Others render as bars. */
+  lineSeries?: string[];
+  /** Stroke width of the line series. */
+  lineWidth?: number;
+}
+
+/** Radial-bar / rose chart configuration. */
+export interface RadialBarChartConfig extends BaseChartConfig {
+  /** Inner radius as a fraction of the outer radius (0–0.95). Default `0.3`. */
+  innerRadius?: number;
+  /** Render as a "rose" — bar length encoded by radius rather than value. */
+  rose?: boolean;
+}
+
+/** Bullet-chart configuration. */
+export interface BulletChartConfig extends BaseChartConfig {
+  /** Tint applied to the qualitative range bands. Default `theme.grid`. */
+  rangeColor?: string;
+}
+
+/** Marimekko (mosaic) chart configuration. */
+export interface MarimekkoChartConfig extends BaseChartConfig {
+  /** Show the percentage label inside each cell (when it fits). Default `true`. */
+  showLabels?: boolean;
+}
+
+/** Network / force-graph configuration. */
+export interface NetworkChartConfig extends BaseChartConfig {
+  /** Number of force-simulation iterations to run before draw. Default `200`. */
+  iterations?: number;
+  /** Strength of the link spring (smaller = looser). Default `0.05`. */
+  linkStrength?: number;
+  /** Strength of node-node repulsion. Default `300`. */
+  chargeStrength?: number;
+}
+
 /** Props for the React `<Line>` and `<Area>` components. */
 export interface LineComponentProps extends ChartComponentProps, LineChartConfig {}
 /** Props for the React `<Bar>` component. */
 export interface BarComponentProps extends ChartComponentProps, BaseChartConfig {}
+/** Props for the React `<StackedBar>` component. */
+export interface StackedBarComponentProps extends ChartComponentProps, StackedBarChartConfig {}
+/** Props for the React `<Bubble>` component. */
+export interface BubbleComponentProps extends ChartComponentProps, BubbleChartConfig {}
+/** Props for the React `<Heatmap>` component. */
+export interface HeatmapComponentProps extends ChartComponentProps, HeatmapChartConfig {}
+/** Props for the React `<Candlestick>` component. */
+export interface CandlestickComponentProps extends ChartComponentProps, CandlestickChartConfig {}
+/** Props for the React `<Boxplot>` component. */
+export interface BoxplotComponentProps extends ChartComponentProps, BoxplotChartConfig {}
+/** Props for the React `<Funnel>` component. */
+export interface FunnelComponentProps extends ChartComponentProps, FunnelChartConfig {}
+/** Props for the React `<Sankey>` component. */
+export interface SankeyComponentProps extends ChartComponentProps, SankeyChartConfig {
+  nodes?: SankeyNode[];
+  links?: SankeyLink[];
+}
+/** Props for the React `<Combo>` component. */
+export interface ComboComponentProps extends ChartComponentProps, ComboChartConfig {}
+/** Props for the React `<RadialBar>` component. */
+export interface RadialBarComponentProps extends ChartComponentProps, RadialBarChartConfig {}
+/** Props for the React `<Bullet>` component. */
+export interface BulletComponentProps extends ChartComponentProps, BulletChartConfig {}
+/** Props for the React `<Marimekko>` component. */
+export interface MarimekkoComponentProps extends ChartComponentProps, MarimekkoChartConfig {}
+/** Props for the React `<Network>` component. */
+export interface NetworkComponentProps extends ChartComponentProps, NetworkChartConfig {
+  nodes?: NetworkNode[];
+  links?: NetworkLink[];
+}
 /** Props for the React `<Pie>` and `<Donut>` components. */
 export interface PieComponentProps extends ChartComponentProps, PieChartConfig {}
 /** Props for the React `<Scatter>` component. */

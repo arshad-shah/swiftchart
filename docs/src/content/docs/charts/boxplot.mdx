@@ -1,0 +1,50 @@
+---
+title: Boxplot
+description: Five-number summary for distributions — quartiles, whiskers, and outliers.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { latencyBoxes } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="boxplot"
+  data={latencyBoxes}
+  options={{ theme: 'midnight' }}
+  height={300}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Pre-computed summaries">
+    ```ts
+    import { BoxplotChart } from '@arshad-shah/swift-chart';
+
+    new BoxplotChart('#chart').setData([
+      { label: 'auth', min: 12, q1: 18, median: 22, q3: 28, max: 38, outliers: [55] },
+    ]);
+    ```
+  </TabItem>
+  <TabItem label="Raw samples">
+    ```ts
+    // Pass raw arrays — SwiftChart computes quartiles + Tukey whiskers for you.
+    new BoxplotChart('#chart').setData(
+      [{ label: 'auth', samples: [12, 14, 18, 19, 22, 25, 28, 33, 41, 55] }],
+      { y: 'samples' },
+    );
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Boxplot } from '@arshad-shah/swift-chart/react';
+
+    <Boxplot data={latencyBoxes} theme="midnight" height={300} />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`BoxplotChart`](/api/core/classes/boxplotchart/)
+- React component: [`Boxplot`](/api/react/variables/boxplot/)
+- Helper: [`fiveNumberSummary`](/api/core/functions/fivenumbersummary/) — Tukey-whisker quartile stats over any numeric sample.

@@ -2,11 +2,16 @@ import type { ComponentType } from 'react';
 import {
   Line, Area, Bar, HBar, Pie, Donut, Scatter, Radar, Gauge,
   SparklineComponent, StackedArea, Waterfall, Treemap,
+  StackedBar, Bubble, Heatmap, Candlestick, Boxplot, Funnel, Sankey,
+  Combo, RadialBar, Bullet, Marimekko, Network,
 } from '@arshad-shah/swift-chart/react';
 
 type Kind =
   | 'line' | 'area' | 'bar' | 'hbar' | 'pie' | 'donut' | 'scatter'
-  | 'radar' | 'gauge' | 'sparkline' | 'stacked-area' | 'waterfall' | 'treemap';
+  | 'radar' | 'gauge' | 'sparkline' | 'stacked-area' | 'waterfall' | 'treemap'
+  | 'stacked-bar' | 'bubble' | 'heatmap' | 'candlestick' | 'boxplot'
+  | 'funnel' | 'sankey' | 'combo' | 'radial-bar' | 'bullet'
+  | 'marimekko' | 'network';
 
 type Props = {
   kind: Kind;
@@ -30,6 +35,18 @@ const REGISTRY: Record<Kind, ComponentType<Record<string, unknown>>> = {
   'stacked-area': StackedArea as unknown as ComponentType<Record<string, unknown>>,
   'waterfall': Waterfall as unknown as ComponentType<Record<string, unknown>>,
   'treemap': Treemap as unknown as ComponentType<Record<string, unknown>>,
+  'stacked-bar': StackedBar as unknown as ComponentType<Record<string, unknown>>,
+  'bubble': Bubble as unknown as ComponentType<Record<string, unknown>>,
+  'heatmap': Heatmap as unknown as ComponentType<Record<string, unknown>>,
+  'candlestick': Candlestick as unknown as ComponentType<Record<string, unknown>>,
+  'boxplot': Boxplot as unknown as ComponentType<Record<string, unknown>>,
+  'funnel': Funnel as unknown as ComponentType<Record<string, unknown>>,
+  'sankey': Sankey as unknown as ComponentType<Record<string, unknown>>,
+  'combo': Combo as unknown as ComponentType<Record<string, unknown>>,
+  'radial-bar': RadialBar as unknown as ComponentType<Record<string, unknown>>,
+  'bullet': Bullet as unknown as ComponentType<Record<string, unknown>>,
+  'marimekko': Marimekko as unknown as ComponentType<Record<string, unknown>>,
+  'network': Network as unknown as ComponentType<Record<string, unknown>>,
 };
 
 export default function ChartPreview({ kind, height = 300, options, ...rest }: Props) {

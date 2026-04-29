@@ -1,0 +1,51 @@
+---
+title: Funnel chart
+description: Drop-off visualisation for conversion / pipeline stages.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { conversionFunnel } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="funnel"
+  data={conversionFunnel}
+  mapping={{ labelField: 'stage', valueField: 'value' }}
+  options={{ theme: 'midnight' }}
+  height={340}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { FunnelChart } from '@arshad-shah/swift-chart';
+
+    new FunnelChart('#chart', { theme: 'midnight' })
+      .setData(conversionFunnel, { labelField: 'stage', valueField: 'value' });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Funnel } from '@arshad-shah/swift-chart/react';
+
+    <Funnel
+      data={conversionFunnel}
+      mapping={{ labelField: 'stage', valueField: 'value' }}
+      theme="midnight"
+      height={340}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Pyramid orientation
+
+Set `pyramid: true` to flip the funnel and place the largest stage at the top.
+
+<ChartPreview client:visible kind="funnel" data={conversionFunnel} mapping={{ labelField: 'stage', valueField: 'value' }} options={{ theme: 'arctic', pyramid: true }} height={300} />
+
+## Reference
+
+- Class: [`FunnelChart`](/api/core/classes/funnelchart/)
+- React component: [`Funnel`](/api/react/variables/funnel/)
