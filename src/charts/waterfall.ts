@@ -35,21 +35,17 @@ export class WaterfallChart extends BaseChart {
   }
 
   _onMouse(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const p = this.plotArea;
     const n = this._wfData.length;
-    if (!n) return;
-    const barW = p.w / n;
-    const idx = Math.floor((mx - p.x) / barW);
-    this.hoverIndex = idx >= 0 && idx < n ? idx : -1;
+    this.hoverIndex = this._idxFromX(e, n);
     if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      const barW = p.w / n;
       const d = this._wfData[this.hoverIndex];
       let cumulative = 0;
       for (let i = 0; i <= this.hoverIndex; i++) cumulative += this._wfData[i].value;
       const sign = d.value >= 0 ? '+' : '';
       const color = d.value >= 0 ? this.theme.positive : this.theme.negative;
-      this.tooltip.showStructured(p.x + (idx + 0.5) * barW, p.y + p.h / 2, {
+      this.tooltip.showStructured(p.x + (this.hoverIndex + 0.5) * barW, p.y + p.h / 2, {
         title: d.label,
         rows: [
           { label: 'Δ', value: `${sign}${this._fmtVal(d.value)}`, color },

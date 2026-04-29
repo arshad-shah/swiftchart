@@ -45,21 +45,17 @@ export class FunnelChart extends BaseChart {
   }
 
   _onMouse(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const my = e.clientY - rect.top;
-    const p = this.plotArea;
     const n = this._items.length;
-    if (!n) return;
-    const slot = p.h / n;
-    const idx = Math.floor((my - p.y) / slot);
-    this.hoverIndex = idx >= 0 && idx < n ? idx : -1;
+    this.hoverIndex = this._idxFromY(e, n);
     if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      const slot = p.h / n;
       const d = this._items[this.hoverIndex];
       const top = this._items[0].value || 1;
       const prev = this.hoverIndex > 0 ? this._items[this.hoverIndex - 1].value : top;
       const conv = ((d.value / top) * 100).toFixed(1);
       const drop = prev > 0 ? (((prev - d.value) / prev) * 100).toFixed(1) : '0.0';
-      this.tooltip.showStructured(p.x + p.w / 2, p.y + (idx + 0.5) * slot, {
+      this.tooltip.showStructured(p.x + p.w / 2, p.y + (this.hoverIndex + 0.5) * slot, {
         title: d.label,
         rows: [
           { label: 'value', value: this._fmtVal(d.value), color: this.theme.colors[0] },

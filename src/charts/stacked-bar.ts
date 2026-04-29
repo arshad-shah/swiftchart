@@ -21,22 +21,18 @@ export class StackedBarChart extends BaseChart {
   private get _percent(): boolean { return !!this.config.percent; }
 
   _onMouse(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const p = this.plotArea;
     const n = this.resolved.labels.length;
-    if (!n) return;
-    const slot = p.w / n;
-    const idx = Math.floor((mx - p.x) / slot);
-    this.hoverIndex = idx >= 0 && idx < n ? idx : -1;
+    this.hoverIndex = this._idxFromX(e, n);
     if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      const slot = p.w / n;
       const total = this.resolved.datasets.reduce((s, d) => s + (d.data[this.hoverIndex] ?? 0), 0);
       const rows = this.resolved.datasets.map((d, i) => ({
         label: d.label || `Series ${i + 1}`,
         value: this._fmtVal(d.data[this.hoverIndex] ?? 0),
         color: d.color || this.theme.colors[i % this.theme.colors.length],
       }));
-      this.tooltip.showStructured(p.x + (idx + 0.5) * slot, p.y + p.h / 2, {
+      this.tooltip.showStructured(p.x + (this.hoverIndex + 0.5) * slot, p.y + p.h / 2, {
         title: this.resolved.labels[this.hoverIndex],
         rows,
         footer: `Total: ${this._fmtVal(total)}`,

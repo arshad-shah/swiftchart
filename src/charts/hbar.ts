@@ -22,17 +22,13 @@ export class HBarChart extends BaseChart {
   }
 
   _onMouse(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const my = e.clientY - rect.top;
-    const p = this.plotArea;
     const n = this.resolved.labels.length;
-    if (!n) return;
-    const slot = p.h / n;
-    const idx = Math.floor((my - p.y) / slot);
-    this.hoverIndex = idx >= 0 && idx < n ? idx : -1;
+    this.hoverIndex = this._idxFromY(e, n);
     if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      const slot = p.h / n;
       this.tooltip.showStructured(
-        p.x + p.w / 2, p.y + (idx + 0.5) * slot,
+        p.x + p.w / 2, p.y + (this.hoverIndex + 0.5) * slot,
         this._tooltipContent(this.hoverIndex),
       );
     }

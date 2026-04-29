@@ -47,17 +47,13 @@ export class BoxplotChart extends BaseChart {
   }
 
   _onMouse(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const p = this.plotArea;
     const n = this._items.length;
-    if (!n) return;
-    const slot = p.w / n;
-    const idx = Math.floor((mx - p.x) / slot);
-    this.hoverIndex = idx >= 0 && idx < n ? idx : -1;
+    this.hoverIndex = this._idxFromX(e, n);
     if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      const slot = p.w / n;
       const d = this._items[this.hoverIndex];
-      this.tooltip.showStructured(p.x + (idx + 0.5) * slot, p.y + p.h / 2, {
+      this.tooltip.showStructured(p.x + (this.hoverIndex + 0.5) * slot, p.y + p.h / 2, {
         title: d.label,
         rows: [
           { label: 'max',    value: this._fmtVal(d.max) },

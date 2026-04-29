@@ -27,18 +27,13 @@ export class BarChart extends BaseChart {
   }
 
   _onMouse(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const p = this.plotArea;
     const n = this.resolved.labels.length;
-    if (n === 0) return;
-    const barW = p.w / n;
-    const idx = Math.floor((mx - p.x) / barW);
-    this.hoverIndex = idx >= 0 && idx < n ? idx : -1;
-
+    this.hoverIndex = this._idxFromX(e, n);
     if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      const barW = p.w / n;
       this.tooltip.showStructured(
-        p.x + (idx + 0.5) * barW,
+        p.x + (this.hoverIndex + 0.5) * barW,
         p.y + p.h / 2,
         this._tooltipContent(this.hoverIndex),
       );

@@ -136,14 +136,32 @@
   },
   "size-limit": [
     {
-      "name": "core (esm, gzipped)",
+      "name": "tree-shaken: LineChart only",
       "path": "dist/esm/index.js",
-      "limit": "13 KB"
+      "import": "{ LineChart }",
+      "limit": "7 KB"
     },
     {
-      "name": "react bundle (esm, gzipped)",
+      "name": "tree-shaken: LineChart + BarChart",
+      "path": "dist/esm/index.js",
+      "import": "{ LineChart, BarChart }",
+      "limit": "7 KB"
+    },
+    {
+      "name": "tree-shaken: 6 common charts",
+      "path": "dist/esm/index.js",
+      "import": "{ LineChart, BarChart, PieChart, ScatterChart, GaugeChart, RadarChart }",
+      "limit": "10 KB"
+    },
+    {
+      "name": "full barrel (all 23 chart classes + helpers)",
+      "path": "dist/esm/index.js",
+      "limit": "21 KB"
+    },
+    {
+      "name": "full react bundle",
       "path": "dist/esm/react/index.js",
-      "limit": "13 KB"
+      "limit": "20 KB"
     }
   ],
   "volta": {

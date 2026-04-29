@@ -30,16 +30,12 @@ export class ComboChart extends BaseChart {
   }
 
   _onMouse(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const p = this.plotArea;
     const n = this.resolved.labels.length;
-    if (!n) return;
-    const slot = p.w / n;
-    const idx = Math.floor((mx - p.x) / slot);
-    this.hoverIndex = idx >= 0 && idx < n ? idx : -1;
+    this.hoverIndex = this._idxFromX(e, n);
     if (this.hoverIndex >= 0 && this.tooltip) {
-      this.tooltip.showStructured(p.x + (idx + 0.5) * slot, p.y + p.h / 2,
+      const p = this.plotArea;
+      const slot = p.w / n;
+      this.tooltip.showStructured(p.x + (this.hoverIndex + 0.5) * slot, p.y + p.h / 2,
         this._tooltipContent(this.hoverIndex));
     }
     this._draw();
