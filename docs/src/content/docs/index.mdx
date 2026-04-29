@@ -3,7 +3,7 @@ title: SwiftChart
 description: Lightning-fast, zero-dependency Canvas 2D charting library with first-class React bindings.
 template: splash
 hero:
-  tagline: 12&nbsp;KB gzipped. Zero dependencies. 13 chart types. One library.
+  tagline: 12&nbsp;KB gzipped. Zero dependencies. 13 chart types. One library — vanilla&nbsp;or&nbsp;React.
   actions:
     - text: Get started
       link: /getting-started/installation/
@@ -22,13 +22,21 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 import ChartPreview from '../../components/ChartPreview';
 import { monthlySales } from '../../components/ExampleData';
 
+<div class="sc-badges">
+  <span class="sc-badge"><strong>12 KB</strong>&nbsp;gzipped</span>
+  <span class="sc-badge"><strong>0</strong>&nbsp;dependencies</span>
+  <span class="sc-badge"><strong>13</strong>&nbsp;chart types</span>
+  <span class="sc-badge"><strong>4</strong>&nbsp;built-in themes</span>
+  <span class="sc-badge">Canvas&nbsp;2D · React · MIT</span>
+</div>
+
 <ChartPreview
   client:visible
   kind="line"
   data={monthlySales}
   mapping={{ x: 'month', y: ['revenue', 'target'] }}
   options={{ theme: 'midnight', area: true, title: 'Monthly revenue vs target' }}
-  height={320}
+  height={340}
 />
 
 ## Why SwiftChart?
@@ -44,7 +52,7 @@ import { monthlySales } from '../../components/ExampleData';
 
 <CardGrid>
   <Card title="Vanilla or React" icon="puzzle">
-    Use the imperative class API or the React component wrappers — same chart engine, identical output.
+    Use the imperative class API or the React component wrappers — same chart engine, identical output, identical bundle weight.
   </Card>
   <Card title="Schema-agnostic" icon="random">
     Pass any data shape. Auto-detect fields, or map them explicitly — no rigid schema required.
@@ -53,6 +61,12 @@ import { monthlySales } from '../../components/ExampleData';
     `midnight`, `arctic`, `ember`, `forest` — or define your own with `addTheme()`.
   </Card>
   <Card title="Animated by default" icon="rocket">
-    Easings, durations, and transitions tuned out of the box.
+    Easings, durations, and transitions tuned out of the box. Disable with `animate: false`.
+  </Card>
+  <Card title="Performance-first" icon="setting">
+    LTTB downsampling, viewport culling, quadtree hover, and offscreen rendering — included.
+  </Card>
+  <Card title="Production-ready" icon="approve-check">
+    545+ tests, strict TypeScript, ESM + CJS dual-package, attw + publint clean.
   </Card>
 </CardGrid>

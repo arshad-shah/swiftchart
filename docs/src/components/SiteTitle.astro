@@ -7,7 +7,12 @@ const version = (libPkg as { version?: string }).version ?? '0.0.0';
 
 <div class="sc-title">
   <Default><slot /></Default>
-  <a class="sc-version" href="https://github.com/ArshadShah/swiftchart/releases" title={`v${version} — release notes`}>v{version}</a>
+  <a class="sc-version"
+     href="https://github.com/ArshadShah/swiftchart/releases"
+     title={`v${version} — release notes`}
+     aria-label={`Current version: v${version}. Open release notes`}>
+    v{version}
+  </a>
 </div>
 
 <style>
@@ -19,18 +24,20 @@ const version = (libPkg as { version?: string }).version ?? '0.0.0';
   .sc-version {
     display: inline-flex;
     align-items: center;
-    padding: 0.15rem 0.5rem;
+    padding: 0.18rem 0.55rem;
     border-radius: 999px;
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1;
-    color: var(--sl-color-accent-high);
-    background: color-mix(in srgb, var(--sl-color-accent) 18%, transparent);
-    border: 1px solid color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+    color: #ffffff;
+    background: linear-gradient(135deg, #5b8cff, #6e6cff 55%, #a64bff);
     text-decoration: none;
     letter-spacing: 0.01em;
+    box-shadow: 0 4px 12px -4px rgba(91, 140, 255, 0.5);
+    transition: filter 120ms, transform 120ms;
   }
   .sc-version:hover {
-    background: color-mix(in srgb, var(--sl-color-accent) 28%, transparent);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
   }
 </style>
