@@ -1,0 +1,251 @@
+/*
+ * App-level overrides — most styling comes from cynosure-react/all.css.
+ *
+ * Workaround for cynosure-react@2.1.1: its `layoutPropsStyle` class sets
+ * `display: var(--cynosure-lp-d-base)` with no fallback. When no `display`
+ * prop is passed, the var is empty and the declaration becomes
+ * invalid-at-computed-value-time, which CSS treats like `unset` —
+ * meaning `display` reverts to its initial value `inline`. That kills
+ * Stack / Inline / Flex / Grid layout. Re-assert the correct displays
+ * with higher specificity (`:where` keeps specificity at 0,2,0 vs the
+ * library's 0,1,0).
+ */
+/*
+ * Default every layoutPropsStyle element to `display: block` (Box's intent).
+ * The `display: var(--cynosure-lp-d-base)` rule from cynosure resolves to
+ * `inline` when no `display` prop was passed; we restore the sane default
+ * here. More-specific rules below override for Stack/Inline/Flex/Grid.
+ */
+[class*="layoutPropsStyle"]                                  { display: block; }
+:where([class*="Stack_stack"])[class*="layoutPropsStyle"]    { display: flex; flex-direction: column; }
+:where([class*="Inline_inline"])[class*="layoutPropsStyle"]  { display: flex; flex-direction: row; flex-wrap: wrap; }
+:where([class*="Flex_flex"])[class*="layoutPropsStyle"]      { display: flex; }
+:where([class*="Grid_grid"])[class*="layoutPropsStyle"]      { display: grid; }
+:where([class*="Center_center"])[class*="layoutPropsStyle"]  { display: flex; }
+:where([class*="Container_"])[class*="layoutPropsStyle"] {
+  display: block;
+  /*
+   * Container ships `max-width: var(--cynosure-container-maxw-base)` but
+   * layoutPropsStyle's later `max-width: var(--cynosure-lp-maxw-base)` wins
+   * the cascade and resolves to `none` (initial), making the container span
+   * the full viewport. Re-apply Container's own max-width with greater
+   * specificity here.
+   */
+  max-width: var(--cynosure-container-maxw-base, 80rem);
+  margin-inline: auto;
+  width: 100%;
+}
+:where([class*="Section_"])[class*="layoutPropsStyle"]       { display: block; }
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--cynosure-font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+code, pre, kbd, samp { font-family: var(--cynosure-font-family-mono); }
+
+/*
+ * Cynosure 2.1.1 layout-prop quirks:
+ *
+ * 1. CSS custom properties inherit, so a `minHeight="screen"` on the root
+ *    leaks into every descendant. `initial` here breaks the cascade per
+ *    layoutPropsStyle element (sizing vars only — those are the leaky ones).
+ *
+ * 2. The internal CSS rule writes shorthands first (`padding-block`) then
+ *    longhands (`padding-top: var(--…-pt-base)`). When `pt-base` is unset,
+ *    the longhand var() resolves invalid and reverts padding-top to 0,
+ *    silently undoing `paddingY=`. Same for paddingX/marginY/marginX.
+ *    Aliasing pt/pb to py-base (and pl/pr to px-base, mt/mb to my-base,
+ *    ml/mr to mx-base) makes the shorthand work without affecting cases
+ *    where the consumer set a longhand directly (inline style still wins).
+ */
+[class*="layoutPropsStyle"] {
+  /* Break inheritance — every element starts fresh. Inline-style declarations
+     on the same element still win over `initial` here, so a Box with
+     `paddingY="8"` keeps its inline value while descendants don't inherit it. */
+  --cynosure-lp-minh-base: initial;
+  --cynosure-lp-maxh-base: initial;
+  --cynosure-lp-minw-base: initial;
+  --cynosure-lp-maxw-base: initial;
+  --cynosure-lp-h-base:    initial;
+  --cynosure-lp-w-base:    initial;
+  --cynosure-lp-d-base:    initial;
+  --cynosure-lp-flex-base: initial;
+  --cynosure-lp-py-base:   initial;
+  --cynosure-lp-px-base:   initial;
+  --cynosure-lp-my-base:   initial;
+  --cynosure-lp-mx-base:   initial;
+  /*
+   * Padding/margin shorthand aliases — cynosure's CSS rule writes shorthands
+   * first then longhands, so `padding-top: var(--…-pt-base)` zeroes out
+   * `paddingY=` when pt-base is unset. Aliasing pt → py (etc.) makes the
+   * shorthand win when no longhand override is present. Inline-set longhands
+   * still override.
+   */
+  --cynosure-lp-pt-base: var(--cynosure-lp-py-base);
+  --cynosure-lp-pb-base: var(--cynosure-lp-py-base);
+  --cynosure-lp-pl-base: var(--cynosure-lp-px-base);
+  --cynosure-lp-pr-base: var(--cynosure-lp-px-base);
+  --cynosure-lp-mt-base: var(--cynosure-lp-my-base);
+  --cynosure-lp-mb-base: var(--cynosure-lp-my-base);
+  --cynosure-lp-ml-base: var(--cynosure-lp-mx-base);
+  --cynosure-lp-mr-base: var(--cynosure-lp-mx-base);
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--cynosure-color-background-subtle);
+}
+
+/* Chart-controls toolbar — sits below the tabs inside the active panel. */
+.toolbar-card {
+  background: color-mix(in srgb, var(--cynosure-color-background-surface) 88%, transparent);
+}
+
+/* Tighten the chart-card body — the chart canvas already has its own padding. */
+[class*="cardBody"] { padding-top: var(--cynosure-space-3); }
+
+/* Tab triggers a touch larger / more readable. */
+[role="tab"] { font-size: 14px; padding: 10px 14px; }
+
+/*
+ * Cynosure 2.1.1 Inline gap bug — the component writes
+ * `--cynosure-inline-gap-base` (and per-breakpoint variants) but the
+ * Inline_inline CSS rule reads `--cynosure-inline-col-gap-*` and
+ * `--cynosure-inline-row-gap-*`. The names don't match → no gap renders.
+ * Alias the names so the consumer-set value reaches the rule.
+ */
+[class*="Inline_inline"] {
+  --cynosure-inline-col-gap-base: var(--cynosure-inline-gap-base);
+  --cynosure-inline-row-gap-base:  var(--cynosure-inline-gap-base);
+  --cynosure-inline-col-gap-sm:    var(--cynosure-inline-gap-sm);
+  --cynosure-inline-row-gap-sm:    var(--cynosure-inline-gap-sm);
+  --cynosure-inline-col-gap-md:    var(--cynosure-inline-gap-md);
+  --cynosure-inline-row-gap-md:    var(--cynosure-inline-gap-md);
+  --cynosure-inline-col-gap-lg:    var(--cynosure-inline-gap-lg);
+  --cynosure-inline-row-gap-lg:    var(--cynosure-inline-gap-lg);
+  --cynosure-inline-col-gap-xl:    var(--cynosure-inline-gap-xl);
+  --cynosure-inline-row-gap-xl:    var(--cynosure-inline-gap-xl);
+}
+
+/* ─── Docs layout ────────────────────────────────────────── */
+.docs-layout {
+  display: grid;
+  gap: var(--cynosure-space-6);
+  grid-template-columns: 1fr; /* mobile: stacked */
+}
+@media (min-width: 900px) {
+  .docs-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: var(--cynosure-space-8, 2rem);
+  }
+}
+/* `minmax(0, 1fr)` lets long code blocks shrink instead of overflowing the grid. */
+.docs-main { min-width: 0; }
+.docs-sidebar { min-width: 0; }
+@media (min-width: 900px) {
+  .docs-sidebar {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    /* Hide scrollbar chrome unless interacting. */
+    scrollbar-width: thin;
+  }
+}
+
+/* Make code blocks behave inside the constrained main column. */
+.docs-main pre,
+.docs-main [class*="codeBlock"] {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* ─── Docs TOC ───────────────────────────────────────────── */
+.docs-toc {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.docs-toc-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cynosure-color-foreground-muted);
+  padding-left: 14px;
+  margin-bottom: 12px;
+}
+.docs-toc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--cynosure-color-accent-base, #6366f1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cynosure-color-accent-base, #6366f1) 22%, transparent);
+}
+.docs-toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  border-left: 1px solid color-mix(in srgb, var(--cynosure-color-foreground-base) 12%, transparent);
+}
+.docs-toc-item { margin: 0; }
+.docs-toc-link {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 10px 7px 14px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  color: var(--cynosure-color-foreground-muted);
+  text-decoration: none;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
+}
+.docs-toc-link:hover,
+.docs-toc-link:focus-visible {
+  color: var(--cynosure-color-foreground-base);
+  background: color-mix(in srgb, var(--cynosure-color-foreground-base) 5%, transparent);
+  outline: none;
+}
+.docs-toc-link.is-active {
+  color: var(--cynosure-color-foreground-base);
+  border-left-color: var(--cynosure-color-accent-base, #6366f1);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--cynosure-color-accent-base, #6366f1) 10%, transparent) 0%,
+    transparent 70%
+  );
+  font-weight: 600;
+}
+.docs-toc-num {
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--cynosure-color-foreground-muted) 80%, transparent);
+}
+.docs-toc-link.is-active .docs-toc-num {
+  color: var(--cynosure-color-accent-base, #6366f1);
+}
+.docs-toc-label { letter-spacing: 0.005em; }
+
+/* Chart canvas frame — explicit height so Charts have a sized container. */
+.sc-chart-frame {
+  display: block;
+  width: 100%;
+  min-height: 280px;
+  height: var(--sc-chart-h, 320px);
+}
