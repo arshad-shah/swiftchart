@@ -11,7 +11,7 @@ import { traffic } from '../../../components/ExampleData';
   client:visible
   kind="hbar"
   data={traffic}
-  mapping={{ x: 'visits', y: 'source' }}
+  mapping={{ x: 'source', y: 'visits' }}
   options={{ theme: 'midnight' }}
   height={320}
 />
@@ -22,7 +22,7 @@ import { traffic } from '../../../components/ExampleData';
     import { HBarChart } from '@arshad-shah/swift-chart';
 
     const chart = new HBarChart('#chart', { theme: 'midnight' });
-    chart.setData(traffic, { x: 'visits', y: 'source' });
+    chart.setData(traffic, { x: 'source', y: 'visits' });
     ```
   </TabItem>
   <TabItem label="React">
@@ -31,7 +31,7 @@ import { traffic } from '../../../components/ExampleData';
 
     <HBar
       data={traffic}
-      mapping={{ x: 'visits', y: 'source' }}
+      mapping={{ x: 'source', y: 'visits' }}
       theme="midnight"
       height={320}
     />

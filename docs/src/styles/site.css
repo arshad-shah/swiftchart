@@ -1,9 +1,31 @@
-/* Override Starlight accents to match SwiftChart's midnight theme. */
+/* SwiftChart docs — visual identity */
+
 :root {
   --sl-color-accent-low: #1a1a3e;
   --sl-color-accent: #5b8cff;
   --sl-color-accent-high: #b8c8ff;
 }
+
+/* Filled, opaque header so the top bar reads as a real chrome instead
+   of bleeding into the hero. */
+:root {
+  --sl-color-bg-nav: #0f1428;
+  --header-border: 1px solid rgba(91, 140, 255, 0.18);
+}
+
+:root[data-theme='light'] {
+  --sl-color-bg-nav: #f5f7ff;
+  --header-border: 1px solid rgba(91, 140, 255, 0.24);
+}
+
+header.header {
+  background: var(--sl-color-bg-nav);
+  border-bottom: var(--header-border);
+  backdrop-filter: saturate(140%) blur(6px);
+  -webkit-backdrop-filter: saturate(140%) blur(6px);
+}
+
+/* Frame around every embedded chart preview. */
 .chart-frame {
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.5rem;
