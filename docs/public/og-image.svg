@@ -19,7 +19,7 @@
   <!-- Tagline -->
   <text x="96" y="398" font-family="-apple-system, 'SF Pro Text', 'Inter', system-ui, sans-serif"
         font-size="34" font-weight="500" fill="#a8b3d4">
-    Lightning-fast Canvas charts. Zero deps. 13 chart types.
+    Lightning-fast Canvas charts. Zero deps. 25 chart types.
   </text>
 
   <!-- Stats row -->

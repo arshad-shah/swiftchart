@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  dpr, lerp, clamp, niceNum, niceScale, shortNum, hexToRgba, resolveData,
+  dpr, lerp, clamp, niceNum, niceScale, shortNum, hexToRgba, lerpColor, resolveData,
 } from '../../src/utils/helpers';
 
 describe('dpr()', () => {
@@ -219,5 +219,47 @@ describe('resolveData()', () => {
     const result = resolveData(data, {});
     expect(result.labels).toEqual(['10', '20']);
     expect(result.datasets.length).toBe(0);
+  });
+});
+
+describe('lerpColor()', () => {
+  it('interpolates linearly between two hex colours', () => {
+    expect(lerpColor('#000000', '#ffffff', 0)).toBe('rgb(0,0,0)');
+    expect(lerpColor('#000000', '#ffffff', 1)).toBe('rgb(255,255,255)');
+    // Halfway is 127 (truncated), not 128.
+    expect(lerpColor('#000000', '#ffffff', 0.5)).toBe('rgb(127,127,127)');
+  });
+
+  it('clamps t to [0, 1]', () => {
+    expect(lerpColor('#000000', '#ffffff', -1)).toBe('rgb(0,0,0)');
+    expect(lerpColor('#000000', '#ffffff', 2)).toBe('rgb(255,255,255)');
+  });
+
+  it('parses rgb()/rgba() input', () => {
+    expect(lerpColor('rgb(0, 0, 0)', 'rgb(100, 100, 100)', 1)).toBe('rgb(100,100,100)');
+    expect(lerpColor('rgba(0,0,0,0.5)', 'rgba(255,255,255,0.5)', 1)).toBe('rgb(255,255,255)');
+  });
+
+  it('parses 3-digit hex', () => {
+    // #f00 → #ff0000
+    expect(lerpColor('#000', '#f00', 1)).toBe('rgb(255,0,0)');
+  });
+
+  it('does not crash on named colours / hsl() / unfamiliar syntax', () => {
+    // The test runner mocks Canvas2D (see tests/setup.ts) so `fillStyle` is
+    // a plain string field with no normalisation. In a *real* browser the
+    // canvas fallback decodes named colours and hsl() correctly; we can't
+    // exercise that path here without a real canvas backend. What we can
+    // verify is that lerpColor never crashes on these inputs and always
+    // returns a valid `rgb(r,g,b)` string (falling back to black is fine).
+    for (const colour of ['red', 'salmon', 'hsl(120, 100%, 50%)', 'oklch(0.7 0.2 200)']) {
+      const out = lerpColor('#000000', colour, 1);
+      expect(out).toMatch(/^rgb\(\d+,\d+,\d+\)$/);
+    }
+  });
+
+  it('returns black for empty / unrecognised input (graceful fallback)', () => {
+    expect(lerpColor('', '#ffffff', 0)).toBe('rgb(0,0,0)');
+    expect(lerpColor('not-a-color', '#ffffff', 0)).toBe('rgb(0,0,0)');
   });
 });

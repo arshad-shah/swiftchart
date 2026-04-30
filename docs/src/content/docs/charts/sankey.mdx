@@ -1,0 +1,46 @@
+---
+title: Sankey diagram
+description: Flow diagram with proportional links between source and sink nodes.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { energyFlow } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="sankey"
+  nodes={energyFlow.nodes}
+  links={energyFlow.links}
+  options={{ theme: 'midnight' }}
+  height={360}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { SankeyChart } from '@arshad-shah/swift-chart';
+
+    const chart = new SankeyChart('#chart', { theme: 'midnight' });
+    chart.setSankey(energyFlow.nodes, energyFlow.links);
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Sankey } from '@arshad-shah/swift-chart/react';
+
+    <Sankey nodes={nodes} links={links} theme="midnight" height={360} />
+    ```
+  </TabItem>
+</Tabs>
+
+## Layout
+
+The layout splits nodes into columns by longest source-path and relaxes y
+positions iteratively. Tune density with `nodePadding` and `nodeWidth`.
+
+## Reference
+
+- Class: [`SankeyChart`](/api/core/classes/sankeychart/)
+- React component: [`Sankey`](/api/react/variables/sankey/)
+- Layout helper: [`layoutSankey`](/api/core/functions/layoutsankey/)

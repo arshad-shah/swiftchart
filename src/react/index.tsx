@@ -9,16 +9,35 @@ import type {
   ScatterComponentProps, RadarComponentProps, GaugeComponentProps,
   HBarComponentProps, SparklineComponentProps, StackedAreaComponentProps,
   WaterfallComponentProps, TreemapComponentProps, DataMapping,
+  StackedBarComponentProps, BubbleComponentProps, HeatmapComponentProps,
+  CandlestickComponentProps, BoxplotComponentProps, FunnelComponentProps,
+  SankeyComponentProps, ComboComponentProps, RadialBarComponentProps,
+  BulletComponentProps, MarimekkoComponentProps, NetworkComponentProps,
 } from '../types';
 import { BaseChart } from '../core/base';
 import { LineChart } from '../charts/line';
 import { BarChart } from '../charts/bar';
 import { PieChart } from '../charts/pie';
-import {
-  ScatterChart, RadarChart, GaugeChart, HBarChart,
-  Sparkline as SparklineChart, StackedAreaChart,
-  WaterfallChart, TreemapChart,
-} from '../charts/extra';
+import { ScatterChart } from '../charts/scatter';
+import { RadarChart } from '../charts/radar';
+import { GaugeChart } from '../charts/gauge';
+import { HBarChart } from '../charts/hbar';
+import { Sparkline as SparklineChart } from '../charts/sparkline';
+import { StackedAreaChart } from '../charts/stacked-area';
+import { WaterfallChart } from '../charts/waterfall';
+import { TreemapChart } from '../charts/treemap';
+import { StackedBarChart } from '../charts/stacked-bar';
+import { BubbleChart } from '../charts/bubble';
+import { HeatmapChart } from '../charts/heatmap';
+import { CandlestickChart } from '../charts/candlestick';
+import { BoxplotChart } from '../charts/boxplot';
+import { FunnelChart } from '../charts/funnel';
+import { SankeyChart } from '../charts/sankey';
+import { ComboChart } from '../charts/combo';
+import { RadialBarChart } from '../charts/radial-bar';
+import { BulletChart } from '../charts/bullet';
+import { MarimekkoChart } from '../charts/marimekko';
+import { NetworkChart } from '../charts/network';
 
 // ── Generic hook ───────────────────────────────────────
 
@@ -58,11 +77,16 @@ function useChart<T extends BaseChart>(
   const mappingSig = shallowKey(mapping);
   const mappingKey = useMemo(() => mappingSig, [mappingSig]);
 
-  // Pre-built data is sometimes carried entirely on `mapping`
-  // (e.g. streaming: mapping={{ labels, datasets }}). Treat that as the
-  // signal that setData should fire even if `data` is undefined.
-  const mappingHasInlineData =
-    !!(mapping && (mapping as any).labels && (mapping as any).datasets);
+  // Pre-built data is sometimes carried entirely on `mapping`:
+  //   - streaming / Chart.js-style: { labels, datasets }
+  //   - graph charts (Sankey, Network):  { nodes, links }
+  // Either shape should fire setData even when `data` is undefined.
+  const mappingHasInlineData = !!(
+    mapping && (
+      ((mapping as any).labels && (mapping as any).datasets) ||
+      ((mapping as any).nodes && (mapping as any).links)
+    )
+  );
 
   // Forward every non-data, non-mount config field to chart.update()
   // so chart-specific props (donut, donutWidth, area, smooth, dots,
@@ -439,6 +463,129 @@ export const Treemap = forwardRef<ChartRef, TreemapComponentProps>(function Tree
   const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useChart(TreemapChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Stacked-bar React component. Pass `percent` for 100 %-stacked bars. */
+export const StackedBar = forwardRef<ChartRef, StackedBarComponentProps>(function StackedBar(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(StackedBarChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Bubble (scatter + size) React component. */
+export const Bubble = forwardRef<ChartRef, BubbleComponentProps>(function Bubble(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(BubbleChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Heatmap React component. */
+export const Heatmap = forwardRef<ChartRef, HeatmapComponentProps>(function Heatmap(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(HeatmapChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Candlestick React component. */
+export const Candlestick = forwardRef<ChartRef, CandlestickComponentProps>(function Candlestick(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(CandlestickChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Boxplot React component. */
+export const Boxplot = forwardRef<ChartRef, BoxplotComponentProps>(function Boxplot(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(BoxplotChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Funnel React component. */
+export const Funnel = forwardRef<ChartRef, FunnelComponentProps>(function Funnel(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(FunnelChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Sankey React component. Pass `nodes` + `links` as props. */
+export const Sankey = forwardRef<ChartRef, SankeyComponentProps>(function Sankey(props, ref) {
+  const {
+    data, mapping, nodes, links,
+    width, height, className, style, onPointClick, ...config
+  } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Forward the graph through `mapping` so useChart's deps catch identity changes.
+  const merged = useMemo(
+    () => ({ ...(mapping || {}), ...(nodes ? { nodes } : {}), ...(links ? { links } : {}) }) as any,
+    [mapping, nodes, links],
+  );
+  const chartRef = useChart(SankeyChart, containerRef, { ...config, onClick: onPointClick }, data, merged);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Combo (bar + line) React component. */
+export const Combo = forwardRef<ChartRef, ComboComponentProps>(function Combo(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(ComboChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Radial bar / rose React component. */
+export const RadialBar = forwardRef<ChartRef, RadialBarComponentProps>(function RadialBar(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(RadialBarChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Bullet React component. */
+export const Bullet = forwardRef<ChartRef, BulletComponentProps>(function Bullet(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(BulletChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Marimekko (mosaic) React component. */
+export const Marimekko = forwardRef<ChartRef, MarimekkoComponentProps>(function Marimekko(props, ref) {
+  const { data, mapping, width, height, className, style, onPointClick, ...config } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useChart(MarimekkoChart, containerRef, { ...config, onClick: onPointClick }, data, mapping);
+  useImperativeHandle(ref, () => makeImperative(chartRef));
+  return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
+});
+
+/** Network / force-graph React component. Pass `nodes` + `links` as props. */
+export const Network = forwardRef<ChartRef, NetworkComponentProps>(function Network(props, ref) {
+  const {
+    data, mapping, nodes, links,
+    width, height, className, style, onPointClick, ...config
+  } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const merged = useMemo(
+    () => ({ ...(mapping || {}), ...(nodes ? { nodes } : {}), ...(links ? { links } : {}) }) as any,
+    [mapping, nodes, links],
+  );
+  const chartRef = useChart(NetworkChart, containerRef, { ...config, onClick: onPointClick }, data, merged);
   useImperativeHandle(ref, () => makeImperative(chartRef));
   return <div ref={containerRef} className={className} style={makeContainerStyle(width, height, style)} />;
 });

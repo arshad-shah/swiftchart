@@ -1,0 +1,54 @@
+---
+title: Network graph
+description: Force-directed node-link diagram. Layout solved up-front, drawing stays O(n).
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { socialGraph } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="network"
+  nodes={socialGraph.nodes}
+  links={socialGraph.links}
+  options={{ theme: 'midnight' }}
+  height={380}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { NetworkChart } from '@arshad-shah/swift-chart';
+
+    const chart = new NetworkChart('#chart', { theme: 'midnight' });
+    chart.setGraph(socialGraph.nodes, socialGraph.links);
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Network } from '@arshad-shah/swift-chart/react';
+
+    <Network nodes={nodes} links={links} theme="midnight" height={380} />
+    ```
+  </TabItem>
+</Tabs>
+
+## Tuning the simulation
+
+Control the springs and repulsion via the chart config — the underlying solver
+is exposed as a standalone helper too.
+
+```ts
+new NetworkChart('#chart', {
+  iterations: 300,
+  linkStrength: 0.08,
+  chargeStrength: 400,
+});
+```
+
+## Reference
+
+- Class: [`NetworkChart`](/api/core/classes/networkchart/)
+- React component: [`Network`](/api/react/variables/network/)
+- Solver helper: [`simulateForce`](/api/core/functions/simulateforce/)

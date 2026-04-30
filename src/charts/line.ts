@@ -37,7 +37,16 @@ export class LineChart extends BaseChart {
 
   // Read from `this.config` so prop updates propagate without recreation.
   private get _area(): boolean { return !!this.config.area; }
-  private get _smooth(): boolean { return this.config.smooth !== false; }
+  private get _step(): false | 'before' | 'after' | 'middle' {
+    const s = this.config.step;
+    if (s === true) return 'after';
+    if (s === 'before' || s === 'after' || s === 'middle') return s;
+    return false;
+  }
+  private get _smooth(): boolean {
+    if (this._step) return false;
+    return this.config.smooth !== false;
+  }
   private get _dots(): boolean { return this.config.dots !== false; }
   private get _lineWidth(): number { return this.config.lineWidth || 2.5; }
 
@@ -121,6 +130,7 @@ export class LineChart extends BaseChart {
       this.ctx.lineCap = 'round';
       this.ctx.beginPath();
 
+      const stepMode = this._step;
       if (this._smooth && points.length > 2) {
         this.ctx.moveTo(points[0].x, points[0].y);
         for (let i = 0; i < points.length - 1; i++) {
@@ -133,6 +143,24 @@ export class LineChart extends BaseChart {
           const cp2x = p2.x - (p3.x - p1.x) / 6;
           const cp2y = p2.y - (p3.y - p1.y) / 6;
           this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+        }
+      } else if (stepMode) {
+        this.ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+          const prev = points[i - 1];
+          const cur = points[i];
+          if (stepMode === 'before') {
+            this.ctx.lineTo(prev.x, cur.y);
+            this.ctx.lineTo(cur.x, cur.y);
+          } else if (stepMode === 'middle') {
+            const mx = (prev.x + cur.x) / 2;
+            this.ctx.lineTo(mx, prev.y);
+            this.ctx.lineTo(mx, cur.y);
+            this.ctx.lineTo(cur.x, cur.y);
+          } else {
+            this.ctx.lineTo(cur.x, prev.y);
+            this.ctx.lineTo(cur.x, cur.y);
+          }
         }
       } else {
         points.forEach((pt, i) =>

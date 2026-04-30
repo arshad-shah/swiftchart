@@ -3,6 +3,9 @@ import {
   BarChart, LineChart, PieChart, ScatterChart,
   RadarChart, GaugeChart, HBarChart, Sparkline,
   StackedAreaChart, WaterfallChart, TreemapChart,
+  StackedBarChart, BubbleChart, HeatmapChart, CandlestickChart,
+  BoxplotChart, FunnelChart, SankeyChart, ComboChart,
+  RadialBarChart, BulletChart, MarimekkoChart, NetworkChart,
 } from '../../src/charts';
 
 function createContainer(w = 600, h = 400): HTMLDivElement {
@@ -28,6 +31,18 @@ const CHART_CLASSES = [
   { name: 'StackedAreaChart', Cls: StackedAreaChart, config: {} },
   { name: 'WaterfallChart', Cls: WaterfallChart, config: {} },
   { name: 'TreemapChart', Cls: TreemapChart, config: {} },
+  { name: 'StackedBarChart', Cls: StackedBarChart, config: {} },
+  { name: 'BubbleChart', Cls: BubbleChart, config: {} },
+  { name: 'HeatmapChart', Cls: HeatmapChart, config: {} },
+  { name: 'CandlestickChart', Cls: CandlestickChart, config: {} },
+  { name: 'BoxplotChart', Cls: BoxplotChart, config: {} },
+  { name: 'FunnelChart', Cls: FunnelChart, config: {} },
+  { name: 'SankeyChart', Cls: SankeyChart, config: {} },
+  { name: 'ComboChart', Cls: ComboChart, config: {} },
+  { name: 'RadialBarChart', Cls: RadialBarChart, config: {} },
+  { name: 'BulletChart', Cls: BulletChart, config: {} },
+  { name: 'MarimekkoChart', Cls: MarimekkoChart, config: {} },
+  { name: 'NetworkChart', Cls: NetworkChart, config: {} },
 ] as const;
 
 describe.each(CHART_CLASSES)('$name', ({ Cls, config }) => {
@@ -59,7 +74,11 @@ describe.each(CHART_CLASSES)('$name', ({ Cls, config }) => {
     const chart = new Cls(container, config);
     expect(chart.config.animate).toBe(true);
     // Some charts override grid/tooltip/legend defaults
-    const noGrid = ['GaugeChart', 'Sparkline', 'TreemapChart'];
+    const noGrid = [
+      'GaugeChart', 'Sparkline', 'TreemapChart',
+      'FunnelChart', 'SankeyChart', 'RadialBarChart',
+      'BulletChart', 'NetworkChart',
+    ];
     const noTooltip = ['Sparkline'];
     expect(chart.config.showGrid).toBe(!noGrid.includes(Cls.name));
     expect(chart.config.showTooltip).toBe(!noTooltip.includes(Cls.name));

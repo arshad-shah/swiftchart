@@ -164,7 +164,7 @@ describe('Integration: Large dataset performance', () => {
   });
 
   it('handles 500 scatter points', async () => {
-    const { ScatterChart } = await import('../../src/charts/extra');
+    const { ScatterChart } = await import('../../src/charts/scatter');
     const chart = new ScatterChart(container, { animate: false });
     const data = Array.from({ length: 500 }, (_, i) => ({
       x: Math.random() * 1000,

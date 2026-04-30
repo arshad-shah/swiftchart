@@ -1,0 +1,87 @@
+import type { BaseChartConfig } from '../types';
+import { BaseChart } from '../core/base';
+import { hexToRgba, arraysExtent } from '../utils/helpers';
+import { roundedBar, seriesColor } from '../core/draw';
+
+/**
+ * Canvas 2D horizontal bar chart. Best for ranked lists or long category labels.
+ *
+ * Mapping convention: `x` is the categorical label field, `y` is the numeric
+ * value field (the bar length).
+ *
+ * @example
+ * ```ts
+ * import { HBarChart } from '@arshad-shah/swift-chart';
+ *
+ * const chart = new HBarChart('#chart', { theme: 'midnight' });
+ * chart.setData(traffic, { x: 'source', y: 'visits' });
+ * ```
+ */
+export class HBarChart extends BaseChart {
+  constructor(container: HTMLElement | string, config: BaseChartConfig = {}) {
+    super(container, { padding: { top: 30, right: 20, bottom: 20, left: 90 }, ...config });
+  }
+
+  _onMouse(e: MouseEvent): void {
+    const n = this.resolved.labels.length;
+    this.hoverIndex = this._idxFromY(e, n);
+    if (this.hoverIndex >= 0 && this.tooltip) {
+      const p = this.plotArea;
+      const slot = p.h / n;
+      this.tooltip.showStructured(
+        p.x + p.w / 2, p.y + (this.hoverIndex + 0.5) * slot,
+        this._tooltipContent(this.hoverIndex),
+      );
+    }
+    this._draw();
+  }
+
+  _draw(): void {
+    const { labels, datasets } = this.resolved;
+    if (!labels.length) return;
+    this._drawBg();
+    this._drawTitle();
+    this._drawLegend();
+    const [, maxV] = arraysExtent(datasets.map((d) => d.data));
+    const maxVal = Math.max(maxV, 1);
+    const p = this.plotArea;
+    const n = labels.length;
+    const slot = p.h / n;
+    const barH = slot * 0.6;
+    const gap = slot * 0.4;
+    const t = this.animProgress;
+    const ff = this._fontFamily();
+
+    labels.forEach((label, i) => {
+      this.ctx.fillStyle = i === this.hoverIndex ? this.theme.text : this.theme.textMuted;
+      this.ctx.font = `400 11px ${ff}`;
+      this.ctx.textAlign = 'right';
+      this.ctx.textBaseline = 'middle';
+      const yCenter = p.y + i * slot + slot / 2;
+      const display = String(label).length > 12 ? String(label).slice(0, 11) + '…' : String(label);
+      this.ctx.fillText(display, p.x - 8, yCenter);
+
+      datasets.forEach((ds, si) => {
+        const color = seriesColor(this.theme, ds, si);
+        const val = ds.data[i];
+        const w = (val / maxVal) * p.w * t;
+        const y = p.y + i * slot + gap / 2;
+        const isHover = i === this.hoverIndex;
+        const r = Math.min(4, barH / 2);
+        // Round only the right end (the bar-tip) so adjacent bars in groups
+        // stay visually anchored to the y-axis.
+        roundedBar(this.ctx, p.x, y, w, barH,
+          isHover ? color : hexToRgba(color, 0.75),
+          { radii: [0, r, r, 0], hover: isHover, glowColor: color });
+
+        if (w > 40) {
+          this.ctx.fillStyle = this.theme.onAccent;
+          this.ctx.font = `500 10px ${ff}`;
+          this.ctx.textAlign = 'right';
+          this.ctx.textBaseline = 'middle';
+          this.ctx.fillText(this._fmtVal(val), p.x + w - 8, yCenter);
+        }
+      });
+    });
+  }
+}

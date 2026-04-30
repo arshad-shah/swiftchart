@@ -1,0 +1,46 @@
+---
+title: Combo chart
+description: Bar series with one or more line series overlaid on a shared scale.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ChartPreview from '../../../components/ChartPreview';
+import { monthlySales } from '../../../components/ExampleData';
+
+<ChartPreview
+  client:visible
+  kind="combo"
+  data={monthlySales}
+  mapping={{ x: 'month', y: ['revenue', 'cost', 'target'] }}
+  options={{ theme: 'midnight', lineSeries: ['target'] }}
+  height={320}
+/>
+
+<Tabs syncKey="api">
+  <TabItem label="Vanilla JS">
+    ```ts
+    import { ComboChart } from '@arshad-shah/swift-chart';
+
+    new ComboChart('#chart', { theme: 'midnight', lineSeries: ['target'] })
+      .setData(monthlySales, { x: 'month', y: ['revenue', 'cost', 'target'] });
+    ```
+  </TabItem>
+  <TabItem label="React">
+    ```tsx
+    import { Combo } from '@arshad-shah/swift-chart/react';
+
+    <Combo
+      data={monthlySales}
+      mapping={{ x: 'month', y: ['revenue', 'cost', 'target'] }}
+      lineSeries={['target']}
+      theme="midnight"
+      height={320}
+    />
+    ```
+  </TabItem>
+</Tabs>
+
+## Reference
+
+- Class: [`ComboChart`](/api/core/classes/combochart/)
+- React component: [`Combo`](/api/react/variables/combo/)

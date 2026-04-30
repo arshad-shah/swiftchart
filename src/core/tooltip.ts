@@ -26,6 +26,7 @@ const GAP = 14;
 export class Tooltip {
   el: HTMLDivElement | null;
   canvas: HTMLCanvasElement;
+  private _onScroll: (() => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -47,6 +48,14 @@ export class Tooltip {
       will-change:left,top,opacity;
     `;
     document.body.appendChild(this.el);
+
+    // Tooltip is positioned `fixed`, so any scroll (window or any scrolling
+    // ancestor) visually disconnects it from the data point it was anchored
+    // to. Hide on scroll — re-hovering brings it back at the new position.
+    // The capture phase + passive flag catch scrolls on every ancestor.
+    this._onScroll = () => this.hide();
+    window.addEventListener('scroll', this._onScroll, { capture: true, passive: true });
+    window.addEventListener('resize', this._onScroll, { passive: true });
   }
 
   /** Render a tooltip from structured content. Safe against XSS. */
@@ -137,6 +146,11 @@ export class Tooltip {
   }
 
   destroy(): void {
+    if (this._onScroll) {
+      window.removeEventListener('scroll', this._onScroll, { capture: true } as any);
+      window.removeEventListener('resize', this._onScroll);
+      this._onScroll = null;
+    }
     this.el?.remove();
     this.el = null;
   }
