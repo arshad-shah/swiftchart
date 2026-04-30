@@ -92,7 +92,7 @@
     "typecheck": "tsc --noEmit",
     "size": "size-limit",
     "publint": "publint",
-    "attw": "pnpm pack --pack-destination . && attw arshad-shah-swift-chart-$npm_package_version.tgz && rm -f arshad-shah-swift-chart-$npm_package_version.tgz",
+    "attw": "node scripts/attw.mjs",
     "validate": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build && pnpm run publint && pnpm run attw && pnpm run size",
     "prepublishOnly": "pnpm run validate",
     "clean": "rm -rf dist coverage",
