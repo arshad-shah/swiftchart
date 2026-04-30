@@ -6,9 +6,10 @@ const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
 const tarball = `${pkg.name.replace('@', '').replace('/', '-')}-${pkg.version}.tgz`;
 
-execFileSync('pnpm', ['pack', '--pack-destination', '.'], { stdio: 'inherit' });
+execFileSync('pnpm', ['pack', '--pack-destination', process.cwd()], { stdio: 'inherit' });
+const tarballPath = `${process.cwd()}/${tarball}`;
 try {
-  execFileSync('attw', [tarball], { stdio: 'inherit' });
+  execFileSync('attw', [tarballPath], { stdio: 'inherit' });
 } finally {
-  rmSync(tarball, { force: true });
+  rmSync(tarballPath, { force: true });
 }
