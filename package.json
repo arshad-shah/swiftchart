@@ -1,6 +1,6 @@
 {
   "name": "@arshad-shah/swift-chart",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Lightning-fast, zero-dependency Canvas 2D charting library with React bindings. Schema-agnostic, themeable, animated.",
   "publishConfig": {
     "access": "public"
