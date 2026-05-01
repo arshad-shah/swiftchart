@@ -88,6 +88,7 @@ export default defineConfig({
           items: [
             { label: 'Data mapping', link: '/guides/data-mapping/' },
             { label: 'Theming', link: '/guides/theming/' },
+            { label: 'Per-datum colours', link: '/guides/per-datum-colors/' },
             { label: 'Animations', link: '/guides/animations/' },
             { label: 'Responsive', link: '/guides/responsive/' },
             { label: 'React refs', link: '/guides/react-refs/' },

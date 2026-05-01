@@ -1,6 +1,7 @@
 import type { MarimekkoChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { hexToRgba } from '../utils/helpers';
+import { datumColor } from '../core/draw';
 
 interface MarimekkoCell {
   x: number; y: number; w: number; h: number;
@@ -82,7 +83,7 @@ export class MarimekkoChart extends BaseChart {
         const v = datasets[si].data[i];
         if (v <= 0) continue;
         const segH = (v / colTotal) * p.h;
-        const color = datasets[si].color || this.theme.colors[si % this.theme.colors.length];
+        const color = datumColor(this.theme, datasets[si], si, i, this.config.colorFn);
         cells.push({ x, y, w: colW, h: segH, value: v, colIdx: i, rowIdx: si, color });
         y += segH;
       }

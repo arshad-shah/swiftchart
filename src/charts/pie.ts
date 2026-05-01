@@ -1,6 +1,7 @@
 import type { PieChartConfig, DataMapping } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba, resolveData, safeRadius } from '../utils/helpers';
+import { hexToRgba, resolveData, safeRadius, isColorString, hashStr } from '../utils/helpers';
+import { datumColor } from '../core/draw';
 
 /**
  * Canvas 2D pie or donut chart.
@@ -43,9 +44,29 @@ export class PieChart extends BaseChart {
         Object.keys(data[0]).find(k => typeof data[0][k] === 'string') || Object.keys(data[0])[0];
       const valKey = mapping?.valueField || mapping?.y as string ||
         Object.keys(data[0]).find(k => typeof data[0][k] === 'number' && k !== labelKey);
+      // Per-datum colours from `colorField`: resolve once via the shared
+      // helper so categorical / hex / named values behave identically to the
+      // cartesian charts.
+      const cf = mapping?.colorField;
+      const cm = mapping?.colorMap;
+      const palette = this.theme.colors;
+      const colors = cf
+        ? data.map(d => {
+            const raw = d[cf];
+            if (raw == null) return undefined;
+            const s = String(raw);
+            if (isColorString(s)) return s;
+            if (cm && cm[s]) return cm[s];
+            return palette.length ? palette[hashStr(s) % palette.length] : undefined;
+          })
+        : undefined;
       this.resolved = {
         labels: data.map(d => String(d[labelKey])),
-        datasets: [{ data: data.map(d => Number(d[valKey!]) || 0), label: 'Values' }],
+        datasets: [{
+          data: data.map(d => Number(d[valKey!]) || 0),
+          label: 'Values',
+          ...(colors ? { colors } : {}),
+        }],
       };
     } else if (mapping?.labels && mapping?.values) {
       this.resolved = {
@@ -53,7 +74,11 @@ export class PieChart extends BaseChart {
         datasets: [{ data: mapping.values, label: 'Values' }],
       };
     } else {
-      this.resolved = resolveData(data, { ...this.config, ...mapping } as DataMapping);
+      this.resolved = resolveData(
+        data,
+        { ...this.config, ...mapping } as DataMapping,
+        this.theme.colors,
+      );
     }
     this._animate();
   }
@@ -101,7 +126,7 @@ export class PieChart extends BaseChart {
 
     if (this.hoverIndex >= 0 && this.tooltip) {
       const pct = ((vals[this.hoverIndex] / total) * 100).toFixed(1);
-      const color = this.theme.colors[this.hoverIndex % this.theme.colors.length];
+      const color = datumColor(this.theme, this.resolved.datasets[0], 0, this.hoverIndex, this.config.colorFn, this.hoverIndex);
       this.tooltip.showStructured(mx, my, {
         title: this.resolved.labels[this.hoverIndex],
         rows: [{
@@ -131,10 +156,12 @@ export class PieChart extends BaseChart {
     if (total <= 0 || r <= 0) return;
     const t = this.animProgress;
 
+    const ds0 = datasets[0];
+    const colorFn = this.config.colorFn;
     let startAngle = -Math.PI / 2;
     vals.forEach((val, i) => {
       const sliceAngle = (val / total) * Math.PI * 2 * t;
-      const color = this.theme.colors[i % this.theme.colors.length];
+      const color = datumColor(this.theme, ds0, 0, i, colorFn, i);
       const isHover = i === this.hoverIndex;
       const midAngle = startAngle + sliceAngle / 2;
       const offset = isHover ? 6 : 0;

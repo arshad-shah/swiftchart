@@ -60,6 +60,17 @@ export class ScatterChart extends BaseChart {
     this._animate();
   }
 
+  /** Layered colour resolution: `colorFn` → group palette index. */
+  private _ptColor(value: number, dataIdx: number, groupIdx: number): string {
+    const fn = this.config.colorFn;
+    if (fn) {
+      const c = fn(value, dataIdx, groupIdx);
+      if (c) return c;
+    }
+    const palette = this.theme.colors;
+    return palette[groupIdx % palette.length];
+  }
+
   private _buildQuadtree(): void {
     if (!this.scatterData) return;
     const p = this.plotArea;
@@ -101,7 +112,7 @@ export class ScatterChart extends BaseChart {
 
     if (this.hoverIndex >= 0 && this.tooltip && this._flatPts[this.hoverIndex]) {
       const fp = this._flatPts[this.hoverIndex];
-      const color = this.theme.colors[fp.gi % this.theme.colors.length];
+      const color = this._ptColor(fp.pt.y, this.hoverIndex, fp.gi);
       this.tooltip.showStructured(fp.sx, fp.sy, {
         title: fp.pt.label || fp.gName,
         rows: [
@@ -155,8 +166,8 @@ export class ScatterChart extends BaseChart {
 
     let globalIdx = 0;
     Object.entries(this.scatterData).forEach(([, pts], gi) => {
-      const color = this.theme.colors[gi % this.theme.colors.length];
       pts.forEach((pt) => {
+        const color = this._ptColor(pt.y, globalIdx, gi);
         const sx = p.x + ((pt.x - xScale.min) / xRange) * p.w;
         const sy = p.y + p.h - ((pt.y - yScale.min) / yRange) * p.h;
         const isHover = globalIdx === this.hoverIndex;

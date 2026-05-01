@@ -1,7 +1,7 @@
 import type { ComboChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { niceScale, hexToRgba, arraysExtent, safeRadius } from '../utils/helpers';
-import { roundedBar, seriesColor, yProj } from '../core/draw';
+import { roundedBar, seriesColor, datumColor, yProj } from '../core/draw';
 
 /**
  * Combo chart — bars + an overlay line series. List the series labels that
@@ -69,12 +69,13 @@ export class ComboChart extends BaseChart {
     const groupPad = slot * 0.18;
     const barGap = 2;
     const barW = Math.max(1, (slot - groupPad * 2 - barGap * (barCount - 1)) / barCount);
+    const colorFn = this.config.colorFn;
     bars.forEach((si, k) => {
       const ds = datasets[si];
-      const color = seriesColor(this.theme, ds, si);
       for (let i = 0; i < n; i++) {
         const v = ds.data[i] ?? 0;
         if (v === 0) continue;
+        const color = datumColor(this.theme, ds, si, i, colorFn);
         const xStart = p.x + i * slot + groupPad + k * (barW + barGap);
         const range = scale.max - scale.min || 1;
         const h = (Math.abs(v) / range) * p.h * t;

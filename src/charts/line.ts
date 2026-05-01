@@ -1,6 +1,7 @@
 import type { LineChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { niceScale, hexToRgba, clamp, arraysExtent } from '../utils/helpers';
+import { datumColor, seriesColor } from '../core/draw';
 import { lttbIndices, autoTarget } from '../perf/lttb';
 import { visibleRange } from '../perf/viewport';
 
@@ -96,8 +97,12 @@ export class LineChart extends BaseChart {
 
     if (this.hoverIndex >= 0) this._drawCrosshair(this.hoverIndex);
 
+    const colorFn = this.config.colorFn;
     datasets.forEach((ds, si) => {
-      const color = ds.color || this.theme.colors[si % this.theme.colors.length];
+      // Stroke / area fill stay at the series level — a single line can't
+      // change colour mid-segment in any clean way. `colorFn` and per-datum
+      // overrides apply to the *dots* below, where it's well-defined.
+      const color = seriesColor(this.theme, ds, si);
 
       // ── LTTB downsampling ───────────────────────────
       const target = this.downsampleTarget || autoTarget(ds.data.length, p.w);
@@ -183,17 +188,20 @@ export class LineChart extends BaseChart {
       if (this._dots) {
         points.forEach((pt) => {
           const isHover = pt.origIdx === this.hoverIndex;
+          // Dot ring matches the line, but the *fill* (and hover halo) use the
+          // per-datum colour so consumers can highlight individual points.
+          const dotColor = datumColor(this.theme, ds, si, pt.origIdx, colorFn);
           this.ctx.beginPath();
           this.ctx.arc(pt.x, pt.y, isHover ? 5 : 3, 0, Math.PI * 2);
-          this.ctx.fillStyle = isHover ? color : this.theme.bg;
+          this.ctx.fillStyle = isHover ? dotColor : this.theme.bg;
           this.ctx.fill();
-          this.ctx.strokeStyle = color;
+          this.ctx.strokeStyle = dotColor;
           this.ctx.lineWidth = 2;
           this.ctx.stroke();
           if (isHover) {
             this.ctx.beginPath();
             this.ctx.arc(pt.x, pt.y, 10, 0, Math.PI * 2);
-            this.ctx.fillStyle = hexToRgba(color, 0.15);
+            this.ctx.fillStyle = hexToRgba(dotColor, 0.15);
             this.ctx.fill();
           }
         });

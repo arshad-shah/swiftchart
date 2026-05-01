@@ -45,6 +45,45 @@ import { monthlySales, regionPnL } from '../../../components/ExampleData';
 
 <ChartPreview client:visible kind="bar" data={regionPnL} mapping={{ x: 'region', y: 'pnl' }} options={{ theme: 'arctic' }} height={260} />
 
+### Per-datum colours
+
+Colour individual bars by value with a `colorFn`, or bind to a row field with `colorField` + `colorMap`. See the [per-datum colours guide](/guides/per-datum-colors/) for the full resolution chain.
+
+<ChartPreview
+  client:visible
+  kind="bar"
+  data={[
+    { region: 'NA',    pnl: 240,  sign: 'pos' },
+    { region: 'EU',    pnl: 180,  sign: 'pos' },
+    { region: 'APAC',  pnl: -60,  sign: 'neg' },
+    { region: 'LATAM', pnl: -30,  sign: 'neg' },
+    { region: 'MEA',   pnl: 90,   sign: 'pos' },
+  ]}
+  mapping={{
+    x: 'region',
+    y: 'pnl',
+    colorField: 'sign',
+    colorMap: { pos: '#22c55e', neg: '#ef4444' },
+  }}
+  options={{ theme: 'arctic' }}
+  height={260}
+/>
+
+```ts
+// Either bind via the row data...
+chart.setData(regionPnL, {
+  x: 'region',
+  y: 'pnl',
+  colorField: 'sign',
+  colorMap: { pos: '#22c55e', neg: '#ef4444' },
+});
+
+// ...or compute at draw time:
+new BarChart('#chart', {
+  colorFn: (v) => v < 0 ? '#ef4444' : '#22c55e',
+}).setData(regionPnL, { x: 'region', y: 'pnl' });
+```
+
 ## Reference
 
 - Class: [`BarChart`](/api/core/classes/barchart/)

@@ -1,6 +1,7 @@
 import type { FunnelChartConfig, FunnelItem, DataMapping } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba } from '../utils/helpers';
+import { hexToRgba, isColorString, hashStr } from '../utils/helpers';
+import { datumColor } from '../core/draw';
 
 /**
  * Conversion funnel chart. Each stage is drawn as a centred trapezoid whose
@@ -24,6 +25,7 @@ export class FunnelChart extends BaseChart {
   declare config: FunnelChartConfig & BaseChart['config'];
 
   private _items: FunnelItem[] = [];
+  private _itemColors: (string | undefined)[] | undefined;
 
   constructor(container: HTMLElement | string, config: FunnelChartConfig = {}) {
     super(container, {
@@ -36,12 +38,36 @@ export class FunnelChart extends BaseChart {
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
     const labelKey = mapping?.labelField ?? mapping?.x ?? 'label';
     const valKey = mapping?.valueField ?? (mapping?.y as string) ?? 'value';
-    this._items = (data || []).map((d) => ({
+    const cf = mapping?.colorField;
+    const cm = mapping?.colorMap;
+    const palette = this.theme.colors;
+    const enriched = (data || []).map((d) => ({
       label: String(d[labelKey] ?? ''),
       value: +d[valKey] || 0,
+      _color: cf ? (() => {
+        const raw = d[cf];
+        if (raw == null) return undefined;
+        const s = String(raw);
+        if (isColorString(s)) return s;
+        if (cm && cm[s]) return cm[s];
+        return palette.length ? palette[hashStr(s) % palette.length] : undefined;
+      })() : undefined,
     })).filter((d) => d.value > 0);
+    this._items = enriched.map(({ label, value }) => ({ label, value }));
+    this._itemColors = cf ? enriched.map(d => d._color) : undefined;
     this.resolved = { labels: this._items.map((d) => d.label), datasets: [] };
     this._animate();
+  }
+
+  private _datumColor(i: number): string {
+    const fn = this.config.colorFn;
+    if (fn) {
+      const c = fn(this._items[i]?.value ?? 0, i, 0);
+      if (c) return c;
+    }
+    const c = this._itemColors?.[i];
+    if (c) return c;
+    return datumColor(this.theme, undefined, i, 0);
   }
 
   _onMouse(e: MouseEvent): void {
@@ -58,7 +84,7 @@ export class FunnelChart extends BaseChart {
       this.tooltip.showStructured(p.x + p.w / 2, p.y + (this.hoverIndex + 0.5) * slot, {
         title: d.label,
         rows: [
-          { label: 'value', value: this._fmtVal(d.value), color: this.theme.colors[0] },
+          { label: 'value', value: this._fmtVal(d.value), color: this._datumColor(this.hoverIndex) },
           { label: 'of top', value: `${conv}%` },
           { label: 'drop', value: `${drop}%`, color: this.theme.negative },
         ],
@@ -91,7 +117,7 @@ export class FunnelChart extends BaseChart {
       const yTop = p.y + idxFromTop * slotH;
       const yBot = yTop + slotH - 2;
       const cx = p.x + p.w / 2;
-      const color = this.theme.colors[i % this.theme.colors.length];
+      const color = this._datumColor(i);
       const isHover = i === this.hoverIndex;
 
       // In pyramid mode the wide edge sits at the *bottom* of each slot so

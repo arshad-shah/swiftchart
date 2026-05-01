@@ -222,14 +222,75 @@ export function escapeHtml(value: unknown): string {
 }
 
 /**
+ * Quick test for whether a string already looks like a CSS colour the canvas
+ * can consume directly. Tolerates leading whitespace. Used by `resolveData`
+ * to decide whether to pass `colorField` values through verbatim or hash
+ * them through the palette.
+ */
+export function isColorString(s: string): boolean {
+  if (!s) return false;
+  const v = s.trim().toLowerCase();
+  return (
+    v.startsWith('#') ||
+    v.startsWith('rgb') ||
+    v.startsWith('hsl') ||
+    v.startsWith('oklch') ||
+    v.startsWith('oklab') ||
+    v.startsWith('lab') ||
+    v.startsWith('lch') ||
+    v.startsWith('color(') ||
+    v.startsWith('color-mix(') ||
+    v === 'transparent' ||
+    v === 'currentcolor'
+  );
+}
+
+/**
+ * Deterministic FNV-1a-style hash → unsigned 32-bit int. Used to map
+ * categorical strings onto palette indices so the same category always lands
+ * on the same colour across renders.
+ */
+export function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Resolve `mapping.colorField` against a row → colour string. Categorical
+ * values fall through `colorMap` first, then hash to the theme palette so
+ * the same category gets the same colour across re-renders.
+ */
+function resolveDatumColor(
+  raw: unknown,
+  colorMap: Record<string, string> | undefined,
+  palette: string[],
+): string | undefined {
+  if (raw == null) return undefined;
+  const s = String(raw);
+  if (isColorString(s)) return s;
+  if (colorMap && colorMap[s]) return colorMap[s];
+  if (!palette.length) return undefined;
+  return palette[hashStr(s) % palette.length];
+}
+
+/**
  * Schema-agnostic data resolution.
  *
  * Accepts any array of objects and auto-detects label/value fields,
  * or uses explicit field mapping from the user.
+ *
+ * When `mapping.colorField` is set, each resolved {@link Dataset} also gets
+ * a parallel `colors` array. The third arg supplies the active theme palette
+ * for hash-fallback when a category has no explicit `colorMap` entry.
  */
 export function resolveData(
   data: Record<string, any>[] | null | undefined,
-  config: DataMapping
+  config: DataMapping,
+  palette: string[] = []
 ): ResolvedData {
   // Pre-built format
   if (config.labels && config.datasets) {
@@ -261,12 +322,22 @@ export function resolveData(
   }
 
   const labels = data.map(d => String(d[labelKey] ?? ''));
+
+  // Bind colorField once, parallel to data rows.
+  let perDatumColors: (string | undefined)[] | undefined;
+  if (config.colorField) {
+    const cf = config.colorField;
+    const cm = config.colorMap;
+    perDatumColors = data.map(d => resolveDatumColor(d[cf], cm, palette));
+  }
+
   const datasets: Dataset[] = valueKeys.map((key, i) => ({
     label: config.seriesNames?.[i] || key,
     data: data.map(d => {
       const v = d[key];
       return typeof v === 'number' ? v : parseFloat(v) || 0;
     }),
+    ...(perDatumColors ? { colors: perDatumColors } : {}),
   }));
 
   return { labels, datasets };

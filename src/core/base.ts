@@ -174,7 +174,11 @@ export abstract class BaseChart {
   // ── Public API ─────────────────────────────────────
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
-    this.resolved = resolveData(data, { ...this.config, ...mapping } as DataMapping);
+    this.resolved = resolveData(
+      data,
+      { ...this.config, ...mapping } as DataMapping,
+      this.theme.colors,
+    );
     this._animate();
   }
 
@@ -278,8 +282,16 @@ export abstract class BaseChart {
   // ── Common Drawing Helpers ─────────────────────────
 
   protected _drawBg(): void {
-    this.ctx.fillStyle = this.theme.bg;
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    // Always clear the canvas first — otherwise transparent themes never wipe
+    // the previous frame, and animation frames composite over each other.
+    // That causes anti-aliased text to look blurry and shadow/glow effects
+    // (shadowBlur) to persist after the cursor leaves a hovered datum.
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    const bg = this.theme.bg;
+    if (bg && bg !== 'transparent') {
+      this.ctx.fillStyle = bg;
+      this.ctx.fillRect(0, 0, this.width, this.height);
+    }
   }
 
   protected _drawTitle(): void {

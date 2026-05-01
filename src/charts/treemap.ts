@@ -1,7 +1,7 @@
 import type { BaseChartConfig, DataMapping, TreemapItem, TreemapRect } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba, safeDim } from '../utils/helpers';
-import { roundedBar, seriesColor } from '../core/draw';
+import { hexToRgba, safeDim, isColorString, hashStr } from '../utils/helpers';
+import { roundedBar, datumColor } from '../core/draw';
 import { squarify } from '../perf/layout/squarify';
 
 /**
@@ -24,6 +24,8 @@ import { squarify } from '../perf/layout/squarify';
 export class TreemapChart extends BaseChart {
   private _items: TreemapItem[] = [];
   private _rects: TreemapRect[] = [];
+  /** Per-item colour overrides resolved at setData time (parallel to `_items`). */
+  private _itemColors: (string | undefined)[] | undefined;
 
   constructor(container: HTMLElement | string, config: BaseChartConfig = {}) {
     super(container, {
@@ -38,10 +40,28 @@ export class TreemapChart extends BaseChart {
     const labelKey = mapping?.labelField
       || (data && data[0] && 'label' in data[0] ? 'label' : 'name');
     const valKey = mapping?.valueField || 'value';
-    this._items = (data || [])
-      .map((d) => ({ label: String(d[labelKey]), value: +d[valKey] || 0 }))
+    const cf = mapping?.colorField;
+    const cm = mapping?.colorMap;
+    const palette = this.theme.colors;
+
+    const enriched = (data || [])
+      .map((d) => ({
+        label: String(d[labelKey]),
+        value: +d[valKey] || 0,
+        _color: cf ? (() => {
+          const raw = d[cf];
+          if (raw == null) return undefined;
+          const s = String(raw);
+          if (isColorString(s)) return s;
+          if (cm && cm[s]) return cm[s];
+          return palette.length ? palette[hashStr(s) % palette.length] : undefined;
+        })() : undefined,
+      }))
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
+
+    this._items = enriched.map(({ label, value }) => ({ label, value }));
+    this._itemColors = cf ? enriched.map(d => d._color) : undefined;
     this._animate();
   }
 
@@ -57,13 +77,28 @@ export class TreemapChart extends BaseChart {
       const r = this._rects[this.hoverIndex];
       const total = this._items.reduce((a, b) => a + b.value, 0) || 1;
       const pct = ((r.value / total) * 100).toFixed(1);
-      const color = this.theme.colors[this.hoverIndex % this.theme.colors.length];
+      const color = this._datumColor(this.hoverIndex);
       this.tooltip.showStructured(mx, my, {
         title: r.label,
         rows: [{ label: 'Value', value: `${this._fmtVal(r.value)} (${pct}%)`, color }],
       });
     } else this.tooltip?.hide();
     this._draw();
+  }
+
+  /**
+   * Layered colour resolution for a single tile. Mirrors the cartesian-chart
+   * resolver: `colorFn` → per-item colour from `colorField` → palette index.
+   */
+  private _datumColor(i: number): string {
+    const fn = this.config.colorFn;
+    if (fn) {
+      const c = fn(this._items[i]?.value ?? 0, i, 0);
+      if (c) return c;
+    }
+    const c = this._itemColors?.[i];
+    if (c) return c;
+    return datumColor(this.theme, undefined, i, 0);
   }
 
   _draw(): void {
@@ -77,7 +112,7 @@ export class TreemapChart extends BaseChart {
     const ff = this._fontFamily();
 
     this._rects.forEach((r, i) => {
-      const color = seriesColor(this.theme, undefined, i);
+      const color = this._datumColor(i);
       const isHover = i === this.hoverIndex;
       const pad = 1.5;
       const animW = safeDim(r.rw * t), animH = safeDim(r.rh * t);

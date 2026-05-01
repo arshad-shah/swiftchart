@@ -1,7 +1,7 @@
 import type { StackedBarChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { niceScale, hexToRgba, arrayMax } from '../utils/helpers';
-import { roundedBar, seriesColor } from '../core/draw';
+import { roundedBar, seriesColor, datumColor } from '../core/draw';
 
 /**
  * Vertical stacked bar chart. Each label slot stacks the series values.
@@ -99,7 +99,7 @@ export class StackedBarChart extends BaseChart {
         const h = (seg / range) * p.h * t;
         if (h <= 0) continue;
 
-        const color = seriesColor(this.theme, datasets[si], si);
+        const color = datumColor(this.theme, datasets[si], si, i, this.config.colorFn);
         const isTop = si === topSeries;
         // Round only the top corners — and only on the topmost segment of
         // the stack — so the rest butt cleanly together.

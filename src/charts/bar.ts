@@ -1,7 +1,7 @@
 import type { BaseChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { niceScale, hexToRgba, arraysExtent } from '../utils/helpers';
-import { roundedBar, seriesColor } from '../core/draw';
+import { roundedBar, datumColor } from '../core/draw';
 
 /**
  * Canvas 2D vertical bar chart. Pass multiple Y fields for grouped bars.
@@ -71,9 +71,10 @@ export class BarChart extends BaseChart {
     const range = scale.max - scale.min || 1;
     const zeroY = p.y + p.h - ((0 - scale.min) / range) * p.h;
 
+    const colorFn = this.config.colorFn;
     datasets.forEach((ds, si) => {
-      const color = seriesColor(this.theme, ds, si);
       ds.data.forEach((val, i) => {
+        const color = datumColor(this.theme, ds, si, i, colorFn);
         const xStart = p.x + i * groupW + groupPad + si * (barW + barGap);
         const rawH = (Math.abs(val) / range) * p.h * t;
         const rawY = val >= 0 ? zeroY - rawH : zeroY;

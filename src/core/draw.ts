@@ -12,7 +12,7 @@
  * none reach back into a class. Pass what you need.
  */
 
-import type { Dataset, NiceScale, PlotArea, Theme } from '../types';
+import type { ColorFn, Dataset, NiceScale, PlotArea, Theme } from '../types';
 import { hexToRgba, safeDim, safeRadius } from '../utils/helpers';
 
 // ─── Series colour ──────────────────────────────────────────────────────
@@ -25,6 +25,43 @@ import { hexToRgba, safeDim, safeRadius } from '../utils/helpers';
 export function seriesColor(theme: Theme, ds: Dataset | undefined, idx: number): string {
   if (ds?.color) return ds.color;
   return theme.colors[idx % theme.colors.length];
+}
+
+/**
+ * Resolve a single datum's colour using the layered precedence:
+ *
+ *   1. `colorFn(value, dataIdx, seriesIdx, ds)` — chart-level callback
+ *   2. `ds.colors[dataIdx]`                     — per-datum array
+ *   3. `ds.color`                               — series override
+ *   4. `theme.colors[paletteIdx % len]`         — palette fallback
+ *
+ * `paletteIdx` defaults to `seriesIdx`, which is right for the common case of
+ * multi-series charts (one palette colour per series). Single-series charts
+ * where each datum should pick the next palette colour — pie, treemap,
+ * funnel, radial bar — pass `paletteIdx = dataIdx` instead.
+ *
+ * Each layer is gated behind a single truthiness check so the hot path stays
+ * branch-light.
+ */
+export function datumColor(
+  theme: Theme,
+  ds: Dataset | undefined,
+  seriesIdx: number,
+  dataIdx: number,
+  colorFn?: ColorFn,
+  paletteIdx: number = seriesIdx,
+): string {
+  if (colorFn) {
+    const c = colorFn(ds?.data[dataIdx] ?? 0, dataIdx, seriesIdx, ds);
+    if (c) return c;
+  }
+  const arr = ds?.colors;
+  if (arr) {
+    const c = arr[dataIdx];
+    if (c) return c;
+  }
+  if (ds?.color) return ds.color;
+  return theme.colors[paletteIdx % theme.colors.length];
 }
 
 // ─── Value projections ──────────────────────────────────────────────────

@@ -1,7 +1,16 @@
 import type { BaseChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { hexToRgba, arraysExtent } from '../utils/helpers';
-import { roundedBar, seriesColor } from '../core/draw';
+import { roundedBar, datumColor } from '../core/draw';
+
+/** Horizontal bar chart configuration. */
+export interface HBarChartConfig extends BaseChartConfig {
+  /**
+   * Fraction of each row's slot occupied by the bar (0–1). Default `0.6`.
+   * Higher = thicker bars with smaller gaps; lower = thinner bars.
+   */
+  barRatio?: number;
+}
 
 /**
  * Canvas 2D horizontal bar chart. Best for ranked lists or long category labels.
@@ -18,8 +27,11 @@ import { roundedBar, seriesColor } from '../core/draw';
  * ```
  */
 export class HBarChart extends BaseChart {
-  constructor(container: HTMLElement | string, config: BaseChartConfig = {}) {
-    super(container, { padding: { top: 30, right: 20, bottom: 20, left: 90 }, ...config });
+  constructor(container: HTMLElement | string, config: HBarChartConfig = {}) {
+    // Default padding is intentionally tight: base.ts adds extra space for the
+    // title and legend on top of these values, so reserving large top/bottom
+    // padding here would leave dead space when neither is shown.
+    super(container, { padding: { top: 8, right: 12, bottom: 8, left: 90 }, ...config });
   }
 
   _onMouse(e: MouseEvent): void {
@@ -47,10 +59,12 @@ export class HBarChart extends BaseChart {
     const p = this.plotArea;
     const n = labels.length;
     const slot = p.h / n;
-    const barH = slot * 0.6;
-    const gap = slot * 0.4;
+    const ratio = Math.min(1, Math.max(0.05, (this.config as HBarChartConfig).barRatio ?? 0.6));
+    const barH = slot * ratio;
+    const gap = slot * (1 - ratio);
     const t = this.animProgress;
     const ff = this._fontFamily();
+    const colorFn = this.config.colorFn;
 
     labels.forEach((label, i) => {
       this.ctx.fillStyle = i === this.hoverIndex ? this.theme.text : this.theme.textMuted;
@@ -62,7 +76,7 @@ export class HBarChart extends BaseChart {
       this.ctx.fillText(display, p.x - 8, yCenter);
 
       datasets.forEach((ds, si) => {
-        const color = seriesColor(this.theme, ds, si);
+        const color = datumColor(this.theme, ds, si, i, colorFn);
         const val = ds.data[i];
         const w = (val / maxVal) * p.w * t;
         const y = p.y + i * slot + gap / 2;

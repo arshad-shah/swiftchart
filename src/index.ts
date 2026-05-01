@@ -9,7 +9,7 @@ export { Animator, EASINGS } from './core/animator';
 export { Tooltip, type TooltipContent, type TooltipRow } from './core/tooltip';
 export { THEMES, resolveTheme, addTheme } from './core/themes';
 export {
-  seriesColor, yProj, xProj,
+  seriesColor, datumColor, yProj, xProj,
   applyHoverGlow, clearHoverGlow,
   roundedBar, type RoundedBarOpts,
 } from './core/draw';
@@ -56,6 +56,8 @@ export {
   arrayMax,
   arraysExtent,
   resolveData,
+  isColorString,
+  hashStr,
 } from './utils/helpers';
 
 // Performance
@@ -144,4 +146,5 @@ export type {
   NetworkChartConfig,
   NetworkNode,
   NetworkLink,
+  ColorFn,
 } from './types';

@@ -1,0 +1,209 @@
+---
+title: Per-datum colours
+description: Colour individual data points, slices, or bars instead of (or in addition to) the per-series palette.
+---
+
+import ChartPreview from '../../../components/ChartPreview';
+import { traffic } from '../../../components/ExampleData';
+
+By default, every chart picks one colour per series from the active theme palette. When you want a single bar, slice, or point to render in its own colour, SwiftChart gives you four ways to express it — pick the one closest to the shape of your data.
+
+## Resolution order
+
+The four layers are tried high-to-low. The first one that returns a colour wins; the rest are skipped:
+
+| Layer | Where it lives | Best for |
+|------:|----------------|----------|
+| 1 | `config.colorFn` callback | value-driven rules ("red if negative") |
+| 2 | `Dataset.colors[i]` array | static, designer-picked colours per slot |
+| 3 | `mapping.colorField` (resolves into `colors[]`) | data-bound categorical colours |
+| 4 | `Dataset.color` | the existing series-wide override |
+| 5 | Theme palette | fallback |
+
+You can mix layers freely — for example, a `colorMap` for normal points plus a `colorFn` that highlights the row under hover.
+
+## 1. `colorFn` — conditional colours by value
+
+The callback runs once per datum at draw time. Return `undefined` to fall through to the next layer.
+
+```ts
+new BarChart('#chart', {
+  colorFn: (v) => v < 0 ? '#ef4444' : v > 600 ? '#22c55e' : '#5b8cff',
+}).setData(regionPnL, { x: 'region', y: 'pnl' });
+```
+
+The same effect using `colorField` — bound to a row attribute so the live preview works without serialising a function:
+
+<ChartPreview
+  client:visible
+  kind="bar"
+  data={[
+    { region: 'NA',    pnl: 240,  sign: 'pos' },
+    { region: 'EU',    pnl: 180,  sign: 'pos' },
+    { region: 'APAC',  pnl: -60,  sign: 'neg' },
+    { region: 'LATAM', pnl: -30,  sign: 'neg' },
+    { region: 'MEA',   pnl: 90,   sign: 'pos' },
+  ]}
+  mapping={{
+    x: 'region',
+    y: 'pnl',
+    colorField: 'sign',
+    colorMap: { pos: '#22c55e', neg: '#ef4444' },
+  }}
+  options={{ theme: 'midnight' }}
+  height={280}
+/>
+
+## 2. `Dataset.colors` — explicit per-slot palette
+
+When you already know the colour for each slot at build time, pass a parallel array. Falsy entries fall through, so you can colour just a few standout points:
+
+```ts
+chart.setData([], {
+  labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+  datasets: [{
+    label: 'Revenue',
+    data: [120, 180, 90, 240],
+    colors: [undefined, undefined, '#fbbf24', undefined], // highlight Q3
+  }],
+});
+```
+
+## 3. `mapping.colorField` — data-bound colours
+
+Carry the colour (or a category that maps to one) on the row itself. SwiftChart resolves it once at `setData` time, so there's no per-frame cost.
+
+The field value can be:
+
+- **A CSS colour string** (`#`, `rgb()`, `hsl()`, `oklch()`, named colours) — used verbatim.
+- **A category key** matched against `colorMap` for an explicit lookup.
+- **Anything else** — hashed deterministically into the theme palette so the same category always lands on the same colour across re-renders.
+
+```ts
+const traffic = [
+  { source: 'Organic',  visits: 4200, status: 'good' },
+  { source: 'Direct',   visits: 3100, status: 'good' },
+  { source: 'Social',   visits: 1800, status: 'warn' },
+  { source: 'Referral', visits: 1100, status: 'warn' },
+  { source: 'Email',    visits: 800,  status: 'bad'  },
+  { source: 'Paid Ads', visits: 600,  status: 'bad'  },
+];
+
+chart.setData(traffic, {
+  x: 'source',
+  y: 'visits',
+  colorField: 'status',
+  colorMap: { good: '#22c55e', warn: '#f59e0b', bad: '#ef4444' },
+});
+```
+
+<ChartPreview
+  client:visible
+  kind="bar"
+  data={[
+    { source: 'Organic',  visits: 4200, status: 'good' },
+    { source: 'Direct',   visits: 3100, status: 'good' },
+    { source: 'Social',   visits: 1800, status: 'warn' },
+    { source: 'Referral', visits: 1100, status: 'warn' },
+    { source: 'Email',    visits: 800,  status: 'bad'  },
+    { source: 'Paid Ads', visits: 600,  status: 'bad'  },
+  ]}
+  mapping={{
+    x: 'source',
+    y: 'visits',
+    colorField: 'status',
+    colorMap: { good: '#22c55e', warn: '#f59e0b', bad: '#ef4444' },
+  }}
+  options={{ theme: 'midnight' }}
+  height={280}
+/>
+
+## 4. Pies, treemaps, and funnels
+
+The same API works on every chart whose datums are naturally per-slot. A pie's slices are a good example:
+
+```ts
+new PieChart('#chart').setData(traffic, {
+  labelField: 'source',
+  valueField: 'visits',
+  colorField: 'source',
+  colorMap: {
+    Organic:  '#5b8cff',
+    Direct:   '#22c55e',
+    Social:   '#f59e0b',
+    Referral: '#a855f7',
+    Email:    '#06b6d4',
+    'Paid Ads': '#ef4444',
+  },
+});
+```
+
+<ChartPreview
+  client:visible
+  kind="pie"
+  data={traffic}
+  mapping={{
+    labelField: 'source',
+    valueField: 'visits',
+    colorField: 'source',
+    colorMap: {
+      'Organic Search': '#5b8cff',
+      'Direct':         '#22c55e',
+      'Social':         '#f59e0b',
+      'Referral':       '#a855f7',
+      'Email':          '#06b6d4',
+      'Paid Ads':       '#ef4444',
+    },
+  }}
+  options={{ theme: 'midnight', donut: true, donutWidth: 0.55 }}
+  height={320}
+/>
+
+## 5. Highlighting a single point on a line chart
+
+`colorFn` applies to dot fills on line charts (the line stroke stays at the series level so it doesn't change colour mid-segment):
+
+```ts
+new LineChart('#chart', {
+  dots: true,
+  colorFn: (v, i) => i === 7 ? '#fbbf24' : undefined,
+}).setData(monthlySales, { x: 'month', y: 'revenue' });
+```
+
+You can achieve the same with a `colors[]` array on a pre-built dataset:
+
+```ts
+chart.setData([], {
+  labels: months,
+  datasets: [{
+    label: 'Revenue',
+    data: revenue,
+    colors: revenue.map((_, i) => i === 7 ? '#fbbf24' : undefined),
+  }],
+});
+```
+
+## Where it applies
+
+| Chart | Datum-level colouring | How |
+|-------|----------------------|-----|
+| Bar, HBar, Stacked Bar, Combo (bars), Marimekko | ✅ each bar / cell | `colorFn`, `colors[]`, `colorField` |
+| Pie / Donut, Treemap, Funnel, Radial Bar | ✅ each slice / tile | `colorFn`, `colorField` |
+| Scatter, Bubble | ✅ each point | `colorFn` (overrides group palette) |
+| Line / Area | ✅ each dot (stroke stays per series) | `colorFn`, `colors[]` |
+| Waterfall, Candlestick | ⛔ semantic (positive/negative, up/down) | use `theme.positive` / `theme.negative` |
+| Heatmap | ⛔ already a value→colour gradient | use `colorScale` |
+
+## Performance
+
+- `colorField` is resolved exactly once, at `setData` time — it adds no per-frame cost.
+- `colorFn` runs once per visible datum per redraw. Keep it pure and side-effect-free.
+- `Dataset.colors` is a sparse array, so a single highlighted point doesn't pay for the rest.
+- The fallback hash (`hashStr`) is FNV-1a — a few cycles per category.
+
+## API references
+
+- [`ColorFn`](/api/core/type-aliases/colorfn/)
+- [`Dataset.colors`](/api/core/interfaces/dataset/#colors)
+- [`DataMapping.colorField`](/api/core/interfaces/datamapping/#colorfield) and [`colorMap`](/api/core/interfaces/datamapping/#colormap)
+- [`datumColor()`](/api/core/functions/datumcolor/) — the resolver, exported for custom chart subclasses

@@ -39,6 +39,44 @@ import { traffic } from '../../../components/ExampleData';
   </TabItem>
 </Tabs>
 
+## Per-slice colours
+
+Map a row field to a colour with `colorField` + `colorMap`. See the [per-datum colours guide](/guides/per-datum-colors/) for the full resolution chain.
+
+<ChartPreview
+  client:visible
+  kind="pie"
+  data={traffic}
+  mapping={{
+    labelField: 'source',
+    valueField: 'visits',
+    colorField: 'source',
+    colorMap: {
+      'Organic Search': '#5b8cff',
+      'Direct':         '#22c55e',
+      'Social':         '#f59e0b',
+      'Referral':       '#a855f7',
+      'Email':          '#06b6d4',
+      'Paid Ads':       '#ef4444',
+    },
+  }}
+  options={{ theme: 'midnight' }}
+  height={340}
+/>
+
+```ts
+chart.setData(traffic, {
+  labelField: 'source',
+  valueField: 'visits',
+  colorField: 'source',
+  colorMap: {
+    'Organic Search': '#5b8cff',
+    Direct: '#22c55e',
+    Social: '#f59e0b',
+  },
+});
+```
+
 ## Reference
 
 - Class: [`PieChart`](/api/core/classes/piechart/)

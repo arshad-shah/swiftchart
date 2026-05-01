@@ -97,7 +97,39 @@ export interface Dataset {
   data: number[];
   /** Override the auto-assigned series colour. */
   color?: string;
+  /**
+   * Per-datum colour overrides, indexed in parallel with `data`. Sparse arrays
+   * are fine — falsy entries fall back through the resolver chain
+   * (`colorFn` → `Dataset.color` → theme palette).
+   */
+  colors?: (string | undefined)[];
 }
+
+/**
+ * Resolve a single datum's colour at draw time. Return `undefined` to fall
+ * through to the next layer in the precedence chain.
+ *
+ * @param value      The datum's numeric value (`dataset.data[dataIdx]`).
+ * @param dataIdx    Index of the datum within its series.
+ * @param seriesIdx  Index of the parent series (0 for single-series charts).
+ * @param dataset    The parent {@link Dataset}, when applicable.
+ *
+ * @example Conditional colour by sign
+ * ```ts
+ * colorFn: (v) => v < 0 ? '#ef4444' : '#22c55e'
+ * ```
+ *
+ * @example Highlight a single point
+ * ```ts
+ * colorFn: (_v, i) => i === 3 ? '#fbbf24' : undefined
+ * ```
+ */
+export type ColorFn = (
+  value: number,
+  dataIdx: number,
+  seriesIdx: number,
+  dataset?: Dataset,
+) => string | undefined;
 
 /**
  * Internal "ready to render" data shape. The result of resolving raw user
@@ -167,6 +199,30 @@ export interface DataMapping {
   sizeField?: string;
   /** Scatter-only: field whose value groups points (drives colour assignment). */
   groupField?: string;
+  /**
+   * Field whose value sets each datum's colour. The value may be either a CSS
+   * colour string (used as-is) or a category key resolved via `colorMap`, or
+   * — when no map is given — hashed deterministically into the theme palette.
+   *
+   * @example
+   * ```ts
+   * chart.setData(rows, { x: 'name', y: 'count', colorField: 'status' });
+   * ```
+   */
+  colorField?: string;
+  /**
+   * Optional category → colour lookup used together with `colorField` for
+   * categorical data-binding.
+   *
+   * @example
+   * ```ts
+   * chart.setData(rows, {
+   *   x: 'name', y: 'count', colorField: 'status',
+   *   colorMap: { ok: '#22c55e', warn: '#f59e0b', err: '#ef4444' },
+   * });
+   * ```
+   */
+  colorMap?: Record<string, string>;
 }
 
 /**
@@ -219,6 +275,19 @@ export interface BaseChartConfig {
    * ```
    */
   formatValue?: (value: number) => string;
+  /**
+   * Per-datum colour callback, applied at draw time. Highest-precedence layer
+   * of the colour resolver chain — returning `undefined` falls through to
+   * `Dataset.colors[i]`, then `Dataset.color`, then the theme palette.
+   *
+   * @example
+   * ```ts
+   * new BarChart('#chart', {
+   *   colorFn: (v) => v < 0 ? '#ef4444' : v > 100 ? '#22c55e' : '#5b8cff',
+   * });
+   * ```
+   */
+  colorFn?: ColorFn;
   /**
    * Click handler invoked with the index of the clicked data point and the
    * resolved data shape so consumers can read the underlying row.
@@ -607,7 +676,13 @@ export interface RadarComponentProps extends ChartComponentProps, BaseChartConfi
 /** Props for the React `<Gauge>` component. */
 export interface GaugeComponentProps extends ChartComponentProps, GaugeConfig {}
 /** Props for the React `<HBar>` component. */
-export interface HBarComponentProps extends ChartComponentProps, BaseChartConfig {}
+export interface HBarComponentProps extends ChartComponentProps, BaseChartConfig {
+  /**
+   * Fraction of each row's slot occupied by the bar (0–1). Default `0.6`.
+   * Higher = thicker bars with smaller gaps.
+   */
+  barRatio?: number;
+}
 
 /**
  * Props for the React `<SparklineComponent>` - a minimal, axis-less inline chart.

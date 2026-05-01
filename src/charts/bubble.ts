@@ -32,6 +32,17 @@ export class BubbleChart extends BaseChart {
   private get _sizeScale(): number { return this.config.sizeScale ?? 1; }
   private get _maxRadius(): number { return this.config.maxRadius ?? 40; }
 
+  /** Layered colour resolution for a single bubble. */
+  private _ptColor(value: number, dataIdx: number, groupIdx: number): string {
+    const fn = this.config.colorFn;
+    if (fn) {
+      const c = fn(value, dataIdx, groupIdx);
+      if (c) return c;
+    }
+    const palette = this.theme.colors;
+    return palette[groupIdx % palette.length];
+  }
+
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
     const xKey = mapping?.x ?? 'x';
     const yKey = (mapping?.y as string) ?? 'y';
@@ -86,7 +97,7 @@ export class BubbleChart extends BaseChart {
     if (this.hoverIndex >= 0 && this.tooltip) {
       const f = this._flat[this.hoverIndex];
       const p = this._points[f.idx];
-      const color = this.theme.colors[f.gi % this.theme.colors.length];
+      const color = this._ptColor(p.y, this.hoverIndex, f.gi);
       this.tooltip.showStructured(f.sx, f.sy, {
         title: p.label || p.group,
         rows: [
@@ -157,7 +168,7 @@ export class BubbleChart extends BaseChart {
       const norm = (pt.size - smin) / sRange;
       const r = safeRadius((4 + norm * 28) * this._sizeScale, this._maxRadius) * t;
       const gi = groupIdx.get(pt.group) || 0;
-      const color = this.theme.colors[gi % this.theme.colors.length];
+      const color = this._ptColor(pt.y, this._flat.length, gi);
       const isHover = this._flat.length === this.hoverIndex;
 
       this.ctx.beginPath();

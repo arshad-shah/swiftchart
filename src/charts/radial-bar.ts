@@ -1,6 +1,7 @@
 import type { RadialBarChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { hexToRgba, arrayMax, safeRadius } from '../utils/helpers';
+import { datumColor } from '../core/draw';
 
 /**
  * Radial bar / rose chart. Each label becomes a wedge.
@@ -49,7 +50,7 @@ export class RadialBarChart extends BaseChart {
       this.tooltip.showStructured(mx, my, {
         title: this.resolved.labels[this.hoverIndex],
         rows: [{ label: 'value', value: this._fmtVal(v),
-          color: this.theme.colors[this.hoverIndex % this.theme.colors.length] }],
+          color: datumColor(this.theme, this.resolved.datasets[0], 0, this.hoverIndex, this.config.colorFn, this.hoverIndex) }],
       });
     }
     this._draw();
@@ -72,13 +73,15 @@ export class RadialBarChart extends BaseChart {
     const sliceA = (Math.PI * 2) / n;
     const t = this.animProgress;
     const isRose = !!this.config.rose;
+    const ds0 = datasets[0];
+    const colorFn = this.config.colorFn;
 
     for (let i = 0; i < n; i++) {
       const v = vals[i];
       const norm = v / maxV;
       const start = i * sliceA - Math.PI / 2;
       const end = start + sliceA * 0.92;
-      const color = this.theme.colors[i % this.theme.colors.length];
+      const color = datumColor(this.theme, ds0, 0, i, colorFn, i);
       const isHover = i === this.hoverIndex;
       // Bar length mode: constant outer radius, variable inner edge.
       // Rose mode: variable outer radius.
