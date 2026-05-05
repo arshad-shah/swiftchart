@@ -83,7 +83,7 @@ function Dashboard() {
 | Stacked Bar | `StackedBarChart` | `StackedBar` | Vertical stack; `percent` for 100%-stacked |
 | Pie | `PieChart` | `Pie` | Classic pie chart |
 | Donut | `PieChart` (donut: true) | `Donut` | Pie with center cutout |
-| Scatter | `ScatterChart` | `Scatter` | XY scatter with grouping |
+| Scatter | `ScatterChart` | `Scatter` | XY scatter with grouping and optional sizing |
 | Bubble | `BubbleChart` | `Bubble` | Scatter with third magnitude on radius |
 | Radar | `RadarChart` | `Radar` | Spider/radar polygon chart |
 | Gauge | `GaugeChart` | `Gauge` | Gauge/meter with segments |
@@ -200,7 +200,7 @@ interface BaseChartConfig {
 `LineChart` also accepts a `step` option for staircase plots:
 
 ```ts
-// Mutually exclusive with smooth. Default 'after' when step: true is passed.
+// Mutually exclusive with smooth. Passing step: true is equivalent to step: 'after'.
 step?: boolean | 'before' | 'after' | 'middle';
 ```
 
