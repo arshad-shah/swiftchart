@@ -1,6 +1,6 @@
 # SwiftChart
 
-**Lightning-fast, zero-dependency Canvas 2D charting library with first-class React bindings.**
+**Lightning-fast, zero-dependency Canvas 2D charting library with first-class React bindings. 25 chart types, tree-shakeable, schema-agnostic, animated.**
 
 ```
 npm install @arshad-shah/swift-chart
@@ -10,13 +10,16 @@ npm install @arshad-shah/swift-chart
 
 | | SwiftChart | Highcharts | Chart.js | Recharts |
 |---|---|---|---|---|
-| **Bundle** | ~14KB gzip | ~80KB | ~60KB | ~45KB |
+| **Bundle** | 6–20 KB brotli¹ | ~80KB | ~60KB | ~45KB |
 | **Dependencies** | 0 | 0 | 0 | 6+ |
 | **Renderer** | Canvas 2D | SVG/Canvas | Canvas | SVG |
 | **React** | Built-in | Wrapper | Wrapper | Native |
 | **Schema** | Any shape | Fixed | Fixed | Fixed |
 | **License** | MIT (free) | Commercial | MIT | MIT |
 | **Themes** | 4 built-in + custom | Paid | Manual | Manual |
+| **Chart types** | 25 | 50+ | 8 | 15 |
+
+¹ Tree-shaken: single chart ~6 KB, full bundle ~20 KB (brotli).
 
 ## Quick Start
 
@@ -73,19 +76,31 @@ function Dashboard() {
 
 | Type | Import (Vanilla) | Import (React) | Description |
 |---|---|---|---|
-| Line | `LineChart` | `Line` | Smooth/straight lines with optional dots |
+| Line | `LineChart` | `Line` | Smooth/straight/step lines with optional dots |
 | Area | `LineChart` (area: true) | `Area` | Line with gradient fill |
 | Bar | `BarChart` | `Bar` | Vertical bars, grouped multi-series |
 | Horizontal Bar | `HBarChart` | `HBar` | Horizontal bars with labels |
+| Stacked Bar | `StackedBarChart` | `StackedBar` | Vertical stack; `percent` for 100%-stacked |
 | Pie | `PieChart` | `Pie` | Classic pie chart |
 | Donut | `PieChart` (donut: true) | `Donut` | Pie with center cutout |
-| Scatter | `ScatterChart` | `Scatter` | XY scatter with grouping + sizing |
+| Scatter | `ScatterChart` | `Scatter` | XY scatter with grouping |
+| Bubble | `BubbleChart` | `Bubble` | Scatter with third magnitude on radius |
 | Radar | `RadarChart` | `Radar` | Spider/radar polygon chart |
 | Gauge | `GaugeChart` | `Gauge` | Gauge/meter with segments |
 | Sparkline | `Sparkline` | `SparklineComponent` | Inline mini chart |
 | Stacked Area | `StackedAreaChart` | `StackedArea` | Stacked filled areas |
 | Waterfall | `WaterfallChart` | `Waterfall` | Waterfall with running total |
 | Treemap | `TreemapChart` | `Treemap` | Squarified treemap |
+| Heatmap | `HeatmapChart` | `Heatmap` | Categorical 2-axis grid with colour scale |
+| Candlestick | `CandlestickChart` | `Candlestick` | Financial OHLC with configurable colours |
+| Boxplot | `BoxplotChart` | `Boxplot` | Box-and-whisker with Tukey fences |
+| Funnel | `FunnelChart` | `Funnel` | Drop-off funnel or pyramid |
+| Sankey | `SankeyChart` | `Sankey` | DAG-driven flow diagram |
+| Combo | `ComboChart` | `Combo` | Bars with line-series overlay |
+| Radial Bar | `RadialBarChart` | `RadialBar` | Polar bar or Coxcomb/rose mode |
+| Bullet | `BulletChart` | `Bullet` | Stephen Few KPI bullet chart |
+| Marimekko | `MarimekkoChart` | `Marimekko` | Variable-width stacked mosaic |
+| Network | `NetworkChart` | `Network` | Force-directed node-link graph |
 
 ## Schema-Agnostic Data
 
@@ -130,6 +145,9 @@ addTheme('neon', {
   text: '#e0e0ff',
   textMuted: '#6060a0',
   axis: '#2a2a4a',
+  positive: '#4ade80',
+  negative: '#ef4444',
+  onAccent: '#0a0a0f',
   colors: ['#ff00ff', '#00ffff', '#ffff00', '#ff6600'],
 });
 ```
@@ -168,11 +186,22 @@ interface BaseChartConfig {
   showGrid?: boolean;          // default: true
   showTooltip?: boolean;       // default: true
   showLegend?: boolean;        // default: true
+  legendPosition?: 'top' | 'bottom' | 'left' | 'right' | 'none'; // default: 'top'
   title?: string;
   subtitle?: string;
   formatValue?: (v: number) => string;
+  colorFn?: (value: number, dataIdx: number, seriesIdx: number) => string | undefined;
   onClick?: (index: number, data: ResolvedData) => void;
+  ariaLabel?: string;
+  ariaDescription?: string;
 }
+```
+
+`LineChart` also accepts a `step` option for staircase plots:
+
+```ts
+// Mutually exclusive with smooth. Default 'after' when step: true is passed.
+step?: boolean | 'before' | 'after' | 'middle';
 ```
 
 ## Browser Support
