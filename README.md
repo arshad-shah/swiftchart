@@ -2,6 +2,15 @@
 
 **Lightning-fast, zero-dependency Canvas 2D charting library with first-class React bindings. 25 chart types, tree-shakeable, schema-agnostic, animated.**
 
+[![CI](https://github.com/arshad-shah/swiftchart/actions/workflows/ci.yml/badge.svg)](https://github.com/arshad-shah/swiftchart/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@arshad-shah/swift-chart?color=cb3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/@arshad-shah/swift-chart)
+[![npm downloads](https://img.shields.io/npm/dm/@arshad-shah/swift-chart?logo=npm&logoColor=white)](https://www.npmjs.com/package/@arshad-shah/swift-chart)
+[![Bundle size](https://img.shields.io/bundlephobia/minzip/@arshad-shah/swift-chart?label=minzipped&color=4ade80)](https://bundlephobia.com/package/@arshad-shah/swift-chart)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](https://bundlephobia.com/package/@arshad-shah/swift-chart)
+[![25 chart types](https://img.shields.io/badge/chart_types-25-f97316)](https://swiftchart.arshadshah.com)
+
 ```
 npm install @arshad-shah/swift-chart
 ```
