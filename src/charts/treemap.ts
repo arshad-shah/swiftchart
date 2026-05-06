@@ -36,6 +36,7 @@ export class TreemapChart extends BaseChart {
   }
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     // Backward-compatible default: support `name` *or* `label` as the label key.
     const labelKey = mapping?.labelField
       || (data && data[0] && 'label' in data[0] ? 'label' : 'name');

@@ -27,6 +27,7 @@ export class WaterfallChart extends BaseChart {
   private _wfData: WaterfallItem[] = [];
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     const labelKey = mapping?.labelField || 'label';
     const valKey = mapping?.valueField || 'value';
     this._wfData = (data || []).map((d) => ({ label: String(d[labelKey]), value: +d[valKey] }));

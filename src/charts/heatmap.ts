@@ -1,4 +1,4 @@
-import type { HeatmapChartConfig, DataMapping } from '../types';
+import type { ChartClickEvent, HeatmapChartConfig, DataMapping } from '../types';
 import { BaseChart } from '../core/base';
 import { lerpColor, hexToRgba } from '../utils/helpers';
 
@@ -48,6 +48,7 @@ export class HeatmapChart extends BaseChart {
   }
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     const xKey = mapping?.x ?? 'x';
     const yKey = (typeof mapping?.y === 'string' ? mapping.y : undefined) ?? 'y';
     const vKey = mapping?.valueField
@@ -114,6 +115,7 @@ export class HeatmapChart extends BaseChart {
       return;
     }
     this.hoverIndex = yi * xn + xi;
+    this.hoverSeriesIndex = yi;
     const v = this._grid[yi]?.[xi];
     if (v != null && this.tooltip) {
       this.tooltip.showStructured(a.x + (xi + 0.5) * cw, a.y + (yi + 0.5) * ch, {
@@ -122,6 +124,26 @@ export class HeatmapChart extends BaseChart {
       });
     }
     this._draw();
+  }
+
+  protected _buildClickEvent(index: number, nativeEvent: MouseEvent): ChartClickEvent {
+    const xn = this._xLabels.length;
+    const xi = xn > 0 ? index % xn : -1;
+    const yi = xn > 0 ? Math.floor(index / xn) : -1;
+    const v = this._grid[yi]?.[xi];
+    return {
+      index,
+      seriesIndex: yi,
+      label: yi >= 0 && xi >= 0 ? `${this._yLabels[yi]} · ${this._xLabels[xi]}` : '',
+      value: typeof v === 'number' ? v : NaN,
+      // Heatmap _cells is in input order, but hoverIndex is grid-encoded — we
+      // don't keep a [yi*xn+xi → cellIdx] map, so the original row isn't
+      // surfaced. Pull `label` / `value` instead.
+      datum: undefined,
+      series: undefined,
+      data: this.resolved,
+      nativeEvent,
+    };
   }
 
   _draw(): void {

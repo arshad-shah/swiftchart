@@ -72,8 +72,10 @@ export class NetworkChart extends BaseChart {
 
   setData(_data: any, mapping?: any): void {
     if (mapping?.nodes && mapping?.links) {
+      this._rawData = Array.isArray(mapping.nodes) ? mapping.nodes : undefined;
       this.setGraph(mapping.nodes, mapping.links);
     } else {
+      this._rawData = undefined;
       this._nodes = []; this._links = [];
       this.resolved = { labels: [], datasets: [] };
       this._animate();

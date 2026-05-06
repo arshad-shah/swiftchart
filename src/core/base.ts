@@ -7,6 +7,7 @@ import type {
   DataMapping,
   NiceScale,
   EasingName,
+  ChartClickEvent,
 } from '../types';
 import { resolveTheme } from './themes';
 import { Animator } from './animator';
@@ -34,8 +35,22 @@ export abstract class BaseChart {
   animator: Animator;
   tooltip: Tooltip | null;
   hoverIndex = -1;
+  /**
+   * Index of the series under the cursor, or `-1` when the hover is not
+   * series-specific (e.g. a column hit on a multi-series line chart).
+   * Charts that can pinpoint a series — bubble, scatter, network, sankey,
+   * marimekko, treemap — set this in their `_onMouse`. Single-series charts
+   * report `0` automatically via {@link _buildClickEvent}.
+   */
+  hoverSeriesIndex = -1;
   animProgress = 1;
   resolved: ResolvedData = { labels: [], datasets: [] };
+  /**
+   * The original rows passed to {@link setData}, kept so click events can
+   * surface the user's untransformed datum. `undefined` when the chart was
+   * fed pre-built `{ labels, datasets }` (no rows ever existed).
+   */
+  protected _rawData: any[] | undefined;
   width = 0;
   height = 0;
   padding: Padding;
@@ -97,12 +112,14 @@ export abstract class BaseChart {
     this._boundMouseMove = (e: MouseEvent) => this._onMouse(e);
     this._boundMouseLeave = () => {
       this.hoverIndex = -1;
+      this.hoverSeriesIndex = -1;
       this.tooltip?.hide();
       this._draw();
     };
-    this._boundClick = (_e: MouseEvent) => {
+    this._boundClick = (e: MouseEvent) => {
       if (this.config.onClick && this.hoverIndex >= 0) {
-        this.config.onClick(this.hoverIndex, this.resolved);
+        const event = this._buildClickEvent(this.hoverIndex, e);
+        this.config.onClick(this.hoverIndex, this.resolved, event);
       }
     };
     this._boundTouch = (e: TouchEvent) => {
@@ -174,6 +191,7 @@ export abstract class BaseChart {
   // ── Public API ─────────────────────────────────────
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     this.resolved = resolveData(
       data,
       { ...this.config, ...mapping } as DataMapping,
@@ -264,6 +282,35 @@ export abstract class BaseChart {
 
   protected _fmtVal(v: number): string {
     return this.config.formatValue ? this.config.formatValue(v) : shortNum(v);
+  }
+
+  /**
+   * Build the {@link ChartClickEvent} for a click at `index`. Default
+   * implementation walks `resolved.datasets`/`_rawData` and uses
+   * `hoverSeriesIndex` (or `0` for single-series charts).
+   *
+   * Charts whose `hoverIndex` does **not** index `resolved.labels` directly
+   * (scatter, bubble, sankey, network, marimekko, treemap) override this
+   * to map their internal flat-list index back onto the right datum/series.
+   */
+  protected _buildClickEvent(index: number, nativeEvent: MouseEvent): ChartClickEvent {
+    const ds = this.resolved.datasets;
+    const seriesIndex =
+      this.hoverSeriesIndex >= 0
+        ? this.hoverSeriesIndex
+        : ds.length === 1 ? 0 : -1;
+    const series = seriesIndex >= 0 ? ds[seriesIndex] : undefined;
+    const v = series?.data[index];
+    return {
+      index,
+      seriesIndex,
+      label: this.resolved.labels[index] ?? '',
+      value: typeof v === 'number' && Number.isFinite(v) ? v : NaN,
+      datum: this._rawData ? this._rawData[index] : undefined,
+      series,
+      data: this.resolved,
+      nativeEvent,
+    };
   }
 
   /** Build a structured tooltip payload from a data index. */

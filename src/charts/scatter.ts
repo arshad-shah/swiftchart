@@ -1,11 +1,19 @@
-import type { DataMapping, ScatterGroups } from '../types';
+import type { ChartClickEvent, DataMapping, ScatterGroups } from '../types';
 import { BaseChart } from '../core/base';
 import {
   niceScale, hexToRgba, arrayMin, arrayMax, safeRadius,
 } from '../utils/helpers';
 import { Quadtree } from '../perf/quadtree';
 
-interface FlatPoint { sx: number; sy: number; pt: { x: number; y: number; label?: string; size?: number }; gi: number; gName: string }
+interface FlatPoint {
+  sx: number;
+  sy: number;
+  pt: { x: number; y: number; label?: string; size?: number };
+  gi: number;
+  gName: string;
+  /** Index into the original `setData(rows)` array — surfaced in click events. */
+  origIdx: number;
+}
 
 /**
  * Canvas 2D scatter chart with grouping and optional per-point sizing.
@@ -24,8 +32,10 @@ export class ScatterChart extends BaseChart {
   scatterData: ScatterGroups | null = null;
   private _qt: Quadtree | null = null;
   private _flatPts: FlatPoint[] = [];
+  private _origIdxOf: WeakMap<object, number> | null = null;
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     this._qt = null;
     this._flatPts = [];
     if (Array.isArray(data) && data.length) {
@@ -36,15 +46,21 @@ export class ScatterChart extends BaseChart {
       const groupKey = mapping?.groupField || 'group';
 
       const groups: ScatterGroups = {};
-      data.forEach((d) => {
+      // Tracked alongside (not on) the public ScatterPoint shape so the type
+      // stays unchanged — let the click event surface the original row.
+      const origIdxOf = new WeakMap<object, number>();
+      data.forEach((d, origIdx) => {
         const g = String(d[groupKey] || 'default');
         if (!groups[g]) groups[g] = [];
-        groups[g].push({
+        const pt = {
           x: +d[xKey], y: +d[yKey],
           label: d[labelKey] || '', size: d[sizeKey] || 5,
-        });
+        };
+        origIdxOf.set(pt, origIdx);
+        groups[g].push(pt);
       });
       this.scatterData = groups;
+      this._origIdxOf = origIdxOf;
       this.resolved = {
         labels: [],
         datasets: Object.keys(groups).map((g, i) => ({
@@ -93,7 +109,8 @@ export class ScatterChart extends BaseChart {
         const sx = p.x + ((pt.x - xScale.min) / xRange) * p.w;
         const sy = p.y + p.h - ((pt.y - yScale.min) / yRange) * p.h;
         this._qt!.insert({ sx, sy, index: globalIdx, group: gi });
-        this._flatPts.push({ sx, sy, pt, gi, gName });
+        const origIdx = this._origIdxOf?.get(pt) ?? -1;
+        this._flatPts.push({ sx, sy, pt, gi, gName, origIdx });
         globalIdx++;
       });
     });
@@ -109,6 +126,10 @@ export class ScatterChart extends BaseChart {
       const nearest = this._qt.nearest(mx, my, 20);
       this.hoverIndex = nearest ? nearest.index : -1;
     } else this.hoverIndex = -1;
+    this.hoverSeriesIndex =
+      this.hoverIndex >= 0 && this._flatPts[this.hoverIndex]
+        ? this._flatPts[this.hoverIndex].gi
+        : -1;
 
     if (this.hoverIndex >= 0 && this.tooltip && this._flatPts[this.hoverIndex]) {
       const fp = this._flatPts[this.hoverIndex];
@@ -122,6 +143,21 @@ export class ScatterChart extends BaseChart {
       });
     } else this.tooltip?.hide();
     this._draw();
+  }
+
+  protected _buildClickEvent(index: number, nativeEvent: MouseEvent): ChartClickEvent {
+    const fp = this._flatPts[index];
+    if (!fp) return super._buildClickEvent(index, nativeEvent);
+    return {
+      index,
+      seriesIndex: fp.gi,
+      label: fp.pt.label ?? fp.gName ?? '',
+      value: fp.pt.y,
+      datum: this._rawData && fp.origIdx >= 0 ? this._rawData[fp.origIdx] : undefined,
+      series: this.resolved.datasets[fp.gi],
+      data: this.resolved,
+      nativeEvent,
+    };
   }
 
   _draw(): void {

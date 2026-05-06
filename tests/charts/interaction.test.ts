@@ -152,7 +152,14 @@ describe('Mouse interactions', () => {
       fireMouseEvent(canvas, 'mousemove', 100, 200);
       chart.hoverIndex = 0; // Force for deterministic test
       fireMouseEvent(canvas, 'click', 100, 200);
-      expect(onClick).toHaveBeenCalledWith(0, expect.any(Object));
+      expect(onClick).toHaveBeenCalledWith(0, expect.any(Object), expect.any(Object));
+      const event = onClick.mock.calls[0][2];
+      expect(event.index).toBe(0);
+      expect(event.label).toBe('A');
+      expect(event.value).toBe(10);
+      expect(event.datum).toEqual({ x: 'A', y: 10 });
+      expect(event.seriesIndex).toBe(0);
+      expect(event.nativeEvent).toBeInstanceOf(MouseEvent);
       chart.destroy();
     });
 

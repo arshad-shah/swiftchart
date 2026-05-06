@@ -1,4 +1,4 @@
-import type { MarimekkoChartConfig } from '../types';
+import type { ChartClickEvent, MarimekkoChartConfig } from '../types';
 import { BaseChart } from '../core/base';
 import { hexToRgba } from '../utils/helpers';
 import { datumColor } from '../core/draw';
@@ -47,6 +47,24 @@ export class MarimekkoChart extends BaseChart {
       this.tooltip.showStructured(mx, my, { title, rows });
     } else this.tooltip?.hide();
     this._draw();
+  }
+
+  protected _buildClickEvent(index: number, nativeEvent: MouseEvent): ChartClickEvent {
+    const colIdx = Math.floor(index / 1000);
+    const rowIdx = index % 1000;
+    const ds = this.resolved.datasets;
+    const series = ds[rowIdx];
+    const value = series?.data[colIdx];
+    return {
+      index,
+      seriesIndex: rowIdx,
+      label: this.resolved.labels[colIdx] ?? '',
+      value: typeof value === 'number' && Number.isFinite(value) ? value : NaN,
+      datum: this._rawData ? this._rawData[colIdx] : undefined,
+      series,
+      data: this.resolved,
+      nativeEvent,
+    };
   }
 
   /** Compute layout once per draw — pure function of resolved + plotArea. */
