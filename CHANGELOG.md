@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+### Patch Changes
+
+- docs: README accuracy pass for v1.1.0 — replace placeholder/inaccurate content with factual data, address review feedback, and add badges to the header.
+
 ## 1.1.0
 
 ### Minor Changes
