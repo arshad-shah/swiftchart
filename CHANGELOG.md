@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+### Patch Changes
+
+- fix: clamp computed canvas-arc radii in bubble, network, radial-bar, and gauge so animation overshoot or near-zero plot areas can no longer throw `IndexSizeError: The radius provided … is negative` from `CanvasRenderingContext2D.arc`. The radial-bar `drawInner` formula (`rOuter - (rOuter - rInner) * norm * t`) can briefly produce a tiny negative under easing curves that overshoot 1; bubble's `r * t` and network's per-node radius had the same shape. Every computed-radius arc call is now wrapped in `safeRadius`.
+
 ## 1.2.0
 
 ### Minor Changes

@@ -85,8 +85,11 @@ export class RadialBarChart extends BaseChart {
       const isHover = i === this.hoverIndex;
       // Bar length mode: constant outer radius, variable inner edge.
       // Rose mode: variable outer radius.
-      const drawOuter = isRose ? rInner + (rOuter - rInner) * norm * t : rOuter;
-      const drawInner = isRose ? rInner : rOuter - (rOuter - rInner) * norm * t;
+      // Wrapped in safeRadius defensively: easing curves can overshoot
+      // (e.g. easeOutBack peaks above 1) which makes the bar-length formula
+      // briefly produce a tiny negative drawInner, throwing IndexSizeError.
+      const drawOuter = safeRadius(isRose ? rInner + (rOuter - rInner) * norm * t : rOuter);
+      const drawInner = safeRadius(isRose ? rInner : rOuter - (rOuter - rInner) * norm * t);
 
       this.ctx.fillStyle = isHover ? color : hexToRgba(color, 0.85);
       this.ctx.beginPath();
