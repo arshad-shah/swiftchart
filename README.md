@@ -200,7 +200,11 @@ interface BaseChartConfig {
   subtitle?: string;
   formatValue?: (v: number) => string;
   colorFn?: (value: number, dataIdx: number, seriesIdx: number) => string | undefined;
-  onClick?: (index: number, data: ResolvedData) => void;
+  onClick?: (
+    index: number,
+    data: ResolvedData,
+    event: ChartClickEvent, // { datum, series, seriesIndex, label, value, nativeEvent, … }
+  ) => void;
   ariaLabel?: string;
   ariaDescription?: string;
 }
@@ -212,6 +216,27 @@ interface BaseChartConfig {
 // Mutually exclusive with smooth. Passing step: true is equivalent to step: 'after'.
 step?: boolean | 'before' | 'after' | 'middle';
 ```
+
+## Click events / drill-down
+
+Every chart's `onClick` (and the React `onPointClick` prop) receives a `ChartClickEvent` carrying the original row, the resolved series, the value, and the underlying `MouseEvent` — enough to wire a chart into analytics, drill-down, or user-journey flows without re-deriving anything.
+
+```tsx
+<Bar
+  data={orders}
+  mapping={{ x: 'region', y: 'revenue' }}
+  onPointClick={(_i, _d, e) => {
+    // e.datum   → original row from `orders`
+    // e.label   → 'NA' | 'EU' | …
+    // e.value   → numeric revenue
+    // e.series  → the resolved series
+    // e.nativeEvent.metaKey → ⌘ for "open in new tab" etc.
+    router.push(`/regions/${e.datum.id}`);
+  }}
+/>
+```
+
+`event.seriesIndex` is `0` for single-series charts, the group index for bubble / scatter / heatmap, and `-1` when a click hits a column-wide hover on a multi-series chart (line / area / grouped-bar). `event.datum` is undefined when the chart was fed a pre-built `{ labels, datasets }` shape (the original row never existed).
 
 ## Browser Support
 
