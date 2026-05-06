@@ -1,6 +1,6 @@
 import type { NetworkChartConfig, NetworkNode, NetworkLink } from '../types';
 import { BaseChart } from '../core/base';
-import { hexToRgba } from '../utils/helpers';
+import { hexToRgba, safeRadius } from '../utils/helpers';
 import { simulateForce, type ForceNode } from '../perf/layout/force';
 
 interface SimNode extends ForceNode {
@@ -143,7 +143,7 @@ export class NetworkChart extends BaseChart {
     for (let i = 0; i < this._nodes.length; i++) {
       const n = this._nodes[i];
       const isHover = i === this.hoverIndex;
-      const r = (n.size + (isHover ? 3 : 0)) * t;
+      const r = safeRadius((n.size + (isHover ? 3 : 0)) * t);
       const color = this._groupColor(n.group);
       this.ctx.beginPath();
       this.ctx.arc(n.x, n.y, r, 0, Math.PI * 2);

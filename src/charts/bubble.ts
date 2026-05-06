@@ -194,7 +194,7 @@ export class BubbleChart extends BaseChart {
       const isHover = this._flat.length === this.hoverIndex;
 
       this.ctx.beginPath();
-      this.ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      this.ctx.arc(sx, sy, safeRadius(r), 0, Math.PI * 2);
       this.ctx.fillStyle = hexToRgba(color, isHover ? 0.85 : 0.55);
       this.ctx.fill();
       this.ctx.strokeStyle = color;

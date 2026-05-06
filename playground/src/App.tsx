@@ -74,8 +74,38 @@ export function App() {
     log('called chart.resize()');
   };
 
-  const onClickLog = (label: string) => (i: number, data: any) =>
-    log(`${label} click: index=${i} label=${data?.labels?.[i] ?? '?'}`);
+  // Showcases the v1.2.0 ChartClickEvent (third arg). Modifier keys, the
+  // original datum, the resolved series, and the numeric value all flow
+  // through — enough to wire the chart into a drill-down / journey flow.
+  const onClickLog = (label: string) => (
+    _i: number,
+    _data: any,
+    e: {
+      index: number;
+      seriesIndex: number;
+      label: string;
+      value: number;
+      datum: any;
+      series?: { label: string };
+      nativeEvent: MouseEvent;
+    },
+  ) => {
+    const mods = [
+      e.nativeEvent.metaKey && '⌘',
+      e.nativeEvent.ctrlKey && '⌃',
+      e.nativeEvent.shiftKey && '⇧',
+      e.nativeEvent.altKey && '⌥',
+    ].filter(Boolean).join('');
+    const datumPreview = e.datum
+      ? JSON.stringify(e.datum).slice(0, 60)
+      : '—';
+    log(
+      `${label} click${mods ? ` ${mods}` : ''} · ` +
+      `label=${e.label || '?'} value=${Number.isFinite(e.value) ? e.value : '—'} ` +
+      `series=${e.series?.label ?? '—'}[${e.seriesIndex}] ` +
+      `datum=${datumPreview}`,
+    );
+  };
 
   return (
     <>
@@ -126,9 +156,14 @@ export function App() {
 
       <main>
         <section>
-          <h2>Event log</h2>
+          <h2>
+            Event log
+            <span className="tag">v1.2.0 ChartClickEvent — datum, value, series, modifier keys</span>
+          </h2>
           <div className="log">
-            {lines.length === 0 ? '(no events — click any chart point)' : lines.join('\n')}
+            {lines.length === 0
+              ? '(no events — click any data point. Hold ⌘/⌃/⇧/⌥ to see modifier keys flow through.)'
+              : lines.join('\n')}
           </div>
         </section>
 
@@ -229,6 +264,7 @@ export function App() {
                 barRatio={0.8}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('HBar')}
                 width="100%"
                 height="100%"
               />
@@ -240,6 +276,7 @@ export function App() {
                 percent
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('StackedBar')}
                 width="100%"
                 height="100%"
               />
@@ -250,6 +287,7 @@ export function App() {
                 mapping={{ x: 'month', y: ['revenue', 'cost', 'target'] }}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('StackedArea')}
                 width="100%"
                 height="100%"
               />
@@ -279,6 +317,7 @@ export function App() {
                 donutWidth={0.55}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Donut')}
                 width="100%"
                 height="100%"
               />
@@ -306,6 +345,7 @@ export function App() {
                 mapping={{ labelField: 'label', valueField: 'value' }}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Treemap')}
                 width="100%"
                 height="100%"
               />
@@ -318,6 +358,7 @@ export function App() {
                 showPercent
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Funnel')}
                 width="100%"
                 height="100%"
               />
@@ -328,6 +369,7 @@ export function App() {
                 mapping={{ x: 'label', y: 'value' }}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Waterfall')}
                 width="100%"
                 height="100%"
               />
@@ -344,6 +386,7 @@ export function App() {
                 mapping={{ x: 'x', y: 'y', groupField: 'group' }}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Scatter')}
                 width="100%"
                 height="100%"
               />
@@ -356,6 +399,7 @@ export function App() {
                 maxRadius={28}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Bubble')}
                 width="100%"
                 height="100%"
               />
@@ -378,6 +422,7 @@ export function App() {
                 colorScale={['#0a1230', '#5b8cff']}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Heatmap')}
                 width="100%"
                 height="100%"
               />
@@ -394,6 +439,7 @@ export function App() {
                 mapping={{ x: 'label' }}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Candlestick')}
                 width="100%"
                 height="100%"
               />
@@ -405,6 +451,7 @@ export function App() {
                 showOutliers
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Boxplot')}
                 width="100%"
                 height="100%"
               />
@@ -417,6 +464,7 @@ export function App() {
                 lineWidth={3}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Combo')}
                 width="100%"
                 height="100%"
               />
@@ -429,6 +477,7 @@ export function App() {
                 innerRadius={0.35}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('RadialBar')}
                 width="100%"
                 height="100%"
               />
@@ -439,6 +488,7 @@ export function App() {
                 mapping={{ x: 'label', y: 'value' }}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Bullet')}
                 width="100%"
                 height="100%"
               />
@@ -449,6 +499,7 @@ export function App() {
                 mapping={{ x: 'region', y: ['Pro', 'Plus', 'Free'] }}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Marimekko')}
                 width="100%"
                 height="100%"
               />
@@ -459,6 +510,7 @@ export function App() {
                 links={sankeyLinks}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Sankey')}
                 width="100%"
                 height="100%"
               />
@@ -470,6 +522,7 @@ export function App() {
                 iterations={250}
                 theme={theme}
                 animate={animate}
+                onPointClick={onClickLog('Network')}
                 width="100%"
                 height="100%"
               />

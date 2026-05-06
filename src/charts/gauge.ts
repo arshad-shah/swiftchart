@@ -155,10 +155,10 @@ export class GaugeChart extends BaseChart {
     this.ctx.fill();
 
     // Needle base disk.
-    const baseRadius = thick * 0.55;
+    const baseRadius = safeRadius(thick * 0.55);
     this.ctx.fillStyle = this.theme.bg;
     this.ctx.beginPath();
-    this.ctx.arc(cx, cy, baseRadius + 3, 0, Math.PI * 2);
+    this.ctx.arc(cx, cy, safeRadius(baseRadius + 3), 0, Math.PI * 2);
     this.ctx.fill();
     this.ctx.fillStyle = hexToRgba(this.theme.text, 0.9);
     this.ctx.beginPath();
