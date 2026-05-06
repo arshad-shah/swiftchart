@@ -1,4 +1,4 @@
-import type { BubbleChartConfig, DataMapping } from '../types';
+import type { BubbleChartConfig, ChartClickEvent, DataMapping } from '../types';
 import { BaseChart } from '../core/base';
 import { niceScale, hexToRgba, safeRadius } from '../utils/helpers';
 import { Quadtree } from '../perf/quadtree';
@@ -9,6 +9,9 @@ interface BubblePoint {
   size: number;
   group: string;
   label?: string;
+  /** Index into the original `setData(rows)` array — preserved through the
+   *  `Number.isFinite` filter so click events can return the source datum. */
+  origIdx: number;
 }
 
 /**
@@ -44,18 +47,20 @@ export class BubbleChart extends BaseChart {
   }
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     const xKey = mapping?.x ?? 'x';
     const yKey = (mapping?.y as string) ?? 'y';
     const sizeKey = mapping?.sizeField ?? 'size';
     const groupKey = mapping?.groupField ?? 'group';
     const labelKey = mapping?.labelField ?? 'label';
 
-    this._points = (data || []).map((d) => ({
+    this._points = (data || []).map((d, origIdx) => ({
       x: +d[xKey],
       y: +d[yKey],
       size: +d[sizeKey] || 1,
       group: String(d[groupKey] ?? 'default'),
       label: d[labelKey] != null ? String(d[labelKey]) : undefined,
+      origIdx,
     })).filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
 
     // Build resolved.datasets purely so _drawLegend has something to render.
@@ -94,6 +99,7 @@ export class BubbleChart extends BaseChart {
     } else {
       this.hoverIndex = -1;
     }
+    this.hoverSeriesIndex = this.hoverIndex >= 0 ? this._flat[this.hoverIndex].gi : -1;
     if (this.hoverIndex >= 0 && this.tooltip) {
       const f = this._flat[this.hoverIndex];
       const p = this._points[f.idx];
@@ -108,6 +114,22 @@ export class BubbleChart extends BaseChart {
       });
     } else this.tooltip?.hide();
     this._draw();
+  }
+
+  protected _buildClickEvent(index: number, nativeEvent: MouseEvent): ChartClickEvent {
+    const f = this._flat[index];
+    if (!f) return super._buildClickEvent(index, nativeEvent);
+    const p = this._points[f.idx];
+    return {
+      index,
+      seriesIndex: f.gi,
+      label: p.label ?? p.group ?? '',
+      value: p.y,
+      datum: this._rawData ? this._rawData[p.origIdx] : undefined,
+      series: this.resolved.datasets[f.gi],
+      data: this.resolved,
+      nativeEvent,
+    };
   }
 
   _draw(): void {

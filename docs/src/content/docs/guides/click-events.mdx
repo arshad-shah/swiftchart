@@ -1,0 +1,110 @@
+---
+title: Click events & drill-down
+description: Wire a chart into analytics, navigation, or user-journey flows with the rich ChartClickEvent payload.
+---
+
+Every chart fires `onClick` (vanilla) / `onPointClick` (React) when the user clicks a hovered datum. The handler receives a third argument — a [`ChartClickEvent`](/api/core/interfaces/chartclickevent/) — with everything you need to identify what was clicked.
+
+```ts
+interface ChartClickEvent<TDatum = Record<string, any>> {
+  index: number;             // datum index along the chart's primary axis
+  seriesIndex: number;       // -1 when click is not series-specific
+  label: string;             // categorical label at `index` (e.g. x-tick)
+  value: number;             // numeric value at the clicked position
+  datum: TDatum | undefined; // the original row passed to setData()
+  series: Dataset | undefined;
+  data: ResolvedData;        // same as the second positional argument
+  nativeEvent: MouseEvent;   // for stopPropagation, modifier keys, coordinates
+}
+```
+
+## Drill-down navigation
+
+Use `event.datum` to navigate using the original row — no need to keep a parallel lookup.
+
+```tsx
+import { Bar } from '@arshad-shah/swift-chart/react';
+import { useRouter } from 'next/router';
+
+export function RevenueByRegion({ orders }) {
+  const router = useRouter();
+  return (
+    <Bar
+      data={orders}
+      mapping={{ x: 'region', y: 'revenue' }}
+      onPointClick={(_i, _d, e) => {
+        if (!e.datum) return;
+        router.push(`/regions/${e.datum.id}`);
+      }}
+    />
+  );
+}
+```
+
+## Modifier-key behaviour
+
+Open in a new tab on ⌘-click (or middle-click) instead of replacing the current view.
+
+```tsx
+onPointClick={(_i, _d, e) => {
+  const url = `/orders/${e.datum.id}`;
+  if (e.nativeEvent.metaKey || e.nativeEvent.ctrlKey) {
+    window.open(url, '_blank');
+  } else {
+    router.push(url);
+  }
+}}
+```
+
+## Analytics
+
+```tsx
+onPointClick={(_i, _d, e) => {
+  analytics.track('chart_click', {
+    chart: 'revenue_by_region',
+    label: e.label,
+    value: e.value,
+    series: e.series?.label,
+    seriesIndex: e.seriesIndex,
+  });
+}}
+```
+
+## Series-aware vs column-wide clicks
+
+`event.seriesIndex` reports which series was clicked when the chart can pinpoint one:
+
+| Chart                                | `seriesIndex` on click                                                          |
+|--------------------------------------|----------------------------------------------------------------------------------|
+| Single-series (pie, treemap, gauge)  | `0`                                                                              |
+| Bubble / scatter                     | the group index — clicks land on a single point                                  |
+| Heatmap                              | the row (y-axis) index of the clicked cell                                       |
+| Marimekko                            | the row index of the clicked segment                                             |
+| Multi-series line / area / grouped-bar | `-1` — the click is column-wide, no single series is identified                |
+
+When `seriesIndex` is `-1`, `event.series` is `undefined` and `event.value` is `NaN` — read `event.label` and `event.data.datasets` instead.
+
+## When `datum` is undefined
+
+`event.datum` is the original row from `setData(rows, mapping)`. It is `undefined` when:
+
+- the chart was fed a pre-built `{ labels, datasets }` shape (the original row never existed)
+- the chart's internal layout breaks index alignment (heatmap — read `event.label` and `event.value` instead)
+
+Sankey and network charts surface the clicked **node object** as `event.datum`.
+
+## Vanilla / imperative
+
+```ts
+import { BarChart } from '@arshad-shah/swift-chart';
+
+new BarChart('#chart', {
+  onClick: (index, data, event) => {
+    console.log('clicked', event.label, event.value, event.datum);
+  },
+}).setData(orders, { x: 'region', y: 'revenue' });
+```
+
+## Backward compatibility
+
+The third argument is additive — existing two-argument handlers `(index, data) => …` keep working unchanged.

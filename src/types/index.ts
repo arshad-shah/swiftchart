@@ -141,6 +141,57 @@ export interface ResolvedData {
 }
 
 /**
+ * Rich payload passed as the third argument to {@link BaseChartConfig.onClick}
+ * (and the React `onPointClick` prop). Designed for analytics / drill-down /
+ * user-journey use cases where the consumer needs to identify exactly what
+ * was clicked without re-deriving it from `index` + `data`.
+ *
+ * Backward compatible: existing handlers `(index, data) => …` keep working
+ * because the event is supplied as an additional third argument.
+ *
+ * @example Drill-down on click
+ * ```ts
+ * onClick: (_i, _d, e) => {
+ *   navigate(`/orders?status=${e.datum?.status}`);
+ * }
+ * ```
+ *
+ * @example Modifier-key behaviour (e.g. open in new tab)
+ * ```ts
+ * onClick: (_i, _d, e) => {
+ *   if (e.nativeEvent.metaKey) window.open(linkFor(e.datum), '_blank');
+ *   else navigate(linkFor(e.datum));
+ * }
+ * ```
+ */
+export interface ChartClickEvent<TDatum = Record<string, any>> {
+  /** Index of the clicked datum along the chart's primary axis (slot / column / point). */
+  index: number;
+  /**
+   * Index of the series that was clicked. `-1` when the click is not
+   * series-specific (e.g. a column hit on a multi-series line chart).
+   * Single-series charts always report `0`.
+   */
+  seriesIndex: number;
+  /** Categorical label at `index` (e.g. x-axis tick). Empty string for charts without categorical labels. */
+  label: string;
+  /** Numeric value at the clicked position. `NaN` when not applicable (e.g. graph nodes). */
+  value: number;
+  /**
+   * Original row object passed to {@link DataMapping}-driven `setData(rows)`,
+   * if available. `undefined` when the chart was fed pre-built
+   * `{ labels, datasets }` (the original rows were never supplied).
+   */
+  datum: TDatum | undefined;
+  /** Resolved series at `seriesIndex`, when known. */
+  series: Dataset | undefined;
+  /** Full resolved data shape — identical to the second positional argument. */
+  data: ResolvedData;
+  /** Underlying DOM event — useful for `stopPropagation()`, modifier keys, and coordinates. */
+  nativeEvent: MouseEvent;
+}
+
+/**
  * Tells SwiftChart how to read your data.
  *
  * SwiftChart accepts any object array. Use `DataMapping` to pick which
@@ -289,10 +340,26 @@ export interface BaseChartConfig {
    */
   colorFn?: ColorFn;
   /**
-   * Click handler invoked with the index of the clicked data point and the
-   * resolved data shape so consumers can read the underlying row.
+   * Click handler. Receives the clicked datum's index, the resolved data
+   * shape, and a {@link ChartClickEvent} with the original row, the resolved
+   * series, the numeric value, and the underlying DOM event — everything you
+   * need to wire a chart into a drill-down / user-journey flow.
+   *
+   * The third argument is additive; existing two-argument handlers keep
+   * working unchanged.
+   *
+   * @example
+   * ```ts
+   * onClick: (_i, _d, e) => analytics.track('chart_click', {
+   *   label: e.label, value: e.value, series: e.series?.label,
+   * });
+   * ```
    */
-  onClick?: (index: number, data: ResolvedData) => void;
+  onClick?: (
+    index: number,
+    data: ResolvedData,
+    event: ChartClickEvent,
+  ) => void;
   /** Accessible label for screen readers (rendered as canvas `aria-label`). */
   ariaLabel?: string;
   /** Longer accessible description (rendered as canvas `aria-description`). */
@@ -539,8 +606,16 @@ export interface ChartComponentProps {
   className?: string;
   /** Inline styles on the wrapper div. */
   style?: React.CSSProperties;
-  /** Click handler - receives the clicked data point's index. */
-  onPointClick?: (index: number, data: ResolvedData) => void;
+  /**
+   * Click handler. Receives the clicked datum's index, the resolved data
+   * shape, and a {@link ChartClickEvent} with the original row, the resolved
+   * series, the numeric value, and the underlying DOM event.
+   */
+  onPointClick?: (
+    index: number,
+    data: ResolvedData,
+    event: ChartClickEvent,
+  ) => void;
 }
 
 /** Stacked-bar chart configuration. */

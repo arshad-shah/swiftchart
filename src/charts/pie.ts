@@ -39,6 +39,7 @@ export class PieChart extends BaseChart {
   }
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     if (Array.isArray(data) && data.length && typeof data[0] === 'object') {
       const labelKey = mapping?.labelField || mapping?.x ||
         Object.keys(data[0]).find(k => typeof data[0][k] === 'string') || Object.keys(data[0])[0];

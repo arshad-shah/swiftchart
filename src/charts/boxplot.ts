@@ -26,6 +26,7 @@ export class BoxplotChart extends BaseChart {
   private _items: ResolvedBox[] = [];
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     const labelKey = mapping?.labelField ?? mapping?.x ?? 'label';
     const samplesKey = (typeof mapping?.y === 'string' ? mapping.y : null) ?? 'samples';
     this._items = (data || []).map((d) => {

@@ -50,8 +50,10 @@ export class SankeyChart extends BaseChart {
   /** React passes the graph through `mapping`; we forward to `setSankey`. */
   setData(_data: any, mapping?: any): void {
     if (mapping?.nodes && mapping?.links) {
+      this._rawData = Array.isArray(mapping.nodes) ? mapping.nodes : undefined;
       this.setSankey(mapping.nodes, mapping.links);
     } else {
+      this._rawData = undefined;
       this._nodes = []; this._links = [];
       this._invalidateLayout();
       this.resolved = { labels: [], datasets: [] };

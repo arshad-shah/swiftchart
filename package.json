@@ -1,6 +1,6 @@
 {
   "name": "@arshad-shah/swift-chart",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Lightning-fast, zero-dependency Canvas 2D charting library with React bindings. Schema-agnostic, themeable, animated.",
   "publishConfig": {
     "access": "public"
@@ -150,13 +150,13 @@
       "name": "tree-shaken: LineChart + BarChart",
       "path": "dist/esm/index.js",
       "import": "{ LineChart, BarChart }",
-      "limit": "7 KB"
+      "limit": "7.5 KB"
     },
     {
       "name": "tree-shaken: 6 common charts",
       "path": "dist/esm/index.js",
       "import": "{ LineChart, BarChart, PieChart, ScatterChart, GaugeChart, RadarChart }",
-      "limit": "10 KB"
+      "limit": "10.5 KB"
     },
     {
       "name": "full barrel (all 23 chart classes + helpers)",

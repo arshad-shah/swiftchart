@@ -30,6 +30,7 @@ export class Sparkline extends BaseChart {
   }
 
   setData(values: number[] | Record<string, any>[] | null | undefined): void {
+    this._rawData = Array.isArray(values) ? (values as any[]) : undefined;
     this._values = Array.isArray(values)
       ? values.map((v) => (typeof v === 'number' ? v : 0))
       : [];

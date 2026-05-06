@@ -36,6 +36,7 @@ export class FunnelChart extends BaseChart {
   }
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
+    this._rawData = Array.isArray(data) ? data : undefined;
     const labelKey = mapping?.labelField ?? mapping?.x ?? 'label';
     const valKey = mapping?.valueField ?? (mapping?.y as string) ?? 'value';
     const cf = mapping?.colorField;
