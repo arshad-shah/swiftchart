@@ -46,6 +46,40 @@ export function App() {
     return () => window.clearInterval(id);
   }, [streaming]);
 
+  // Memoised so unrelated re-renders (event-log updates from clicks on
+  // other charts) don't replace these data arrays with fresh identities,
+  // which would re-fire setData on every dense chart.
+  const denseQuarters = useMemo(
+    () => Array.from({ length: 30 }).map((_, i) => ({
+      quarter: `2024-Q${(i % 4) + 1}-Region-${String.fromCharCode(65 + (i % 26))}-${i}`,
+      revenue: 100 + ((i * 37) % 200),
+    })),
+    [],
+  );
+  const denseTimestamps = useMemo(
+    () => Array.from({ length: 50 }).map((_, i) => ({
+      t: `2026-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')} 14:35`,
+      v: 50 + Math.sin(i * 0.4) * 30 + i * 1.5,
+    })),
+    [],
+  );
+  const denseDepartments = useMemo(
+    () => Array.from({ length: 24 }).map((_, i) => ({
+      label: `Department-${String.fromCharCode(65 + (i % 26))}${i}-2026`,
+      api: 30 + ((i * 13) % 80),
+      web: 20 + ((i * 7) % 60),
+      mobile: 10 + ((i * 11) % 40),
+    })),
+    [],
+  );
+  const denseShortKeys = useMemo(
+    () => Array.from({ length: 60 }).map((_, i) => ({
+      k: String.fromCharCode(65 + (i % 26)) + (i + 1),
+      v: 50 + ((i * 17) % 150),
+    })),
+    [],
+  );
+
   const liveSeries = useMemo(
     () => monthly.map(row => ({
       ...row,
@@ -558,10 +592,7 @@ export function App() {
           <div className="grid">
             <Card title="Bar — 30 long quarter labels">
               <Bar
-                data={Array.from({ length: 30 }).map((_, i) => ({
-                  quarter: `2024-Q${(i % 4) + 1}-Region-${String.fromCharCode(65 + (i % 26))}-${i}`,
-                  revenue: 100 + ((i * 37) % 200),
-                }))}
+                data={denseQuarters}
                 mapping={{ x: 'quarter', y: 'revenue' }}
                 theme={theme}
                 animate={false}
@@ -572,10 +603,7 @@ export function App() {
             </Card>
             <Card title="Line — 50 timestamps">
               <Line
-                data={Array.from({ length: 50 }).map((_, i) => ({
-                  t: `2026-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')} 14:35`,
-                  v: 50 + Math.sin(i * 0.4) * 30 + i * 1.5,
-                }))}
+                data={denseTimestamps}
                 mapping={{ x: 't', y: 'v' }}
                 theme={theme}
                 animate={false}
@@ -586,12 +614,7 @@ export function App() {
             </Card>
             <Card title="Stacked bar — 24 categories">
               <StackedBar
-                data={Array.from({ length: 24 }).map((_, i) => ({
-                  label: `Department-${String.fromCharCode(65 + (i % 26))}${i}-2026`,
-                  api: 30 + ((i * 13) % 80),
-                  web: 20 + ((i * 7) % 60),
-                  mobile: 10 + ((i * 11) % 40),
-                }))}
+                data={denseDepartments}
                 mapping={{ x: 'label', y: ['api', 'web', 'mobile'] }}
                 theme={theme}
                 animate={false}
@@ -601,10 +624,7 @@ export function App() {
             </Card>
             <Card title="Bar — 60 short keys">
               <Bar
-                data={Array.from({ length: 60 }).map((_, i) => ({
-                  k: String.fromCharCode(65 + (i % 26)) + (i + 1),
-                  v: 50 + ((i * 17) % 150),
-                }))}
+                data={denseShortKeys}
                 mapping={{ x: 'k', y: 'v' }}
                 theme={theme}
                 animate={false}
