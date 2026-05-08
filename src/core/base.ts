@@ -826,16 +826,17 @@ export abstract class BaseChart {
     // need `truncatedWidth / √2 + gap ≤ stride * step`. Solve for the
     // truncation that fits at step=1 first; only fall back to skipping
     // every Nth label when even the readable minimum (3 chars) won't fit.
-    // This keeps dense charts dense — pre-fix, a 24-bar @ 280 px chart
-    // showed 3 of 24 labels; post-fix it shows ~12 truncated to 3 chars.
-    const CHAR_PX = 7;
+    // CHAR_PX is a conservative 10px-sans width-per-char estimate; the
+    // real measureText is checked at draw time inside _truncate.
+    const CHAR_PX = 6;
+    const GAP_PX = 2;
     let rotChars = 14;
     if (rotate) {
-      const budgetPx = stride * Math.SQRT2 - 4;
+      const budgetPx = stride * Math.SQRT2 - GAP_PX;
       rotChars = Math.max(3, Math.min(14, Math.floor(budgetPx / CHAR_PX)));
     }
     const minSpacing = rotate
-      ? Math.ceil(Math.min(maxW, rotChars * CHAR_PX) / Math.SQRT2) + 4
+      ? Math.ceil(Math.min(maxW, rotChars * CHAR_PX) / Math.SQRT2) + GAP_PX
       : maxW + 12;
     const step = Math.max(1, Math.ceil(minSpacing / stride));
 
