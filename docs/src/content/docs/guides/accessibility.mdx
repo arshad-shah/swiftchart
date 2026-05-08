@@ -1,0 +1,77 @@
+---
+title: Accessibility
+description: How SwiftChart works with screen readers, keyboards, and reduced-motion preferences.
+---
+
+SwiftChart wires every chart up with sensible defaults so it doesn't disappear from assistive tech. The behaviour adapts to whether the chart is interactive (has an `onClick` / `onPointClick`) and to the user's `prefers-reduced-motion` setting.
+
+## Labels and descriptions
+
+Every chart canvas gets an accessible name. The fallback chain is:
+
+1. `ariaLabel` (config option) — wins if set.
+2. `title` — used when `ariaLabel` is absent.
+3. Otherwise the canvas has no accessible name.
+
+```ts
+new LineChart('#chart', {
+  ariaLabel: 'Quarterly revenue, January–December',
+  ariaDescription: 'Two series: actual revenue and target. Revenue exceeded target in Q3.',
+});
+```
+
+`ariaDescription` renders into a hidden element next to the canvas and is wired up via the standard `aria-describedby` attribute (the older `aria-description` attribute is not used — it has limited browser support). Calling `update({ ariaLabel })` or `update({ ariaDescription })` keeps both in sync at runtime.
+
+## Live region for data updates
+
+Each chart appends a hidden `aria-live="polite"` region inside its container. Every call to `setData()` writes a short summary into it (e.g. `"3 points, 2 series."`) so screen-reader users know when the chart's content has changed — including streaming updates and React re-renders.
+
+The region is visually hidden via the standard sr-only clip pattern; sighted users never see it.
+
+## Interactive charts
+
+When you pass an `onClick` (vanilla) or `onPointClick` (React), the chart becomes a keyboard-operable widget:
+
+- The canvas is added to the tab order (`tabIndex=0`).
+- `role="img"` is **dropped** — an interactive image would lie to assistive tech. Instead, the chart gets `aria-roledescription="interactive chart"` plus the `aria-label` as its accessible name.
+- The browser's native focus ring is preserved (no `outline:none`) so the focused chart is visible.
+
+### Keyboard controls
+
+| Key | Action |
+|-----|--------|
+| `Tab` / `Shift+Tab` | Move focus to / from the chart |
+| `Enter` or `Space` | Fire `onPointClick` for the focused datum |
+| `ArrowRight` / `ArrowLeft` | Step the focused datum along the chart's primary axis |
+| `ArrowDown` / `ArrowUp` | Step *across* series on multi-series charts (no-op on single-series) |
+
+`ArrowRight` from an unfocused chart starts at the first datum; `ArrowLeft` starts at the last. `ArrowDown` from the default column-wide state (no series pinpointed) drops into the first series; `ArrowUp` jumps to the last. The focused index and series both drive the existing tooltip + hover highlight, so screen reader users hear the announced label and sighted keyboard users see the same hover state as a mouse pointer would produce.
+
+Non-interactive charts skip all of this: no `tabIndex`, no key listeners, just `role="img"` + the accessible name.
+
+## Reduced motion
+
+When the browser reports `prefers-reduced-motion: reduce` and the chart's `animate` config is **unset**, animations are disabled automatically — the first paint is final, no easing, no transitions.
+
+Explicit `animate: true` or `animate: false` still wins: the auto-respect only fills in a default for users who haven't expressed a preference in code.
+
+```ts
+// Honours the user's OS-level setting:
+new BarChart('#chart');
+
+// Always animates, even for reduced-motion users:
+new BarChart('#chart', { animate: true });
+
+// Never animates:
+new BarChart('#chart', { animate: false });
+```
+
+## Quick checklist
+
+If you're shipping SwiftChart in a product, the minimum to set per chart:
+
+- A meaningful `ariaLabel` (not just the title — describe what the chart shows).
+- A short `ariaDescription` for context that a sighted user gets from looking at the axes / legend.
+- Don't override the focus outline if you're providing custom canvas styles; or if you must, paint your own visible ring.
+
+That's it — the library handles role, tabIndex, the live region, the keyboard handlers, and reduced motion for you.

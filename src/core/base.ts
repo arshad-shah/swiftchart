@@ -79,6 +79,16 @@ export abstract class BaseChart {
   private _lastTapIndex = -1;
   private _lastTapAt = 0;
 
+  /** Hidden description element when `ariaDescription` is set. */
+  private _descEl: HTMLElement | null = null;
+  /** Hidden polite live region announcing data updates to screen readers. */
+  private _liveEl: HTMLElement | null = null;
+  private _boundKeydown: ((e: KeyboardEvent) => void) | null = null;
+
+  /** Monotonically-increasing instance id used to namespace ARIA ids. */
+  private static _instanceCounter = 0;
+  private readonly _instanceId = ++BaseChart._instanceCounter;
+
   constructor(container: HTMLElement | string, config: BaseChartConfig = {}) {
     if (SSR) {
       throw new Error('SwiftChart: cannot construct a chart during SSR. Construct in useEffect or after mount.');
@@ -105,17 +115,49 @@ export abstract class BaseChart {
       ...config,
     };
 
+    // Honour `prefers-reduced-motion` when the user hasn't explicitly opted
+    // in or out via the `animate` config. WCAG 2.3.3 — motion-sensitive
+    // users get a static rendering; explicit `animate: true` from the
+    // consumer is preserved.
+    if (
+      config.animate === undefined &&
+      typeof matchMedia !== 'undefined' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      this.config.animate = false;
+    }
+
+    const isInteractive = !!this.config.onClick;
     this.canvas = document.createElement('canvas');
+    // Note: no `outline:none` — let the browser draw its native focus ring
+    // when the canvas is keyboard-focused. WCAG 2.4.7 requires a visible
+    // focus indicator on every interactive element.
     this.canvas.style.cssText = 'width:100%;height:100%;display:block;';
-    // Accessibility — canvas has no semantics by default.
-    this.canvas.setAttribute('role', 'img');
+
+    // ── Accessibility wiring ───────────────────────────
+    // - role="img" lies when the chart is interactive (it implies non-
+    //   interactive content). Drop the role when an onClick is present
+    //   and let the focusable canvas + aria-roledescription speak for it.
+    // - tabIndex only when interactive — purely-decorative charts shouldn't
+    //   pull keyboard focus into a dead element.
+    // - Use aria-describedby to a hidden element instead of the not-yet-
+    //   broadly-supported `aria-description` attribute.
+    if (!isInteractive) {
+      this.canvas.setAttribute('role', 'img');
+    } else {
+      this.canvas.setAttribute('aria-roledescription', 'interactive chart');
+    }
     if (this.config.ariaLabel) this.canvas.setAttribute('aria-label', this.config.ariaLabel);
     else if (this.config.title) this.canvas.setAttribute('aria-label', this.config.title);
-    if (this.config.ariaDescription) {
-      this.canvas.setAttribute('aria-description', this.config.ariaDescription);
-    }
-    this.canvas.tabIndex = 0;
+    if (isInteractive) this.canvas.tabIndex = 0;
     this.container.appendChild(this.canvas);
+
+    // Attach the description element after the canvas so screen readers
+    // announce label first then description on focus.
+    if (this.config.ariaDescription) this._setDescription(this.config.ariaDescription);
+    // Polite live region: announces data summaries from setData() so screen
+    // readers know when the chart's content changes.
+    this._liveEl = this._mountVisuallyHidden('status', 'polite');
 
     const rawCtx = this.canvas.getContext('2d');
     if (!rawCtx) throw new Error('SwiftChart: Canvas 2D context unavailable');
@@ -174,6 +216,17 @@ export abstract class BaseChart {
       this._lastTapAt = 0;
       this._boundMouseLeave();
     };
+
+    if (isInteractive) {
+      // Keyboard activation: Enter / Space fire onClick on the focused
+      // datum (using the current hover index, or 0 if no hover yet).
+      // ArrowLeft / ArrowRight step linearly through the resolved labels;
+      // chart subclasses that don't have a linear axis (Pie, Treemap)
+      // still benefit because the index-into-labels[] traversal makes
+      // their slices keyboard-discoverable through the tooltip system.
+      this._boundKeydown = (e: KeyboardEvent) => this._onKeydown(e);
+      this.canvas.addEventListener('keydown', this._boundKeydown);
+    }
 
     this.canvas.addEventListener('mousemove', this._boundMouseMove);
     this.canvas.addEventListener('mouseleave', this._boundMouseLeave);
@@ -241,6 +294,7 @@ export abstract class BaseChart {
       { ...this.config, ...mapping } as DataMapping,
       this.theme.colors,
     );
+    this._announceDataUpdate();
     this._animate();
   }
 
@@ -299,6 +353,7 @@ export abstract class BaseChart {
     if (arg.animDuration) this.animator.duration = arg.animDuration;
     if (arg.animEasing) this.animator.easing = arg.animEasing;
     if (arg.ariaLabel) this.canvas.setAttribute('aria-label', arg.ariaLabel);
+    if (arg.ariaDescription !== undefined) this._setDescription(arg.ariaDescription);
     this._draw();
   }
 
@@ -323,7 +378,106 @@ export abstract class BaseChart {
     this.canvas.removeEventListener('touchmove', this._boundTouch);
     this.canvas.removeEventListener('touchend', this._boundTouchEnd);
     this.canvas.removeEventListener('touchcancel', this._boundTouchCancel);
+    if (this._boundKeydown) {
+      this.canvas.removeEventListener('keydown', this._boundKeydown);
+      this._boundKeydown = null;
+    }
+    this._descEl?.remove();
+    this._descEl = null;
+    this._liveEl?.remove();
+    this._liveEl = null;
     this.canvas.remove();
+  }
+
+  // ── Accessibility helpers ──────────────────────────
+
+  private _setDescription(text: string): void {
+    if (!text) {
+      if (this._descEl) {
+        this._descEl.remove();
+        this._descEl = null;
+        this.canvas.removeAttribute('aria-describedby');
+      }
+      return;
+    }
+    if (!this._descEl) {
+      this._descEl = this._mountVisuallyHidden();
+      this._descEl.id = `sc-desc-${this._instanceId}`;
+      this.canvas.setAttribute('aria-describedby', this._descEl.id);
+    }
+    this._descEl.textContent = text;
+  }
+
+  /**
+   * Append a visually-hidden element to the chart container. Standard
+   * "sr-only" clip pattern — invisible to sighted users, still read by AT.
+   */
+  private _mountVisuallyHidden(role?: string, live?: 'polite' | 'assertive'): HTMLElement {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:absolute;width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden';
+    if (role) el.setAttribute('role', role);
+    if (live) el.setAttribute('aria-live', live);
+    this.container.appendChild(el);
+    return el;
+  }
+
+  /** Update the live region with a textual summary of the current data. */
+  private _announceDataUpdate(): void {
+    if (!this._liveEl) return;
+    const n = this.resolved.labels?.length ?? 0;
+    const s = this.resolved.datasets?.length ?? 0;
+    this._liveEl.textContent = n === 0 && s === 0
+      ? 'Chart cleared.'
+      : `${n} point${n === 1 ? '' : 's'}${s > 1 ? `, ${s} series` : ''}.`;
+  }
+
+  /**
+   * Keyboard handler for interactive charts.
+   *
+   * - `Enter` / `Space` activate the focused datum (hoverIndex; falls back to 0).
+   * - `ArrowLeft` / `ArrowRight` walk the index along `resolved.labels`
+   *   (the chart's primary axis).
+   * - `ArrowUp` / `ArrowDown` walk `hoverSeriesIndex` between datasets so
+   *   keyboard users can move *across* the chart on multi-series shapes
+   *   (grouped bars, multi-line, stacked area, etc.). No-op when the chart
+   *   has only one series.
+   *
+   * All key handlers update the existing hover state so the draw + tooltip
+   * pipeline highlights the focused datum / series.
+   */
+  private _onKeydown(e: KeyboardEvent): void {
+    const len = this.resolved.labels?.length ?? 0;
+    if (!len) return;
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      const idx = this.hoverIndex >= 0 ? this.hoverIndex : 0;
+      if (idx < 0 || idx >= len) return;
+      e.preventDefault();
+      const synthetic = new MouseEvent('click', { bubbles: true });
+      this.config.onClick?.(idx, this.resolved, this._buildClickEvent(idx, synthetic));
+      return;
+    }
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const dir = e.key === 'ArrowRight' ? 1 : -1;
+      const cur = this.hoverIndex < 0 ? (dir === 1 ? -1 : len) : this.hoverIndex;
+      this.hoverIndex = Math.max(0, Math.min(len - 1, cur + dir));
+      this._draw();
+      return;
+    }
+
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      const sLen = this.resolved.datasets?.length ?? 0;
+      if (sLen <= 1) return;
+      e.preventDefault();
+      const dir = e.key === 'ArrowDown' ? 1 : -1;
+      // From the column-wide state (hoverSeriesIndex === -1), step into the
+      // first or last series depending on direction.
+      const cur = this.hoverSeriesIndex < 0 ? (dir === 1 ? -1 : sLen) : this.hoverSeriesIndex;
+      this.hoverSeriesIndex = Math.max(0, Math.min(sLen - 1, cur + dir));
+      this._draw();
+    }
   }
 
   // ── Internal ───────────────────────────────────────
