@@ -346,16 +346,69 @@ header.header {
 
 /* Below the desktop breakpoint, the 5-column fixed layout collapses each
    cell to ~60-70px on a phone and labels wrap awkwardly. Drop the forced
-   100% width and let the wrapper's overflow-x: auto scroll horizontally. */
+   100% width, let the wrapper's overflow-x: auto scroll horizontally, and
+   add scroll affordances so it's obvious there's more to the right. */
 @media (max-width: 50rem) {
+  .sc-compare {
+    /* Hint the scroll: a subtle gradient on the right edge fades to the
+       page background so users see content is being clipped. */
+    background-image:
+      linear-gradient(
+        to right,
+        transparent calc(100% - 28px),
+        color-mix(in srgb, var(--sl-color-bg) 92%, transparent)
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--sc-brand) 4%, transparent),
+        transparent 60%
+      );
+    background-attachment: local, local;
+  }
   .sc-compare table {
     width: auto !important;
-    min-width: 36rem;
+    min-width: 32rem;
     table-layout: auto;
+    font-size: 0.85rem;
   }
   .sc-compare colgroup col.sc-compare-label,
   .sc-compare colgroup col {
     width: auto;
+  }
+  .sc-compare th,
+  .sc-compare td {
+    padding: 0.7rem 0.7rem !important;
+    white-space: nowrap;
+  }
+
+  /* Pin the row-header column so users always see *what metric* they're
+     comparing as they swipe horizontally through the rivals. */
+  .sc-compare tbody th,
+  .sc-compare thead th:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--sl-color-bg);
+    /* Re-paint the row-bottom border the sticky cell just covered. */
+    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--sc-header-border) 60%, transparent);
+    z-index: 1;
+  }
+  /* Last-row sticky cell shouldn't draw a bottom border. */
+  .sc-compare tbody tr:last-child th {
+    box-shadow: none;
+  }
+}
+
+/* Even narrower (phones): widen the visible viewport before scrolling
+   kicks in, and tighten the row-header column so the SwiftChart column
+   sits next to the labels with at least one rival visible at once. */
+@media (max-width: 30rem) {
+  .sc-compare table {
+    min-width: 28rem;
+    font-size: 0.8rem;
+  }
+  .sc-compare th,
+  .sc-compare td {
+    padding: 0.6rem 0.55rem !important;
   }
 }
 
