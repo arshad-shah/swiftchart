@@ -819,8 +819,24 @@ export abstract class BaseChart {
     const labelMaxPx = stride - 4;
     const rotate = maxW > labelMaxPx;
 
-    // Choose visible step so labels don't overlap.
-    const minSpacing = rotate ? Math.min(maxW + 4, 60) : maxW + 12;
+    // Choose visible step + rotated truncation cooperatively.
+    //
+    // A label rotated -π/4 anchored at its right occupies `width / √2` px
+    // along the x-axis. So for adjacent rotated labels not to overlap we
+    // need `truncatedWidth / √2 + gap ≤ stride * step`. Solve for the
+    // truncation that fits at step=1 first; only fall back to skipping
+    // every Nth label when even the readable minimum (3 chars) won't fit.
+    // This keeps dense charts dense — pre-fix, a 24-bar @ 280 px chart
+    // showed 3 of 24 labels; post-fix it shows ~12 truncated to 3 chars.
+    const CHAR_PX = 7;
+    let rotChars = 14;
+    if (rotate) {
+      const budgetPx = stride * Math.SQRT2 - 4;
+      rotChars = Math.max(3, Math.min(14, Math.floor(budgetPx / CHAR_PX)));
+    }
+    const minSpacing = rotate
+      ? Math.ceil(Math.min(maxW, rotChars * CHAR_PX) / Math.SQRT2) + 4
+      : maxW + 12;
     const step = Math.max(1, Math.ceil(minSpacing / stride));
 
     this.ctx.fillStyle = this.theme.textMuted;
@@ -846,7 +862,7 @@ export abstract class BaseChart {
         this.ctx.save();
         this.ctx.translate(x, p.y + p.h + 6);
         this.ctx.rotate(-Math.PI / 4);
-        this.ctx.fillText(this._truncate(raw, 14), 0, 0);
+        this.ctx.fillText(this._truncate(raw, rotChars), 0, 0);
         this.ctx.restore();
       } else {
         const fits = this.ctx.measureText(raw).width <= labelMaxPx;
