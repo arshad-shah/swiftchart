@@ -1,6 +1,6 @@
 import type { Theme, ThemeName } from '../types';
 
-export const THEMES: Record<string, Theme> = {
+const BUILTINS: Record<string, Theme> = {
   midnight: {
     bg: '#12161c', surface: '#1a1f28', grid: '#252b3640',
     text: '#e2e8f0', textMuted: '#7a8599', axis: '#3a4255',
@@ -30,6 +30,19 @@ export const THEMES: Record<string, Theme> = {
     colors: ['#34d399','#a3e635','#38bdf8','#facc15','#fb923c','#a78bfa','#f472b6','#2dd4bf','#818cf8','#ef4444'],
   },
 };
+
+// The registry is anchored on globalThis so that the core ESM bundle
+// (./dist/esm/index.js) and the React ESM bundle (./dist/esm/react/index.js)
+// — which tsup compiles as independent units with `splitting: false`,
+// each inlining its own copy of this module — share one map at runtime.
+// Without this, addTheme() called via the core entry was invisible to
+// charts rendered through `/react`.
+const REGISTRY_KEY = '__SWIFT_CHART_THEMES_V1__';
+type GlobalWithRegistry = typeof globalThis & {
+  [REGISTRY_KEY]?: Record<string, Theme>;
+};
+const g = globalThis as GlobalWithRegistry;
+export const THEMES: Record<string, Theme> = g[REGISTRY_KEY] ??= { ...BUILTINS };
 
 const SEMANTIC_DEFAULTS = {
   positive: '#34d399',

@@ -50,6 +50,20 @@ export interface Theme {
   onAccent: string;
   /** Series palette. Indexed modulo length for charts with more series than colours. */
   colors: string[];
+  /**
+   * Tooltip panel background. Optional — falls back to {@link Theme.surface}.
+   * Accepts any CSS colour (`#rrggbbaa` for translucency).
+   */
+  tooltipBg?: string;
+  /**
+   * Tooltip panel border. Optional — falls back to {@link Theme.axis}.
+   */
+  tooltipBorder?: string;
+  /**
+   * Tooltip primary text (title and values). Optional — falls back to {@link Theme.text}.
+   * Muted/label text and the footer separator are derived from {@link Theme.textMuted}.
+   */
+  tooltipText?: string;
 }
 
 /**
