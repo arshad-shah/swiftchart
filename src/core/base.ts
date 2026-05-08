@@ -89,6 +89,12 @@ export abstract class BaseChart {
   padding: Padding;
 
   private _ro: ResizeObserver | null = null;
+  /**
+   * Pending RAF id for ResizeObserver-driven resizes. We coalesce bursty
+   * layout events (window resize, flexbox jitter, panel collapse) into a
+   * single rAF so heavy charts don't repaint per observer fire.
+   */
+  private _resizeRaf = 0;
   private _boundMouseMove: (e: MouseEvent) => void;
   private _boundMouseLeave: () => void;
   private _boundClick: (e: MouseEvent) => void;
@@ -261,12 +267,36 @@ export abstract class BaseChart {
     this.canvas.addEventListener('touchend', this._boundTouchEnd);
     this.canvas.addEventListener('touchcancel', this._boundTouchCancel);
 
+    // Initial sizing is explicit so first paint has dimensions even on
+    // platforms where `ResizeObserver.observe()` defers its first callback
+    // to after the next layout. The observer below is rAF-coalesced and
+    // bails when dimensions haven't actually changed, so this _resize()
+    // doesn't double up with the observer's first fire.
+    this._resize();
+
     if (this.config.responsive && typeof ResizeObserver !== 'undefined') {
-      this._ro = new ResizeObserver(() => { this._resize(); this._draw(); });
+      this._ro = new ResizeObserver(() => this._scheduleResize());
       this._ro.observe(this.container);
     }
+  }
 
-    this._resize();
+  /**
+   * Coalesce a burst of ResizeObserver callbacks into a single rAF. Bails
+   * when the container's pixel dimensions haven't actually changed —
+   * absorbs the observer's redundant initial fire after construction.
+   */
+  private _scheduleResize(): void {
+    if (this._resizeRaf) return;
+    this._resizeRaf = requestAnimationFrame(() => {
+      this._resizeRaf = 0;
+      const d = dpr();
+      const r = this.container.getBoundingClientRect();
+      const bw = Math.max(1, Math.floor(Math.max(1, r.width) * d));
+      const bh = Math.max(1, Math.floor(Math.max(1, r.height) * d));
+      if (bw === this.canvas.width && bh === this.canvas.height) return;
+      this._resize();
+      this._draw();
+    });
   }
 
   // ── Layout ─────────────────────────────────────────
@@ -395,6 +425,10 @@ export abstract class BaseChart {
   destroy(): void {
     this.animator.stop();
     this._ro?.disconnect();
+    if (this._resizeRaf) {
+      cancelAnimationFrame(this._resizeRaf);
+      this._resizeRaf = 0;
+    }
     this.tooltip?.destroy();
     this.canvas.removeEventListener('mousemove', this._boundMouseMove);
     this.canvas.removeEventListener('mouseleave', this._boundMouseLeave);
@@ -533,12 +567,22 @@ export abstract class BaseChart {
   }
 
   protected _resize(): void {
+    // Snap CSS dimensions to multiples of 1/DPR so the backing store is an
+    // exact integer pixel count. At fractional DPR (Windows 125% = 1.25),
+    // Math.round on the backing dim leaves a half-pixel mismatch with the
+    // CSS box and integer-CSS strokes blur between physical pixels.
     const d = dpr();
-    const rect = this.container.getBoundingClientRect();
-    this.width = Math.max(1, rect.width);
-    this.height = Math.max(1, rect.height);
-    this.canvas.width = Math.round(this.width * d);
-    this.canvas.height = Math.round(this.height * d);
+    const r = this.container.getBoundingClientRect();
+    const bw = Math.max(1, Math.floor(Math.max(1, r.width) * d));
+    const bh = Math.max(1, Math.floor(Math.max(1, r.height) * d));
+    this.width = bw / d;
+    this.height = bh / d;
+    this.canvas.width = bw;
+    this.canvas.height = bh;
+    // Pin the CSS box to the snapped size; inline width:100% would otherwise
+    // let the browser stretch the bitmap fractionally.
+    this.canvas.style.width = this.width + 'px';
+    this.canvas.style.height = this.height + 'px';
     this.ctx.setTransform(d, 0, 0, d, 0, 0);
   }
 
