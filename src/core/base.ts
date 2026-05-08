@@ -89,6 +89,12 @@ export abstract class BaseChart {
   padding: Padding;
 
   private _ro: ResizeObserver | null = null;
+  /**
+   * Pending RAF id for ResizeObserver-driven resizes. We coalesce bursty
+   * layout events (window resize, flexbox jitter, panel collapse) into a
+   * single rAF so heavy charts don't repaint per observer fire.
+   */
+  private _resizeRaf = 0;
   private _boundMouseMove: (e: MouseEvent) => void;
   private _boundMouseLeave: () => void;
   private _boundClick: (e: MouseEvent) => void;
@@ -261,13 +267,42 @@ export abstract class BaseChart {
     this.canvas.addEventListener('touchend', this._boundTouchEnd);
     this.canvas.addEventListener('touchcancel', this._boundTouchCancel);
 
+    // Initial sizing is explicit so first paint has dimensions even on
+    // platforms where `ResizeObserver.observe()` defers its first callback
+    // to after the next layout. The observer below is rAF-coalesced and
+    // bails when dimensions haven't actually changed, so this _resize()
+    // doesn't double up with the observer's first fire.
+    this._resize();
+
     if (this.config.responsive && typeof ResizeObserver !== 'undefined') {
-      this._ro = new ResizeObserver(() => { this._resize(); this._draw(); });
+      this._ro = new ResizeObserver(() => this._scheduleResize());
       this._ro.observe(this.container);
     }
-
-    this._resize();
   }
+
+  /**
+   * Coalesce a burst of ResizeObserver callbacks into a single rAF. Skips
+   * the redraw when the container's CSS dimensions haven't actually changed
+   * (this is the path that absorbs the observer's redundant initial fire).
+   */
+  private _scheduleResize(): void {
+    if (this._resizeRaf) return;
+    this._resizeRaf = requestAnimationFrame(() => {
+      this._resizeRaf = 0;
+      const rect = this.container.getBoundingClientRect();
+      const w = Math.max(1, rect.width);
+      const h = Math.max(1, rect.height);
+      // Snap-equality check is in CSS-pixel space because that's what
+      // _resize() pins itself to. A few-pixel jitter from sub-pixel rect
+      // values still no-ops here, which is what we want.
+      if (Math.abs(w - this._lastRectW) < 0.5 && Math.abs(h - this._lastRectH) < 0.5) return;
+      this._resize();
+      this._draw();
+    });
+  }
+
+  private _lastRectW = 0;
+  private _lastRectH = 0;
 
   // ── Layout ─────────────────────────────────────────
 
@@ -395,6 +430,10 @@ export abstract class BaseChart {
   destroy(): void {
     this.animator.stop();
     this._ro?.disconnect();
+    if (this._resizeRaf) {
+      cancelAnimationFrame(this._resizeRaf);
+      this._resizeRaf = 0;
+    }
     this.tooltip?.destroy();
     this.canvas.removeEventListener('mousemove', this._boundMouseMove);
     this.canvas.removeEventListener('mouseleave', this._boundMouseLeave);
@@ -535,10 +574,23 @@ export abstract class BaseChart {
   protected _resize(): void {
     const d = dpr();
     const rect = this.container.getBoundingClientRect();
-    this.width = Math.max(1, rect.width);
-    this.height = Math.max(1, rect.height);
-    this.canvas.width = Math.round(this.width * d);
-    this.canvas.height = Math.round(this.height * d);
+    this._lastRectW = Math.max(1, rect.width);
+    this._lastRectH = Math.max(1, rect.height);
+    // Snap CSS dimensions to multiples of 1/DPR so the backing-store can be
+    // an exact integer pixel count. At fractional DPR (e.g. Windows 125% =
+    // 1.25), Math.round on the backing dim leaves a half-pixel mismatch
+    // between the canvas's CSS box and its bitmap, which makes integer-CSS
+    // strokes land between physical pixels and look blurry.
+    const backingW = Math.max(1, Math.floor(this._lastRectW * d));
+    const backingH = Math.max(1, Math.floor(this._lastRectH * d));
+    this.width = backingW / d;
+    this.height = backingH / d;
+    this.canvas.width = backingW;
+    this.canvas.height = backingH;
+    // Pin the canvas's CSS box to the snapped size; the inline `width:100%`
+    // baseline would otherwise let the browser stretch the bitmap fractionally.
+    this.canvas.style.width = `${this.width}px`;
+    this.canvas.style.height = `${this.height}px`;
     this.ctx.setTransform(d, 0, 0, d, 0, 0);
   }
 

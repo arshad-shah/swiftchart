@@ -4,6 +4,13 @@ import {
   useRef, useEffect, forwardRef, useImperativeHandle, useMemo,
   type CSSProperties, type RefObject,
 } from 'react';
+
+// Monotonic counter used as a fallback key when an input can't be JSON-
+// stringified (e.g. circular references in `mapping` or in nested handlers).
+// A fresh value per call means the consuming effect always re-runs instead
+// of silently collapsing two distinct unstringifiable inputs into the same
+// empty-string key — see issue #25.
+let _unstringifiableSeq = 0;
 import type {
   LineComponentProps, BarComponentProps, PieComponentProps,
   ScatterComponentProps, RadarComponentProps, GaugeComponentProps,
@@ -91,10 +98,53 @@ export interface ChartRef {
  * Stable JSON-stringify for useEffect dependencies.
  * Cheap, and protects callers from re-running effects on every render
  * when they pass `mapping={{x:'a', y:'b'}}` literals.
+ *
+ * On stringify failure (circular refs, BigInt, etc.) returns a unique
+ * sentinel per call so that two consecutive throws still register as
+ * "changed" and re-fire the dependent effect. Returning `''` made effects
+ * silently no-op on every unstringifiable input — see issue #25.
  */
 function shallowKey(obj: unknown): string {
   if (obj == null) return '';
-  try { return JSON.stringify(obj); } catch { return ''; }
+  try { return JSON.stringify(obj); }
+  catch { return `__sc_unstringifiable_${++_unstringifiableSeq}`; }
+}
+
+/**
+ * Shallow-equal mapping signature. Returns a stable string that bumps only
+ * when the mapping changes by shallow content — avoids JSON-stringifying
+ * potentially huge fields like `nodes`/`links`/`datasets` on every parent
+ * re-render. `colorMap` is compared one level deeper because it's the
+ * canonical place users pass an inline object literal of category→color.
+ */
+function shallowMappingEq(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+  const ak = Object.keys(a);
+  const bk = Object.keys(b);
+  if (ak.length !== bk.length) return false;
+  for (const k of ak) {
+    if (k === 'colorMap') {
+      const av = a[k];
+      const bv = b[k];
+      if (av === bv) continue;
+      if (!av || !bv || typeof av !== 'object' || typeof bv !== 'object') return false;
+      const cak = Object.keys(av);
+      if (cak.length !== Object.keys(bv).length) return false;
+      for (const kk of cak) if (av[kk] !== bv[kk]) return false;
+      continue;
+    }
+    if (a[k] !== b[k]) return false;
+  }
+  return true;
+}
+
+function useShallowMappingKey(mapping: DataMapping | undefined): string {
+  const ref = useRef<{ map: any; ver: number }>({ map: undefined, ver: 0 });
+  if (!shallowMappingEq(ref.current.map, mapping)) {
+    ref.current = { map: mapping, ver: ref.current.ver + 1 };
+  }
+  return String(ref.current.ver);
 }
 
 function useChart<T extends BaseChart>(
@@ -111,8 +161,9 @@ function useChart<T extends BaseChart>(
   const themeKey = typeof config.theme === 'string'
     ? config.theme
     : shallowKey(config.theme);
-  const mappingSig = shallowKey(mapping);
-  const mappingKey = useMemo(() => mappingSig, [mappingSig]);
+  // Shallow-equal so large mapping fields (Sankey/Network nodes+links,
+  // pre-built datasets) aren't JSON-stringified per render — issue #25.
+  const mappingKey = useShallowMappingKey(mapping);
 
   // Pre-built data is sometimes carried entirely on `mapping`:
   //   - streaming / Chart.js-style: { labels, datasets }
