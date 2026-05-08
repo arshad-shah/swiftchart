@@ -28,18 +28,30 @@ export interface SquarifyItem {
   value: number;
 }
 
+/**
+ * Output of {@link squarify} — an item with its placed pixel rectangle.
+ * Use `(rx, ry, rw, rh)` directly with `ctx.fillRect` / `ctx.strokeRect`.
+ */
 export interface SquarifiedRect extends SquarifyItem {
-  /** Pixel rectangle. */
+  /** Pixel rect — left edge. */
   rx: number;
+  /** Pixel rect — top edge. */
   ry: number;
+  /** Pixel rect — width. */
   rw: number;
+  /** Pixel rect — height. */
   rh: number;
 }
 
+/** Bounding rectangle passed into {@link squarify}. */
 export interface SquarifyRect {
+  /** Pixel rect — left edge. */
   x: number;
+  /** Pixel rect — top edge. */
   y: number;
+  /** Pixel rect — width. */
   w: number;
+  /** Pixel rect — height. */
   h: number;
 }
 

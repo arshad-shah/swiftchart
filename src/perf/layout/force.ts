@@ -19,13 +19,20 @@ export interface ForceNode {
   pinned?: boolean;
 }
 
+/**
+ * One edge in a force-directed graph. Indices reference positions in the
+ * `ForceNode[]` passed to {@link simulateForce} — *not* node ids.
+ */
 export interface ForceLink {
+  /** Index of the source node within the `nodes` array. */
   source: number;
+  /** Index of the target node within the `nodes` array. */
   target: number;
   /** Desired rest length. Defaults to `linkDistance` when omitted. */
   length?: number;
 }
 
+/** Tunable parameters for {@link simulateForce}. All fields are optional. */
 export interface ForceOptions {
   /** Centre point for the centring force. */
   cx: number;

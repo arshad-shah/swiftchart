@@ -23,7 +23,30 @@ const TITLE_HEIGHT = 32;
 // fire the click within ~300ms; 700ms gives generous headroom.
 const TAP_CLICK_WINDOW_MS = 700;
 
+/**
+ * Shared lifecycle, layout, theming, accessibility, and event plumbing for
+ * every SwiftChart chart class. End users typically don't construct
+ * `BaseChart` directly — they instantiate one of the concrete subclasses
+ * (`LineChart`, `BarChart`, `PieChart`, …) — but `BaseChart` is the type
+ * surfaced from `chartRef.current.chart` and from the imperative API, so
+ * the public methods documented here apply to every chart.
+ *
+ * Public surface used by consumers:
+ * - {@link setData} — replace the chart's data
+ * - {@link update} — patch config or data without recreating the chart
+ * - {@link setTheme} — switch palette by registered name
+ * - {@link resize} — force a re-layout
+ * - {@link toDataURL} — export as PNG (or other canvas-supported format)
+ * - {@link destroy} — tear down listeners, observers, tooltip, canvas
+ *
+ * Internals worth knowing about (protected):
+ * - `_rebakeColorsForTheme()` — re-resolves `colorField` colours when the
+ *   theme changes. Pie/Funnel/Treemap override it to redo their bake.
+ *
+ * @see {@link BaseChartConfig} for the cross-chart config shape.
+ */
 export abstract class BaseChart {
+  /** Host element the canvas was mounted into. */
   container: HTMLElement;
   config: Required<
     Pick<
