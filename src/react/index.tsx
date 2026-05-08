@@ -118,10 +118,15 @@ function shallowKey(obj: unknown): string {
 
 /**
  * Shallow-equal mapping signature. Returns a stable string that bumps only
- * when the mapping changes by shallow reference. Avoids JSON-stringifying
- * potentially huge fields (`nodes`, `links`, `datasets`) on every render.
- * Nested objects (e.g. `colorMap`) must be referentially stable; consumers
- * passing inline literals there should `useMemo`.
+ * when the mapping changes by shallow content. Primitive-string array
+ * fields (notably `mapping.y` for multi-series charts) are compared
+ * element-wise — these almost always come in as inline literals like
+ * `y: ['revenue', 'cost']`, so reference comparison would treat every
+ * parent re-render as a change and trigger a needless setData (which on
+ * animated charts re-runs the entry transition — observable as a flash
+ * after any unrelated state update). Larger nested objects/arrays
+ * (`nodes`, `links`, `datasets`, `colorMap`) must still be referentially
+ * stable; pass them through `useMemo` from the consumer side.
  */
 function useShallowMappingKey(m: DataMapping | undefined): string {
   const ref = useRef<{ m: any; v: number }>({ m: undefined, v: 0 });
@@ -129,8 +134,20 @@ function useShallowMappingKey(m: DataMapping | undefined): string {
   let same = p === m;
   if (!same && p && m && typeof p === 'object' && typeof m === 'object') {
     const pk = Object.keys(p);
-    same = pk.length === Object.keys(m).length &&
-      pk.every(k => (p as any)[k] === (m as any)[k]);
+    same = pk.length === Object.keys(m).length && pk.every(k => {
+      const av = (p as any)[k];
+      const bv = (m as any)[k];
+      if (av === bv) return true;
+      // One-level deep equality for primitive-string arrays — the common
+      // `y: ['a', 'b']` inline-literal pattern.
+      if (Array.isArray(av) && Array.isArray(bv) && av.length === bv.length) {
+        for (let i = 0; i < av.length; i++) {
+          if (av[i] !== bv[i]) return false;
+        }
+        return true;
+      }
+      return false;
+    });
   }
   if (!same) ref.current = { m, v: ref.current.v + 1 };
   return '' + ref.current.v;
