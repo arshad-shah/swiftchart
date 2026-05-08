@@ -232,12 +232,29 @@ export class Tooltip {
   }
 }
 
-/** Restrict an inline color string to a small allow-list of CSS shapes. */
+/**
+ * Restrict an inline color string to something the browser will actually
+ * accept. The previous implementation matched any pure-letter word
+ * (`/^[a-zA-Z]+$/`), which let typos like `'foobar'` through and produced
+ * silently invalid styles.
+ *
+ * Use `CSS.supports('color', candidate)` when available — that's the
+ * authoritative test the browser would apply. Fall back to the explicit
+ * prefix list (mirroring `isColorString`) in environments that don't
+ * expose `CSS.supports` (older test runners / non-browser jobs).
+ */
 function cssColor(c: string): string {
   const s = String(c).trim();
-  if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
-  if (/^rgba?\([\d.,\s%]+\)$/.test(s)) return s;
-  if (/^hsla?\([\d.,\s%]+\)$/.test(s)) return s;
-  if (/^[a-zA-Z]+$/.test(s)) return s;
-  return '#888';
+  if (typeof CSS !== 'undefined' && typeof CSS.supports === 'function') {
+    return CSS.supports('color', s) ? s : '#888';
+  }
+  const v = s.toLowerCase();
+  const ok =
+    /^#[0-9a-fA-F]{3,8}$/.test(s) ||
+    v.startsWith('rgb') || v.startsWith('hsl') ||
+    v.startsWith('oklch') || v.startsWith('oklab') ||
+    v.startsWith('lab') || v.startsWith('lch') ||
+    v.startsWith('color(') || v.startsWith('color-mix(') ||
+    v === 'transparent' || v === 'currentcolor';
+  return ok ? s : '#888';
 }

@@ -1,5 +1,24 @@
 import type { Theme, ThemeName } from '../types';
 
+/** True when consumer's bundler hasn't replaced NODE_ENV with 'production'. */
+const __DEV__ =
+  typeof process !== 'undefined' &&
+  typeof process.env !== 'undefined' &&
+  process.env.NODE_ENV !== 'production';
+
+function devWarn(message: string): void {
+  if (!__DEV__) return;
+  // eslint-disable-next-line no-console
+  console.warn(`[SwiftChart] ${message}`);
+}
+
+const BUILTIN_NAMES = ['midnight', 'arctic', 'ember', 'forest'] as const;
+
+/** Required fields a custom theme must supply. */
+const REQUIRED_FIELDS = [
+  'bg', 'surface', 'grid', 'text', 'textMuted', 'axis', 'colors',
+] as const;
+
 const BUILTINS: Record<string, Theme> = {
   midnight: {
     bg: '#12161c', surface: '#1a1f28', grid: '#252b3640',
@@ -52,11 +71,47 @@ const SEMANTIC_DEFAULTS = {
 
 export function resolveTheme(theme?: ThemeName | Theme): Theme {
   if (!theme) return THEMES.midnight;
-  if (typeof theme === 'string') return THEMES[theme] || THEMES.midnight;
+  if (typeof theme === 'string') {
+    const hit = THEMES[theme];
+    if (hit) return hit;
+    devWarn(
+      `Theme "${theme}" is not registered — falling back to "midnight". ` +
+      `Available themes: ${Object.keys(THEMES).join(', ')}. ` +
+      `Did you forget to call addTheme("${theme}", ...)?`,
+    );
+    return THEMES.midnight;
+  }
   // Backfill semantic fields if a partial custom theme was passed.
   return { ...SEMANTIC_DEFAULTS, ...theme } as Theme;
 }
 
 export function addTheme(name: string, theme: Theme): void {
-  THEMES[name] = { ...SEMANTIC_DEFAULTS, ...theme } as Theme;
+  // Warn (don't block) when a built-in name is being shadowed — flexible by
+  // design, but accidental overrides cause hard-to-trace style regressions.
+  if ((BUILTIN_NAMES as readonly string[]).includes(name)) {
+    devWarn(
+      `addTheme("${name}", ...) is overwriting a built-in theme. ` +
+      `If this is intentional, you can ignore this warning; otherwise pick a unique name.`,
+    );
+  }
+
+  // Validate the shape — missing fields silently degrade canvas rendering
+  // (ctx.fillStyle = undefined is a no-op, the previous fillStyle is reused).
+  // Missing fields are backfilled from `midnight` so production never ships
+  // a chart with `undefined` colours; in dev we also surface a warning.
+  const missing = REQUIRED_FIELDS.filter(
+    (f) => (theme as unknown as Record<string, unknown>)[f] == null,
+  );
+  if (missing.length) {
+    devWarn(
+      `addTheme("${name}", ...) is missing required field${missing.length > 1 ? 's' : ''}: ` +
+      `${missing.join(', ')}. Falling back to "midnight" for those fields.`,
+    );
+  }
+
+  THEMES[name] = {
+    ...THEMES.midnight,        // backfill required fields from a known-good theme
+    ...SEMANTIC_DEFAULTS,      // ensure positive/negative/onAccent are present
+    ...theme,                  // user-provided fields win
+  } as Theme;
 }
