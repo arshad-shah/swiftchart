@@ -61,6 +61,26 @@ type GlobalWithRegistry = typeof globalThis & {
   [REGISTRY_KEY]?: Record<string, Theme>;
 };
 const g = globalThis as GlobalWithRegistry;
+
+/**
+ * The live registry of all known themes, keyed by name. The four built-in
+ * themes (`midnight`, `arctic`, `ember`, `forest`) are pre-registered;
+ * custom themes added via {@link addTheme} appear here too.
+ *
+ * The registry is anchored on `globalThis` so the core ESM bundle and the
+ * React ESM bundle (which tsup compiles as separate units) share the same
+ * map at runtime.
+ *
+ * Direct mutation works but is discouraged — prefer {@link addTheme} for
+ * registration and {@link resolveTheme} for lookup so future versions can
+ * add validation and warnings without breaking your code.
+ *
+ * @example
+ * ```ts
+ * import { THEMES } from '@arshad-shah/swift-chart';
+ * console.log(Object.keys(THEMES)); // ["midnight", "arctic", "ember", "forest"]
+ * ```
+ */
 export const THEMES: Record<string, Theme> = g[REGISTRY_KEY] ??= { ...BUILTINS };
 
 const SEMANTIC_DEFAULTS = {
@@ -69,6 +89,27 @@ const SEMANTIC_DEFAULTS = {
   onAccent: '#ffffff',
 };
 
+/**
+ * Resolve a theme reference into the concrete {@link Theme} object the
+ * chart will use for drawing. Accepts:
+ *
+ * - A registered theme **name** (`'midnight'`, `'arctic'`, a name passed
+ *   to {@link addTheme}, …). Unknown names fall back to `midnight`.
+ * - An inline **{@link Theme} object**. Missing semantic fields
+ *   (`positive`/`negative`/`onAccent`) are backfilled from sensible
+ *   defaults so partial themes don't render with `undefined` colours.
+ * - `undefined` — returns the default `midnight` theme.
+ *
+ * @param theme  Theme name, inline theme object, or omitted.
+ * @returns The resolved {@link Theme}, never `undefined`.
+ *
+ * @example
+ * ```ts
+ * resolveTheme('arctic');                  // built-in
+ * resolveTheme({ bg: '#000', ... });       // inline (semantics backfilled)
+ * resolveTheme();                          // → midnight (default)
+ * ```
+ */
 export function resolveTheme(theme?: ThemeName | Theme): Theme {
   if (!theme) return THEMES.midnight;
   if (typeof theme === 'string') {
@@ -85,6 +126,34 @@ export function resolveTheme(theme?: ThemeName | Theme): Theme {
   return { ...SEMANTIC_DEFAULTS, ...theme } as Theme;
 }
 
+/**
+ * Register a named theme so charts can reference it via `theme: '<name>'`.
+ *
+ * Custom themes can override any subset of the {@link Theme} fields.
+ * Semantic fields (`positive`/`negative`/`onAccent`) are backfilled from
+ * defaults if omitted.
+ *
+ * Re-exported from `@arshad-shah/swift-chart/react` so React-only
+ * consumers can register themes without importing the core entry.
+ *
+ * @param name   Identifier used as `theme: '<name>'` on chart configs.
+ *               Must be unique; reusing a built-in name (`midnight`,
+ *               `arctic`, `ember`, `forest`) replaces it globally.
+ * @param theme  Theme palette and semantic colours.
+ *
+ * @example
+ * ```ts
+ * import { addTheme, LineChart } from '@arshad-shah/swift-chart';
+ *
+ * addTheme('neon', {
+ *   bg: '#0a0a0f', surface: '#111118', grid: '#ffffff08',
+ *   text: '#e0e0ff', textMuted: '#6060a0', axis: '#2a2a4a',
+ *   colors: ['#ff00ff', '#00ffff', '#ffff00', '#ff6600'],
+ * });
+ *
+ * new LineChart('#chart', { theme: 'neon' });
+ * ```
+ */
 export function addTheme(name: string, theme: Theme): void {
   // Warn (don't block) when a built-in name is being shadowed — flexible by
   // design, but accidental overrides cause hard-to-trace style regressions.

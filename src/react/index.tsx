@@ -48,12 +48,42 @@ import { NetworkChart } from '../charts/network';
 
 // ── Generic hook ───────────────────────────────────────
 
+/**
+ * Imperative handle exposed by every SwiftChart React component via
+ * `forwardRef`. Use it to reach the underlying chart instance, force a
+ * resize, or export a PNG snapshot — without leaking renderer details
+ * into your component tree.
+ *
+ * @example
+ * ```tsx
+ * import { useRef } from 'react';
+ * import { Line, type ChartRef } from '@arshad-shah/swift-chart/react';
+ *
+ * const ref = useRef<ChartRef>(null);
+ * <Line ref={ref} data={...} mapping={{ x: 'month', y: 'revenue' }} />
+ * <button onClick={() => download(ref.current?.toDataURL())}>Save PNG</button>
+ * ```
+ *
+ * @see {@link BaseChart} for the full surface available via `chart`.
+ */
 export interface ChartRef {
-  /** The underlying SwiftChart instance */
+  /**
+   * The underlying SwiftChart instance, or `null` while the host element
+   * is unmounted (between render and the first effect, or after destroy).
+   * Use it for imperative operations not exposed as props (e.g.
+   * `chart.update({ animDuration: 0 })`).
+   */
   chart: BaseChart | null;
-  /** Force a resize recalculation */
+  /**
+   * Force a resize + re-layout. Useful after a parent's CSS changes shape
+   * outside a `ResizeObserver`-tracked dimension.
+   */
   resize: () => void;
-  /** Export current chart as PNG data URL. */
+  /**
+   * Export the current canvas as a data URL. Defaults to PNG; pass
+   * `'image/jpeg'` or `'image/webp'` (with `quality` 0–1) for those
+   * formats. Returns `null` if the chart isn't mounted.
+   */
   toDataURL: (type?: string, quality?: number) => string | null;
 }
 

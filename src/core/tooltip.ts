@@ -14,13 +14,34 @@
 
 import type { Theme } from '../types';
 
+/**
+ * One row inside a structured tooltip — typically one series at the
+ * hovered datum on a multi-series chart. All strings are rendered via
+ * `textContent` (XSS-safe).
+ */
 export interface TooltipRow {
+  /** Left-aligned label (often the series name). */
   label: string;
+  /** Right-aligned formatted value (e.g. `'1,240'`, `'$5.20'`). */
   value: string;
+  /**
+   * Optional dot colour shown left of the label. Validated against
+   * `CSS.supports('color', …)`; invalid values fall back to `#888`.
+   */
   color?: string;
 }
+
+/**
+ * Structured payload for {@link Tooltip.showStructured}. The chart's
+ * built-in tooltip handlers build one of these per hovered point and
+ * pass it to the tooltip; consumers writing custom charts can use the
+ * same shape via the `tooltipFormatter` config option (see
+ * {@link TooltipFormatter}).
+ */
 export interface TooltipContent {
+  /** Bold heading line (often the x-axis label). */
   title?: string;
+  /** One row per series / datum. */
   rows: TooltipRow[];
   /** Optional plain-text footer (e.g. "Total: $1.2K"). */
   footer?: string;
@@ -55,13 +76,38 @@ function resolveColors(theme: Theme | null): TooltipColors {
   };
 }
 
+/**
+ * Floating tooltip panel rendered as plain DOM (not on the canvas). Each
+ * `BaseChart` owns one when `showTooltip !== false` and pushes structured
+ * content into it as the user hovers / focuses datums.
+ *
+ * Typically you don't construct this directly — `BaseChart` does that
+ * for you and exposes it via `chart.tooltip`. Custom charts that draw
+ * their own hover logic can call {@link show} or {@link showStructured}
+ * to display a panel anchored to canvas coordinates.
+ *
+ * @see {@link BaseChartConfig.tooltipContainer} for portal control.
+ */
 export class Tooltip {
+  /** The live tooltip element (null in SSR / after `destroy`). */
   el: HTMLDivElement | null;
+  /** The host canvas — used to compute viewport coords from canvas coords. */
   canvas: HTMLCanvasElement;
   private _onScroll: (() => void) | null = null;
   private _scrollables: Element[] = [];
   private _colors: TooltipColors = resolveColors(null);
 
+  /**
+   * @param canvas       The chart's `<canvas>` element. Used as the
+   *                     positioning anchor (canvas coords → viewport coords).
+   * @param theme        Optional palette to colour the panel. Pass `null`
+   *                     to use built-in fallback colours.
+   * @param mountTarget  Where to append the tooltip element. Defaults to
+   *                     `document.body` for compatibility, but `BaseChart`
+   *                     resolves a smarter default (shadow root, then the
+   *                     chart container) so Shadow DOM and modal stacking
+   *                     contexts work out of the box.
+   */
   constructor(
     canvas: HTMLCanvasElement,
     theme: Theme | null = null,
@@ -210,6 +256,7 @@ export class Tooltip {
     this.el.style.top = ty + 'px';
   }
 
+  /** Fade and hide the tooltip. Idempotent. */
   hide(): void {
     if (!this.el) return;
     this.el.style.opacity = '0';
@@ -217,6 +264,12 @@ export class Tooltip {
     this.el.setAttribute('aria-hidden', 'true');
   }
 
+  /**
+   * Tear down: detach scroll/resize listeners (window + each scrollable
+   * ancestor walked at construction) and remove the tooltip element from
+   * the DOM. After `destroy`, `el` is `null` and any further calls are
+   * no-ops.
+   */
   destroy(): void {
     if (this._onScroll) {
       for (const el of this._scrollables) {

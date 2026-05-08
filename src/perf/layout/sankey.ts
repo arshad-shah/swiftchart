@@ -11,54 +11,89 @@ export interface RawSankeyNode {
   label?: string;
   color?: string;
 }
+/**
+ * Edge in a raw Sankey graph passed to {@link layoutSankey}. `source`
+ * and `target` are node ids (not indices) for ergonomics; the layout
+ * algorithm builds its own index internally.
+ */
 export interface RawSankeyLink {
+  /** Node id the flow leaves from. */
   source: string;
+  /** Node id the flow arrives at. */
   target: string;
+  /** Flow magnitude. Bands and link thickness scale with this. */
   value: number;
 }
 
+/**
+ * A node after {@link layoutSankey} has placed it. Adds column index,
+ * pixel rectangle, and the in/out flow totals derived from the links.
+ */
 export interface LaidOutSankeyNode {
+  /** Original node id. */
   id: string;
+  /** Display label (defaults to `id` when not provided). */
   label: string;
+  /** Optional explicit fill — falls back to the theme palette. */
   color?: string;
   /** Column index (0 = first source, max = last sink). */
   col: number;
-  /** Pixel rect. */
+  /** Pixel rect — top-left x. */
   x: number;
+  /** Pixel rect — top-left y. */
   y: number;
+  /** Pixel rect — width. */
   w: number;
+  /** Pixel rect — height. */
   h: number;
-  /** Sum of incoming flow. */
+  /** Sum of incoming flow values. */
   valueIn: number;
-  /** Sum of outgoing flow. */
+  /** Sum of outgoing flow values. */
   valueOut: number;
 }
 
+/**
+ * A link after {@link layoutSankey} has placed it. `source`/`target`
+ * here are *indices* into `SankeyLayout.nodes`, not ids.
+ */
 export interface LaidOutSankeyLink {
+  /** Index of the source node within `SankeyLayout.nodes`. */
   source: number;
+  /** Index of the target node within `SankeyLayout.nodes`. */
   target: number;
+  /** Flow magnitude (carried through from the raw link). */
   value: number;
-  /** Y offset of this link inside the source node. */
+  /** Y offset of this link's band inside the source node. */
   sy0: number;
-  /** Y offset of this link inside the target node. */
+  /** Y offset of this link's band inside the target node. */
   ty0: number;
-  /** Pixel thickness (== source/target band height). */
+  /** Pixel thickness (== source / target band height). */
   width: number;
 }
 
+/** Options for {@link layoutSankey}. The plot rect is required. */
 export interface SankeyLayoutOptions {
+  /** Plot rect — left edge in pixels. */
   x: number;
+  /** Plot rect — top edge in pixels. */
   y: number;
+  /** Plot rect — width in pixels. */
   w: number;
+  /** Plot rect — height in pixels. */
   h: number;
   /** Pixel width of node rectangles. Default 14. */
   nodeWidth?: number;
   /** Pixel gap between nodes within a column. Default 12. */
   nodePadding?: number;
-  /** Relaxation iterations. Default 16. */
+  /** Relaxation iterations for vertical positioning. Default 16. */
   iterations?: number;
 }
 
+/**
+ * Result of {@link layoutSankey}: nodes and links with pixel coordinates
+ * ready to draw. Both arrays are in stable order so consumers can map
+ * back to their original raw inputs by index.
+ */
 export interface SankeyLayout {
   nodes: LaidOutSankeyNode[];
   links: LaidOutSankeyLink[];

@@ -124,12 +124,22 @@ export function clearHoverGlow(ctx: CanvasRenderingContext2D): void {
 
 // ─── Rounded bar ────────────────────────────────────────────────────────
 
+/**
+ * Options for {@link roundedBar} — corner radii, optional hover glow, and
+ * glow colour. Charts (Bar, HBar, ComboChart, StackedBar, Bullet, etc.)
+ * forward their hover state and theme into this for a consistent rounded-
+ * rectangle visual language.
+ */
 export interface RoundedBarOpts {
-  /** Per-corner radii [topLeft, topRight, bottomRight, bottomLeft]. */
+  /**
+   * Corner radii in pixels. Pass a single number for uniform corners or a
+   * tuple `[topLeft, topRight, bottomRight, bottomLeft]` for asymmetric
+   * shapes (e.g. only round the top of a stacked bar).
+   */
   radii?: number | [number, number, number, number];
-  /** Light up the hover-glow drop shadow during this draw. */
+  /** Apply the canvas drop-shadow used as a hover halo on this bar. */
   hover?: boolean;
-  /** Glow / shadow colour. Defaults to the fill colour. */
+  /** Glow / shadow colour. Defaults to the bar's fill colour. */
   glowColor?: string;
 }
 

@@ -19,11 +19,24 @@ export interface OffscreenRenderRequest {
   commands: DrawCommand[];
 }
 
+/**
+ * Successful return of {@link OffscreenRenderer.render} — an `ImageBitmap`
+ * the caller should `transferFromImageBitmap` onto its on-screen canvas
+ * (or draw via `drawImage`). The bitmap is consumed by transfer; do not
+ * reuse it across frames.
+ */
 export interface OffscreenRenderResult {
   type: 'rendered';
   bitmap: ImageBitmap;
 }
 
+/**
+ * Serialisable draw command — a small DSL for the chart's draw pass that
+ * can be replayed on a regular `CanvasRenderingContext2D` *or*
+ * transferred (via `postMessage`) to an `OffscreenCanvas` worker. Charts
+ * that want offscreen rendering build a `DrawCommand[]` and feed it to
+ * {@link OffscreenRenderer} or {@link executeCommands}.
+ */
 export type DrawCommand =
   | { op: 'fillRect'; args: [string, number, number, number, number] }
   | { op: 'strokeLine'; args: [string, number, number[], number[]] }
@@ -33,6 +46,11 @@ export type DrawCommand =
   | { op: 'fillPath'; args: [string, PathSegment[]] }
   | { op: 'strokePath'; args: [string, number, PathSegment[]] };
 
+/**
+ * One step of a serialised path used inside a `'path'` / `'fillPath'` /
+ * `'strokePath'` {@link DrawCommand}. Mirrors the SVG path-command set
+ * but kept tight (`M`/`L`/`C`/`Z`) — enough for charts, no arcs.
+ */
 export type PathSegment =
   | { t: 'M'; x: number; y: number }
   | { t: 'L'; x: number; y: number }

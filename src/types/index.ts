@@ -92,9 +92,13 @@ export type EasingName =
 
 /** Pixel padding around the plot area inside the canvas. */
 export interface Padding {
+  /** Top padding in pixels — leaves room for the title. */
   top: number;
+  /** Right padding in pixels. */
   right: number;
+  /** Bottom padding in pixels — leaves room for x-axis labels. */
   bottom: number;
+  /** Left padding in pixels — leaves room for y-axis tick labels. */
   left: number;
 }
 
@@ -107,7 +111,9 @@ export type LegendPosition = 'top' | 'bottom' | 'left' | 'right' | 'none';
  * `data.length` must equal `labels.length` of the parent {@link ResolvedData}.
  */
 export interface Dataset {
+  /** Display name shown in legends and tooltips. */
   label: string;
+  /** Series values, one per `labels[]` entry on the parent {@link ResolvedData}. */
   data: number[];
   /** Override the auto-assigned series colour. */
   color?: string;
@@ -150,7 +156,9 @@ export type ColorFn = (
  * input (any object array) against the {@link DataMapping}.
  */
 export interface ResolvedData {
+  /** Categorical x-axis labels, in render order. */
   labels: string[];
+  /** One {@link Dataset} per series, all with `data.length === labels.length`. */
   datasets: Dataset[];
 }
 
@@ -465,6 +473,7 @@ export interface GaugeConfig extends BaseChartConfig {
 
 /** A single coloured range on a gauge. */
 export interface GaugeSegment {
+  /** Fill colour for this band. */
   color: string;
   /** End of the segment, in the gauge's [min, max] domain. */
   to: number;
@@ -472,7 +481,9 @@ export interface GaugeSegment {
 
 /** Scatter point in cartesian space. */
 export interface ScatterPoint {
+  /** X coordinate in data space. */
   x: number;
+  /** Y coordinate in data space. */
   y: number;
   /** Optional label shown in the tooltip. */
   label?: string;
@@ -487,13 +498,17 @@ export interface ScatterGroups {
 
 /** A single bar in a waterfall - positive adds, negative subtracts. */
 export interface WaterfallItem {
+  /** Bar label, displayed on the x-axis. */
   label: string;
+  /** Signed delta — positive bars add to the running total, negative subtract. */
   value: number;
 }
 
 /** A single rectangle in a treemap. */
 export interface TreemapItem {
+  /** Tile label, drawn inside the rectangle when there's room. */
   label: string;
+  /** Tile area weight; the rectangle's area is proportional to this. */
   value: number;
 }
 
@@ -501,14 +516,19 @@ export interface TreemapItem {
 export interface CandlestickItem {
   /** Categorical label (date, period, etc.). */
   label: string;
+  /** Opening price for the period. */
   open: number;
+  /** Highest price during the period. */
   high: number;
+  /** Lowest price during the period. */
   low: number;
+  /** Closing price for the period. */
   close: number;
 }
 
 /** Pre-computed five-number summary for a boxplot category. */
 export interface BoxplotItem {
+  /** Category label. */
   label: string;
   /** Lower whisker (typically min or Q1 - 1.5*IQR). */
   min: number;
@@ -526,41 +546,57 @@ export interface BoxplotItem {
 
 /** A single funnel stage. */
 export interface FunnelItem {
+  /** Stage label, shown on the slab. */
   label: string;
+  /** Stage volume; bands taper towards smaller values. */
   value: number;
 }
 
 /** A node in a Sankey diagram. */
 export interface SankeyNode {
+  /** Unique node id used by {@link SankeyLink} to wire flows. */
   id: string;
+  /** Optional display label (defaults to the id). */
   label?: string;
+  /** Optional explicit fill — falls back to the theme palette. */
   color?: string;
 }
 
 /** A flow between two Sankey nodes. */
 export interface SankeyLink {
+  /** Source node id (the flow's origin). */
   source: string;
+  /** Target node id (the flow's destination). */
   target: string;
+  /** Flow magnitude. Bands and link thickness scale with this. */
   value: number;
 }
 
 /** A node in a network / force-directed graph. */
 export interface NetworkNode {
+  /** Unique node id used by {@link NetworkLink} endpoints. */
   id: string;
+  /** Optional display label (defaults to the id). */
   label?: string;
+  /** Categorical group; nodes in the same group share a palette colour. */
   group?: string | number;
+  /** Optional radius in pixels. Falls back to a constant. */
   size?: number;
 }
 
 /** An edge in a network / force-directed graph. */
 export interface NetworkLink {
+  /** Endpoint node id. */
   source: string;
+  /** Endpoint node id. */
   target: string;
+  /** Optional edge weight; influences spring rest length when set. */
   value?: number;
 }
 
 /** A single bullet-chart row. */
 export interface BulletItem {
+  /** Row label drawn at the left. */
   label: string;
   /** Current measure (the dark bar). */
   value: number;
@@ -572,24 +608,35 @@ export interface BulletItem {
 
 /** A treemap rect with computed pixel coordinates (internal use). */
 export interface TreemapRect extends TreemapItem {
+  /** Pixel rect — left edge. */
   rx: number;
+  /** Pixel rect — top edge. */
   ry: number;
+  /** Pixel rect — width. */
   rw: number;
+  /** Pixel rect — height. */
   rh: number;
 }
 
 /** Pixel-space rectangle covering the chart's drawing area. */
 export interface PlotArea {
+  /** Left edge of the plot area in canvas pixels. */
   x: number;
+  /** Top edge of the plot area in canvas pixels. */
   y: number;
+  /** Width of the plot area in canvas pixels. */
   w: number;
+  /** Height of the plot area in canvas pixels. */
   h: number;
 }
 
 /** Result of {@link niceScale} - rounded axis bounds and tick step. */
 export interface NiceScale {
+  /** Lower axis bound, rounded down to a "nice" round number. */
   min: number;
+  /** Upper axis bound, rounded up to a "nice" round number. */
   max: number;
+  /** Distance between adjacent ticks. */
   step: number;
 }
 
@@ -755,7 +802,9 @@ export interface BoxplotComponentProps extends ChartComponentProps, BoxplotChart
 export interface FunnelComponentProps extends ChartComponentProps, FunnelChartConfig {}
 /** Props for the React `<Sankey>` component. */
 export interface SankeyComponentProps extends ChartComponentProps, SankeyChartConfig {
+  /** Node list. Pass alongside `links` instead of `data` + `mapping`. */
   nodes?: SankeyNode[];
+  /** Edge list referencing `nodes[].id`. */
   links?: SankeyLink[];
 }
 /** Props for the React `<Combo>` component. */
@@ -768,7 +817,9 @@ export interface BulletComponentProps extends ChartComponentProps, BulletChartCo
 export interface MarimekkoComponentProps extends ChartComponentProps, MarimekkoChartConfig {}
 /** Props for the React `<Network>` component. */
 export interface NetworkComponentProps extends ChartComponentProps, NetworkChartConfig {
+  /** Node list. Pass alongside `links` instead of `data` + `mapping`. */
   nodes?: NetworkNode[];
+  /** Edge list referencing `nodes[].id`. */
   links?: NetworkLink[];
 }
 /** Props for the React `<Pie>` and `<Donut>` components. */
@@ -807,9 +858,13 @@ export interface SparklineComponentProps {
   animate?: boolean;
   /** Animation duration in ms. Default `600`. */
   animDuration?: number;
+  /** Sparkline width — CSS string or pixel number. Default `'100%'`. */
   width?: string | number;
+  /** Sparkline height — CSS string or pixel number. Default `40`. */
   height?: string | number;
+  /** Optional CSS class on the host `<div>`. */
   className?: string;
+  /** Inline style overrides on the host `<div>`. */
   style?: React.CSSProperties;
   /** Theme name or {@link Theme} object. */
   theme?: ThemeName | Theme;
