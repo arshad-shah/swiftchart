@@ -281,28 +281,23 @@ export abstract class BaseChart {
   }
 
   /**
-   * Coalesce a burst of ResizeObserver callbacks into a single rAF. Skips
-   * the redraw when the container's CSS dimensions haven't actually changed
-   * (this is the path that absorbs the observer's redundant initial fire).
+   * Coalesce a burst of ResizeObserver callbacks into a single rAF. Bails
+   * when the container's pixel dimensions haven't actually changed —
+   * absorbs the observer's redundant initial fire after construction.
    */
   private _scheduleResize(): void {
     if (this._resizeRaf) return;
     this._resizeRaf = requestAnimationFrame(() => {
       this._resizeRaf = 0;
-      const rect = this.container.getBoundingClientRect();
-      const w = Math.max(1, rect.width);
-      const h = Math.max(1, rect.height);
-      // Snap-equality check is in CSS-pixel space because that's what
-      // _resize() pins itself to. A few-pixel jitter from sub-pixel rect
-      // values still no-ops here, which is what we want.
-      if (Math.abs(w - this._lastRectW) < 0.5 && Math.abs(h - this._lastRectH) < 0.5) return;
+      const d = dpr();
+      const r = this.container.getBoundingClientRect();
+      const bw = Math.max(1, Math.floor(Math.max(1, r.width) * d));
+      const bh = Math.max(1, Math.floor(Math.max(1, r.height) * d));
+      if (bw === this.canvas.width && bh === this.canvas.height) return;
       this._resize();
       this._draw();
     });
   }
-
-  private _lastRectW = 0;
-  private _lastRectH = 0;
 
   // ── Layout ─────────────────────────────────────────
 
@@ -572,25 +567,22 @@ export abstract class BaseChart {
   }
 
   protected _resize(): void {
+    // Snap CSS dimensions to multiples of 1/DPR so the backing store is an
+    // exact integer pixel count. At fractional DPR (Windows 125% = 1.25),
+    // Math.round on the backing dim leaves a half-pixel mismatch with the
+    // CSS box and integer-CSS strokes blur between physical pixels.
     const d = dpr();
-    const rect = this.container.getBoundingClientRect();
-    this._lastRectW = Math.max(1, rect.width);
-    this._lastRectH = Math.max(1, rect.height);
-    // Snap CSS dimensions to multiples of 1/DPR so the backing-store can be
-    // an exact integer pixel count. At fractional DPR (e.g. Windows 125% =
-    // 1.25), Math.round on the backing dim leaves a half-pixel mismatch
-    // between the canvas's CSS box and its bitmap, which makes integer-CSS
-    // strokes land between physical pixels and look blurry.
-    const backingW = Math.max(1, Math.floor(this._lastRectW * d));
-    const backingH = Math.max(1, Math.floor(this._lastRectH * d));
-    this.width = backingW / d;
-    this.height = backingH / d;
-    this.canvas.width = backingW;
-    this.canvas.height = backingH;
-    // Pin the canvas's CSS box to the snapped size; the inline `width:100%`
-    // baseline would otherwise let the browser stretch the bitmap fractionally.
-    this.canvas.style.width = `${this.width}px`;
-    this.canvas.style.height = `${this.height}px`;
+    const r = this.container.getBoundingClientRect();
+    const bw = Math.max(1, Math.floor(Math.max(1, r.width) * d));
+    const bh = Math.max(1, Math.floor(Math.max(1, r.height) * d));
+    this.width = bw / d;
+    this.height = bh / d;
+    this.canvas.width = bw;
+    this.canvas.height = bh;
+    // Pin the CSS box to the snapped size; inline width:100% would otherwise
+    // let the browser stretch the bitmap fractionally.
+    this.canvas.style.width = this.width + 'px';
+    this.canvas.style.height = this.height + 'px';
     this.ctx.setTransform(d, 0, 0, d, 0, 0);
   }
 

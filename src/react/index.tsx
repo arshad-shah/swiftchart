@@ -112,39 +112,22 @@ function shallowKey(obj: unknown): string {
 
 /**
  * Shallow-equal mapping signature. Returns a stable string that bumps only
- * when the mapping changes by shallow content — avoids JSON-stringifying
- * potentially huge fields like `nodes`/`links`/`datasets` on every parent
- * re-render. `colorMap` is compared one level deeper because it's the
- * canonical place users pass an inline object literal of category→color.
+ * when the mapping changes by shallow reference. Avoids JSON-stringifying
+ * potentially huge fields (`nodes`, `links`, `datasets`) on every render.
+ * Nested objects (e.g. `colorMap`) must be referentially stable; consumers
+ * passing inline literals there should `useMemo`.
  */
-function shallowMappingEq(a: any, b: any): boolean {
-  if (a === b) return true;
-  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
-  const ak = Object.keys(a);
-  const bk = Object.keys(b);
-  if (ak.length !== bk.length) return false;
-  for (const k of ak) {
-    if (k === 'colorMap') {
-      const av = a[k];
-      const bv = b[k];
-      if (av === bv) continue;
-      if (!av || !bv || typeof av !== 'object' || typeof bv !== 'object') return false;
-      const cak = Object.keys(av);
-      if (cak.length !== Object.keys(bv).length) return false;
-      for (const kk of cak) if (av[kk] !== bv[kk]) return false;
-      continue;
-    }
-    if (a[k] !== b[k]) return false;
+function useShallowMappingKey(m: DataMapping | undefined): string {
+  const ref = useRef<{ m: any; v: number }>({ m: undefined, v: 0 });
+  const p = ref.current.m;
+  let same = p === m;
+  if (!same && p && m && typeof p === 'object' && typeof m === 'object') {
+    const pk = Object.keys(p);
+    same = pk.length === Object.keys(m).length &&
+      pk.every(k => (p as any)[k] === (m as any)[k]);
   }
-  return true;
-}
-
-function useShallowMappingKey(mapping: DataMapping | undefined): string {
-  const ref = useRef<{ map: any; ver: number }>({ map: undefined, ver: 0 });
-  if (!shallowMappingEq(ref.current.map, mapping)) {
-    ref.current = { map: mapping, ver: ref.current.ver + 1 };
-  }
-  return String(ref.current.ver);
+  if (!same) ref.current = { m, v: ref.current.v + 1 };
+  return '' + ref.current.v;
 }
 
 function useChart<T extends BaseChart>(
