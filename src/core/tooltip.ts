@@ -5,6 +5,8 @@
  * labels/values cannot inject markup or scripts.
  */
 
+import type { Theme } from '../types';
+
 export interface TooltipRow {
   label: string;
   value: string;
@@ -19,34 +21,49 @@ export interface TooltipContent {
 
 const SSR = typeof document === 'undefined';
 
-const PANEL_BG = '#0f1620f2';
-const PANEL_BORDER = '#38bdf855';
+// Fallbacks used when no chart theme has been pushed in (e.g. ad-hoc Tooltip
+// usage in tests). The themed path derives all colours from the active Theme.
+const DEFAULT_BG = '#0f1620f2';
+const DEFAULT_BORDER = '#38bdf855';
+const DEFAULT_TEXT = '#e2e8f0';
+const DEFAULT_MUTED = '#94a3b8';
 const GAP = 14;
+
+interface TooltipColors {
+  bg: string;
+  border: string;
+  text: string;
+  muted: string;
+}
+
+function resolveColors(theme: Theme | null): TooltipColors {
+  if (!theme) {
+    return { bg: DEFAULT_BG, border: DEFAULT_BORDER, text: DEFAULT_TEXT, muted: DEFAULT_MUTED };
+  }
+  return {
+    bg: theme.tooltipBg ?? theme.surface ?? DEFAULT_BG,
+    border: theme.tooltipBorder ?? theme.axis ?? DEFAULT_BORDER,
+    text: theme.tooltipText ?? theme.text ?? DEFAULT_TEXT,
+    muted: theme.textMuted ?? DEFAULT_MUTED,
+  };
+}
 
 export class Tooltip {
   el: HTMLDivElement | null;
   canvas: HTMLCanvasElement;
   private _onScroll: (() => void) | null = null;
+  private _colors: TooltipColors = resolveColors(null);
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, theme: Theme | null = null) {
     this.canvas = canvas;
+    this._colors = resolveColors(theme);
     if (SSR) { this.el = null; return; }
 
     this.el = document.createElement('div');
     this.el.setAttribute('role', 'tooltip');
     this.el.setAttribute('aria-hidden', 'true');
     this.el.className = 'sc-tooltip';
-    this.el.style.cssText = `
-      position:fixed;pointer-events:none;opacity:0;
-      transition:opacity .15s ease,transform .15s ease;
-      background:${PANEL_BG};border:1px solid ${PANEL_BORDER};border-radius:8px;
-      padding:8px 12px;
-      font-family:system-ui,-apple-system,sans-serif;font-size:12px;color:#e2e8f0;
-      z-index:9999;backdrop-filter:blur(12px);
-      box-shadow:0 8px 32px #00000060;max-width:260px;
-      transform:translateY(4px);line-height:1.5;
-      will-change:left,top,opacity;
-    `;
+    this._applyPanelStyle();
     document.body.appendChild(this.el);
 
     // Tooltip is positioned `fixed`, so any scroll (window or any scrolling
@@ -58,14 +75,45 @@ export class Tooltip {
     window.addEventListener('resize', this._onScroll, { passive: true });
   }
 
+  /**
+   * Apply a Theme to subsequent tooltip renders. Colours flow from
+   * (in priority order):
+   *   - explicit theme.tooltipBg / .tooltipBorder / .tooltipText
+   *   - theme.surface / .axis / .text (so built-in themes auto-coordinate)
+   *   - hard-coded fallbacks (only when no theme is set, e.g. unit tests)
+   *
+   * Pass `null` to revert to fallbacks.
+   */
+  setTheme(theme: Theme | null): void {
+    this._colors = resolveColors(theme);
+    this._applyPanelStyle();
+  }
+
+  private _applyPanelStyle(): void {
+    if (!this.el) return;
+    const c = this._colors;
+    this.el.style.cssText = `
+      position:fixed;pointer-events:none;opacity:0;
+      transition:opacity .15s ease,transform .15s ease;
+      background:${c.bg};border:1px solid ${c.border};border-radius:8px;
+      padding:8px 12px;
+      font-family:system-ui,-apple-system,sans-serif;font-size:12px;color:${c.text};
+      z-index:9999;backdrop-filter:blur(12px);
+      box-shadow:0 8px 32px #00000060;max-width:260px;
+      transform:translateY(4px);line-height:1.5;
+      will-change:left,top,opacity;
+    `;
+  }
+
   /** Render a tooltip from structured content. Safe against XSS. */
   showStructured(canvasX: number, canvasY: number, content: TooltipContent): void {
     if (!this.el) return;
+    const c = this._colors;
     const root = document.createDocumentFragment();
 
     if (content.title) {
       const t = document.createElement('div');
-      t.style.cssText = 'font-weight:600;margin-bottom:4px;color:#f1f5f9';
+      t.style.cssText = `font-weight:600;margin-bottom:4px;color:${c.text}`;
       t.textContent = content.title;
       root.appendChild(t);
     }
@@ -80,11 +128,11 @@ export class Tooltip {
         row.appendChild(dot);
       }
       const label = document.createElement('span');
-      label.style.color = '#94a3b8';
+      label.style.color = c.muted;
       label.textContent = r.label;
       row.appendChild(label);
       const val = document.createElement('b');
-      val.style.cssText = 'margin-left:auto;padding-left:8px;color:#f1f5f9';
+      val.style.cssText = `margin-left:auto;padding-left:8px;color:${c.text}`;
       val.textContent = r.value;
       row.appendChild(val);
       root.appendChild(row);
@@ -93,7 +141,7 @@ export class Tooltip {
     if (content.footer) {
       const f = document.createElement('div');
       f.style.cssText =
-        'border-top:1px solid #ffffff15;margin-top:6px;padding-top:4px;color:#94a3b8;font-size:11px';
+        `border-top:1px solid ${c.border};margin-top:6px;padding-top:4px;color:${c.muted};font-size:11px`;
       f.textContent = content.footer;
       root.appendChild(f);
     }

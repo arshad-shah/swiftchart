@@ -106,7 +106,7 @@ export abstract class BaseChart {
 
     this.theme = resolveTheme(this.config.theme);
     this.animator = new Animator(this.config.animDuration, this.config.animEasing as EasingName);
-    this.tooltip = this.config.showTooltip ? new Tooltip(this.canvas) : null;
+    this.tooltip = this.config.showTooltip ? new Tooltip(this.canvas, this.theme) : null;
 
     // Bind event handlers for cleanup
     this._boundMouseMove = (e: MouseEvent) => this._onMouse(e);
@@ -202,6 +202,7 @@ export abstract class BaseChart {
 
   setTheme(name: string): void {
     this.theme = resolveTheme(name);
+    this.tooltip?.setTheme(this.theme);
     this._draw();
   }
 
@@ -223,7 +224,10 @@ export abstract class BaseChart {
       const v = (arg as any)[k];
       if (v !== undefined) (this.config as any)[k] = v;
     }
-    if (arg.theme) this.theme = resolveTheme(arg.theme);
+    if (arg.theme) {
+      this.theme = resolveTheme(arg.theme);
+      this.tooltip?.setTheme(this.theme);
+    }
     if (arg.padding) this.padding = { ...this.padding, ...arg.padding };
     if (arg.animDuration) this.animator.duration = arg.animDuration;
     if (arg.animEasing) this.animator.easing = arg.animEasing;

@@ -15,6 +15,13 @@ import type {
   BulletComponentProps, MarimekkoComponentProps, NetworkComponentProps,
 } from '../types';
 import { BaseChart } from '../core/base';
+
+// Re-export the theme registry from the React entry. The registry itself is
+// anchored on globalThis (see core/themes.ts) so that calling addTheme() from
+// either entry mutates the same map; the re-export here lets consumers who
+// only import from `/react` reach addTheme/THEMES at runtime as well as types.
+export { THEMES, addTheme, resolveTheme } from '../core/themes';
+
 import { LineChart } from '../charts/line';
 import { BarChart } from '../charts/bar';
 import { PieChart } from '../charts/pie';
