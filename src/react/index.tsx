@@ -98,8 +98,9 @@ function useChart<T extends BaseChart>(
   // Forward every non-data, non-mount config field to chart.update()
   // so chart-specific props (donut, donutWidth, area, smooth, dots,
   // lineWidth, segments, animate, …) stay in sync without recreating
-  // the chart. `theme` is excluded because it has its own setTheme path,
-  // and `onClick` is a function that update() doesn't need to diff.
+  // the chart. `theme` is excluded because it has its own setTheme path;
+  // `onClick` is excluded because functions can't be serialised into the
+  // configKey for change detection — it gets its own per-render sync below.
   const updatable: Record<string, any> = {};
   for (const k in config) {
     if (k === 'theme' || k === 'onClick') continue;
@@ -150,6 +151,19 @@ function useChart<T extends BaseChart>(
     c.setData((data ?? []) as any, mapping);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, mappingKey, extraDepKey]);
+
+  // Always sync the latest onClick handler into the chart instance.
+  // Functions don't survive JSON.stringify, so they can't ride along with
+  // the configKey path; and the mount-only effect above captured only the
+  // first render's handler, which made every subsequent prop swap a stale
+  // closure. The chart's bound click listener reads `config.onClick` lazily
+  // on each click, so a direct assignment is sufficient — no redraw needed.
+  useEffect(() => {
+    const c = chartRef.current;
+    if (!c) return;
+    (c as unknown as { config: { onClick?: unknown } }).config.onClick =
+      (config as { onClick?: unknown }).onClick;
+  });
 
   return chartRef;
 }
