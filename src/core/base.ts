@@ -165,7 +165,9 @@ export abstract class BaseChart {
 
     this.theme = resolveTheme(this.config.theme);
     this.animator = new Animator(this.config.animDuration, this.config.animEasing as EasingName);
-    this.tooltip = this.config.showTooltip ? new Tooltip(this.canvas, this.theme) : null;
+    this.tooltip = this.config.showTooltip
+      ? new Tooltip(this.canvas, this.theme, this._tooltipMountTarget())
+      : null;
 
     // Bind event handlers for cleanup
     this._boundMouseMove = (e: MouseEvent) => this._onMouse(e);
@@ -387,6 +389,22 @@ export abstract class BaseChart {
     this._liveEl?.remove();
     this._liveEl = null;
     this.canvas.remove();
+  }
+
+  /**
+   * Pick where the tooltip element should mount. Honours the explicit
+   * `tooltipContainer` config first, then the shadow root if the chart is
+   * inside one (preserves Shadow DOM encapsulation), otherwise the chart's
+   * own container — keeps the tooltip inside any stacking context the
+   * consumer has set up (modals, popovers, web components, etc.).
+   */
+  private _tooltipMountTarget(): ParentNode {
+    if (this.config.tooltipContainer) return this.config.tooltipContainer;
+    const root = this.canvas.getRootNode();
+    if (typeof ShadowRoot !== 'undefined' && root instanceof ShadowRoot) {
+      return root;
+    }
+    return this.container;
   }
 
   // ── Accessibility helpers ──────────────────────────

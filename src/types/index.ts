@@ -376,8 +376,23 @@ export interface BaseChartConfig {
   ) => void;
   /** Accessible label for screen readers (rendered as canvas `aria-label`). */
   ariaLabel?: string;
-  /** Longer accessible description (rendered as canvas `aria-description`). */
+  /**
+   * Longer accessible description. Rendered into a hidden element next to
+   * the canvas and linked via the standard `aria-describedby` attribute.
+   */
   ariaDescription?: string;
+  /**
+   * Where to mount the floating tooltip element. Defaults to:
+   *   1. The canvas's shadow root, if the chart is inside one (so the
+   *      tooltip stays inside the same Shadow DOM encapsulation).
+   *   2. Otherwise, the chart's container element — keeping the tooltip
+   *      inside the chart's stacking context (e.g. inside a modal,
+   *      popover, or web component).
+   *
+   * Pass an explicit `HTMLElement` to portal the tooltip elsewhere
+   * (e.g. directly to `document.body` for a Radix-style portal).
+   */
+  tooltipContainer?: HTMLElement;
 }
 
 /**

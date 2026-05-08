@@ -19,3 +19,21 @@ chart.resize();
 In React, call `ref.current?.resize()` — see [React refs](/guides/react-refs/).
 
 The chart respects `devicePixelRatio` automatically, so output stays crisp on Retina displays.
+
+## Tooltip placement in nested layouts
+
+The floating tooltip is mounted next to the chart by default — not portalled to `document.body`. That means:
+
+- A chart inside a **modal**, **popover**, or any element with its own stacking context keeps its tooltip *above* that ancestor (it sits in the same subtree).
+- A chart inside a **shadow root** (web components) renders its tooltip into the same shadow root, so the encapsulation isn't broken.
+- A chart inside an `overflow: auto` panel hides the tooltip when *the panel* scrolls — not just when the page scrolls — because every scrollable ancestor of the canvas gets a scroll listener.
+
+If you need to portal the tooltip elsewhere (e.g. to bypass an aggressive `overflow: clip` ancestor, or to render into a Radix-style portal root), pass `tooltipContainer`:
+
+```ts
+new LineChart('#chart', {
+  tooltipContainer: document.getElementById('app-tooltip-portal')!,
+});
+```
+
+In React, the same prop is forwarded to all chart components.

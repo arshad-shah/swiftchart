@@ -1,5 +1,12 @@
 /**
- * Tooltip — floating panel attached to body.
+ * Tooltip — floating panel mounted near the chart.
+ *
+ * Mount target priority (decided by the caller):
+ *   1. An explicit container passed in (e.g. `BaseChartConfig.tooltipContainer`)
+ *   2. The chart canvas's shadow root, if any (so a chart in a web component
+ *      keeps its tooltip inside the same encapsulation boundary)
+ *   3. The chart container element
+ *   4. `document.body` (legacy fallback used when no target is provided)
  *
  * Renders via DOM construction (`textContent` for user data) so user-supplied
  * labels/values cannot inject markup or scripts.
@@ -52,9 +59,14 @@ export class Tooltip {
   el: HTMLDivElement | null;
   canvas: HTMLCanvasElement;
   private _onScroll: (() => void) | null = null;
+  private _scrollables: Element[] = [];
   private _colors: TooltipColors = resolveColors(null);
 
-  constructor(canvas: HTMLCanvasElement, theme: Theme | null = null) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    theme: Theme | null = null,
+    mountTarget?: ParentNode,
+  ) {
     this.canvas = canvas;
     this._colors = resolveColors(theme);
     if (SSR) { this.el = null; return; }
@@ -64,14 +76,26 @@ export class Tooltip {
     this.el.setAttribute('aria-hidden', 'true');
     this.el.className = 'sc-tooltip';
     this._applyPanelStyle();
-    document.body.appendChild(this.el);
+    (mountTarget ?? document.body).appendChild(this.el);
 
-    // Tooltip is positioned `fixed`, so any scroll (window or any scrolling
-    // ancestor) visually disconnects it from the data point it was anchored
-    // to. Hide on scroll — re-hovering brings it back at the new position.
-    // The capture phase + passive flag catch scrolls on every ancestor.
+    // Tooltip is positioned `fixed`, so any scroll — window OR any scrolling
+    // ancestor of the canvas — visually disconnects it from the anchor.
+    // `scroll` does NOT bubble, so a single window listener can't catch
+    // scrolls inside an `overflow:auto` parent. Walk the canvas ancestry
+    // and attach a scroll listener to every scrollable container.
     this._onScroll = () => this.hide();
-    window.addEventListener('scroll', this._onScroll, { capture: true, passive: true });
+    let p: Element | null = canvas.parentElement;
+    while (p) {
+      const s = getComputedStyle(p);
+      const o = `${s.overflow}${s.overflowX}${s.overflowY}`;
+      if (/auto|scroll|hidden|clip/.test(o)) {
+        p.addEventListener('scroll', this._onScroll, { passive: true });
+        this._scrollables.push(p);
+      }
+      p = p.parentElement;
+    }
+    // Window scroll/resize as a final backstop for page-level changes.
+    window.addEventListener('scroll', this._onScroll, { passive: true });
     window.addEventListener('resize', this._onScroll, { passive: true });
   }
 
@@ -195,7 +219,11 @@ export class Tooltip {
 
   destroy(): void {
     if (this._onScroll) {
-      window.removeEventListener('scroll', this._onScroll, { capture: true } as any);
+      for (const el of this._scrollables) {
+        el.removeEventListener('scroll', this._onScroll);
+      }
+      this._scrollables = [];
+      window.removeEventListener('scroll', this._onScroll);
       window.removeEventListener('resize', this._onScroll);
       this._onScroll = null;
     }
