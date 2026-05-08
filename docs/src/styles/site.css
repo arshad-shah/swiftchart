@@ -377,7 +377,9 @@ header.header {
   }
   .sc-compare th,
   .sc-compare td {
-    padding: 0.7rem 0.7rem !important;
+    /* Vertical 0.7rem keeps row height tight; horizontal 1rem matches
+       desktop so cell content keeps clear of the column borders. */
+    padding: 0.7rem 1rem !important;
     white-space: nowrap;
   }
 
@@ -398,9 +400,8 @@ header.header {
   }
 }
 
-/* Even narrower (phones): widen the visible viewport before scrolling
-   kicks in, and tighten the row-header column so the SwiftChart column
-   sits next to the labels with at least one rival visible at once. */
+/* Even narrower (phones): tighten font-size but keep horizontal padding
+   generous so content has breathing room from the column borders. */
 @media (max-width: 30rem) {
   .sc-compare table {
     min-width: 28rem;
@@ -408,7 +409,7 @@ header.header {
   }
   .sc-compare th,
   .sc-compare td {
-    padding: 0.6rem 0.55rem !important;
+    padding: 0.65rem 0.85rem !important;
   }
 }
 
