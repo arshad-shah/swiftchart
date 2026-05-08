@@ -79,6 +79,8 @@ The field value can be:
 - **A category key** matched against `colorMap` for an explicit lookup.
 - **Anything else** — hashed deterministically into the theme palette so the same category always lands on the same colour across re-renders.
 
+The resolve runs once at `setData` time *and* once again on every theme change (`chart.setTheme(...)` or `update({ theme })`) — categorical values that hash into the palette flip to the new theme's colours; explicit `colorMap` entries and verbatim CSS colour strings stay put. There's no per-frame cost either way.
+
 ```ts
 const traffic = [
   { source: 'Organic',  visits: 4200, status: 'good' },

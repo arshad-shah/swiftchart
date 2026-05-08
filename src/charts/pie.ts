@@ -40,6 +40,26 @@ export class PieChart extends BaseChart {
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
     this._rawData = Array.isArray(data) ? data : undefined;
+    this._lastMapping = mapping;
+    this._buildResolved(data, mapping);
+    this._animate();
+  }
+
+  /**
+   * Rebake per-slice colours against the current theme palette without
+   * re-animating. Skips the pre-built `{ labels, values }` shape — the
+   * consumer owns colours there.
+   */
+  protected _rebakeColorsForTheme(): void {
+    if (!this._rawData) return;
+    if (!this._lastMapping?.colorField) return;
+    this._buildResolved(this._rawData, this._lastMapping);
+  }
+
+  private _buildResolved(
+    data: Record<string, any>[] | null | undefined,
+    mapping?: DataMapping,
+  ): void {
     if (Array.isArray(data) && data.length && typeof data[0] === 'object') {
       const labelKey = mapping?.labelField || mapping?.x ||
         Object.keys(data[0]).find(k => typeof data[0][k] === 'string') || Object.keys(data[0])[0];
@@ -81,7 +101,6 @@ export class PieChart extends BaseChart {
         this.theme.colors,
       );
     }
-    this._animate();
   }
 
   _onMouse(e: MouseEvent): void {

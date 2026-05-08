@@ -37,6 +37,26 @@ export class FunnelChart extends BaseChart {
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
     this._rawData = Array.isArray(data) ? data : undefined;
+    this._lastMapping = mapping;
+    this._buildItems(data, mapping);
+    this._animate();
+  }
+
+  /**
+   * Rebake per-stage colours against the current theme palette without
+   * re-animating. No-op when no rows are stored or when there's no
+   * `colorField` to resolve.
+   */
+  protected _rebakeColorsForTheme(): void {
+    if (!this._rawData) return;
+    if (!this._lastMapping?.colorField) return;
+    this._buildItems(this._rawData, this._lastMapping);
+  }
+
+  private _buildItems(
+    data: Record<string, any>[] | null | undefined,
+    mapping?: DataMapping,
+  ): void {
     const labelKey = mapping?.labelField ?? mapping?.x ?? 'label';
     const valKey = mapping?.valueField ?? (mapping?.y as string) ?? 'value';
     const cf = mapping?.colorField;
@@ -57,7 +77,6 @@ export class FunnelChart extends BaseChart {
     this._items = enriched.map(({ label, value }) => ({ label, value }));
     this._itemColors = cf ? enriched.map(d => d._color) : undefined;
     this.resolved = { labels: this._items.map((d) => d.label), datasets: [] };
-    this._animate();
   }
 
   private _datumColor(i: number): string {
