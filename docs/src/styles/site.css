@@ -106,6 +106,11 @@ header.header {
 }
 
 .hero .actions a.minimal {
+  /* Starlight's default minimal button has zero horizontal padding, which
+     puts the text + icon flush against our brand-line border on the hero.
+     Restore the 18px inline padding the primary variant uses so all three
+     hero buttons have consistent breathing room. */
+  padding-inline: 18px;
   color: var(--sc-header-fg);
   border: 1px solid var(--sc-header-border);
   background: transparent;
@@ -259,6 +264,10 @@ header.header {
   overflow-x: auto;
   border-radius: 0.85rem;
   border: 1px solid var(--sc-header-border);
+  /* Inset padding so the table doesn't bleed into the outer rounded border —
+     the SwiftChart column's brand tint and the leftmost / rightmost cells
+     get visible breathing room from the wrapper edge. */
+  padding: 0.5rem 0.5rem 0;
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--sc-brand) 4%, transparent),
