@@ -66,3 +66,13 @@ addTheme('brand', {
 ```
 
 The semantic fields `positive`, `negative`, and `onAccent` are also part of the `Theme` shape; if omitted from a custom theme, they default to a green/red/white set so existing themes keep working.
+
+## Diagnostics
+
+In development builds (`process.env.NODE_ENV !== 'production'`), the theme resolver surfaces three classes of misuse via `console.warn`:
+
+- **Unknown theme name** — `theme: 'rd-light'` when no `addTheme('rd-light', …)` call has run. The chart falls back to `midnight` and you see `[SwiftChart] Theme "rd-light" is not registered — falling back to "midnight". Available themes: …`.
+- **Missing required fields on a custom theme** — `addTheme('brand', { bg: '#fff' })` (forgetting `surface`/`grid`/`text`/`textMuted`/`axis`/`colors`). Missing fields are backfilled from `midnight` so the chart still renders, and you see which fields were filled in.
+- **Shadowing a built-in name** — `addTheme('midnight', …)`. The override still applies (this is intentional flexibility), but a warning fires so accidental overrides aren't silent.
+
+Production builds drop the warnings entirely so they don't leak into your users' devtools.
