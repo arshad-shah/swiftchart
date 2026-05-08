@@ -89,9 +89,15 @@ export interface ChartRef {
   /**
    * Export the current canvas as a data URL. Defaults to PNG; pass
    * `'image/jpeg'` or `'image/webp'` (with `quality` 0–1) for those
-   * formats. Returns `null` if the chart isn't mounted.
+   * formats. Pass `{ scale: 'css' }` to export at on-screen CSS-pixel
+   * resolution instead of the DPR-multiplied backing store (useful for
+   * "Save as PNG" buttons). Returns `null` if the chart isn't mounted.
    */
-  toDataURL: (type?: string, quality?: number) => string | null;
+  toDataURL: (
+    type?: string,
+    quality?: number,
+    options?: { scale?: 'native' | 'css' },
+  ) => string | null;
 }
 
 /**
@@ -260,7 +266,8 @@ function makeImperative<T extends BaseChart>(chartRef: RefObject<T | null>): Cha
   return {
     get chart() { return chartRef.current; },
     resize: () => chartRef.current?.resize(),
-    toDataURL: (type, quality) => chartRef.current?.toDataURL(type, quality) ?? null,
+    toDataURL: (type, quality, options) =>
+      chartRef.current?.toDataURL(type, quality, options) ?? null,
   };
 }
 

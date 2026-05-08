@@ -548,6 +548,82 @@ export function App() {
         </section>
 
         <section>
+          <h2>Dense x-axis labels — issue #26 sub-item 8</h2>
+          <p style={{ color: '#7a8599', marginTop: 0, fontSize: 13 }}>
+            These charts have many ticks with long labels. Watch the rotated
+            labels at narrow widths — if they still overlap or collide with
+            adjacent rotated labels, sub-item 8 of the polish issue is valid.
+          </p>
+          <div className="grid">
+            <Card title="Bar — 30 long labels in a 320 px slot">
+              <div style={{ width: 320, height: 240 }}>
+                <Bar
+                  data={Array.from({ length: 30 }).map((_, i) => ({
+                    quarter: `2024-Q${(i % 4) + 1}-Region-${String.fromCharCode(65 + (i % 26))}-${i}`,
+                    revenue: 100 + ((i * 37) % 200),
+                  }))}
+                  mapping={{ x: 'quarter', y: 'revenue' }}
+                  theme={theme}
+                  animate={false}
+                  showLegend={false}
+                  width="100%"
+                  height="100%"
+                />
+              </div>
+            </Card>
+            <Card title="Line — 50 timestamps, narrow viewport">
+              <div style={{ width: 360, height: 240 }}>
+                <Line
+                  data={Array.from({ length: 50 }).map((_, i) => ({
+                    t: `2026-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')} 14:35`,
+                    v: 50 + Math.sin(i * 0.4) * 30 + i * 1.5,
+                  }))}
+                  mapping={{ x: 't', y: 'v' }}
+                  theme={theme}
+                  animate={false}
+                  showLegend={false}
+                  width="100%"
+                  height="100%"
+                />
+              </div>
+            </Card>
+            <Card title="Stacked bar — 24 categories, very tight">
+              <div style={{ width: 280, height: 240 }}>
+                <StackedBar
+                  data={Array.from({ length: 24 }).map((_, i) => ({
+                    label: `Department-${String.fromCharCode(65 + (i % 26))}${i}-2026`,
+                    api: 30 + ((i * 13) % 80),
+                    web: 20 + ((i * 7) % 60),
+                    mobile: 10 + ((i * 11) % 40),
+                  }))}
+                  mapping={{ x: 'label', y: ['api', 'web', 'mobile'] }}
+                  theme={theme}
+                  animate={false}
+                  width="100%"
+                  height="100%"
+                />
+              </div>
+            </Card>
+            <Card title="Bar — 60 single-letter labels (rotation skip path)">
+              <div style={{ width: 360, height: 240 }}>
+                <Bar
+                  data={Array.from({ length: 60 }).map((_, i) => ({
+                    k: String.fromCharCode(65 + (i % 26)) + (i + 1),
+                    v: 50 + ((i * 17) % 150),
+                  }))}
+                  mapping={{ x: 'k', y: 'v' }}
+                  theme={theme}
+                  animate={false}
+                  showLegend={false}
+                  width="100%"
+                  height="100%"
+                />
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        <section>
           <h2>Stress: many charts mounted at once</h2>
           <div className="grid">
             {Array.from({ length: 12 }).map((_, i) => (

@@ -91,6 +91,7 @@ export default defineConfig({
             { label: 'Per-datum colours', link: '/guides/per-datum-colors/' },
             { label: 'Animations', link: '/guides/animations/' },
             { label: 'Responsive', link: '/guides/responsive/' },
+            { label: 'Streaming / real-time', link: '/guides/streaming/' },
             { label: 'React refs', link: '/guides/react-refs/' },
             { label: 'Click events & drill-down', link: '/guides/click-events/' },
             { label: 'Accessibility', link: '/guides/accessibility/' },
