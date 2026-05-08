@@ -1,0 +1,84 @@
+---
+title: Streaming
+description: Real-time data with StreamBuffer and StreamDataset.
+---
+
+For high-frequency updates (live metrics, IoT, market ticks) SwiftChart ships two ring-buffer helpers that avoid the per-push array re-allocation that bottlenecks naïve approaches.
+
+## `StreamBuffer` — single series
+
+A fixed-capacity ring buffer of recent points. O(1) append, O(1) access, O(n) snapshot.
+
+```ts
+import { LineChart, StreamBuffer } from '@arshad-shah/swift-chart';
+
+const chart = new LineChart('#chart', { animate: false });
+const buf = new StreamBuffer(/*capacity=*/ 500);
+
+setInterval(() => {
+  buf.push(Math.random() * 100);
+  chart.setData(undefined, {
+    labels: Array.from({ length: buf.length }, (_, i) => String(i)),
+    datasets: [{ label: 'tick', data: buf.toArray() }],
+  });
+}, 100);
+```
+
+API:
+
+| Method | Notes |
+|---|---|
+| `push(v)` | Append one value (drops oldest when full). |
+| `pushMany(vs)` | Bulk append. |
+| `toArray()` | Cached snapshot, invalidated on next `push`. |
+| `tail(n)` | Last `n` values. |
+| `minMax()` | Cached min/max for axis computation. |
+| `length`, `capacity` | Current size and cap. |
+
+## `StreamDataset` — multiple series with shared labels
+
+Wraps several `StreamBuffer`s plus a label buffer, and produces the pre-built `{ labels, datasets }` shape that `setData` accepts via `mapping`.
+
+```ts
+import { LineChart, StreamDataset } from '@arshad-shah/swift-chart';
+
+const stream = new StreamDataset(['cpu', 'mem'], /*capacity=*/ 600);
+const chart = new LineChart('#chart', { animate: false });
+
+setInterval(() => {
+  stream.push(new Date().toLocaleTimeString(), {
+    cpu: Math.random() * 100,
+    mem: 40 + Math.random() * 30,
+  });
+  chart.setData(undefined, stream.toResolvedData());
+}, 250);
+```
+
+## Why a ring buffer?
+
+A naïve `setData([...prev, next])` allocates a new array of length N on every tick. At 60 fps with N=10 000, that's 600 000 entries per second of GC pressure. `StreamBuffer` writes into a single `Float64Array` and reuses its snapshot until the next push, so steady-state GC is flat.
+
+## With React
+
+The React adapter calls `setData` whenever `data` or `mapping` change identity. For streams, drive updates imperatively against the chart instance via `ref` so React doesn't re-render on every tick:
+
+```tsx
+import { useEffect, useRef } from 'react';
+import { Line, type ChartRef } from '@arshad-shah/swift-chart/react';
+import { StreamDataset } from '@arshad-shah/swift-chart';
+
+function LiveChart() {
+  const ref = useRef<ChartRef>(null);
+  useEffect(() => {
+    const stream = new StreamDataset(['rps']);
+    const id = setInterval(() => {
+      stream.push(String(Date.now()), { rps: Math.random() * 1000 });
+      ref.current?.chart?.setData(undefined, stream.toResolvedData());
+    }, 100);
+    return () => clearInterval(id);
+  }, []);
+  return <Line ref={ref} animate={false} height={240} />;
+}
+```
+
+Animations are usually disabled (`animate={false}`) for streams — the entry transition fights every tick.

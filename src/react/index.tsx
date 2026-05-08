@@ -89,9 +89,15 @@ export interface ChartRef {
   /**
    * Export the current canvas as a data URL. Defaults to PNG; pass
    * `'image/jpeg'` or `'image/webp'` (with `quality` 0–1) for those
-   * formats. Returns `null` if the chart isn't mounted.
+   * formats. Pass `{ scale: 'css' }` to export at on-screen CSS-pixel
+   * resolution instead of the DPR-multiplied backing store (useful for
+   * "Save as PNG" buttons). Returns `null` if the chart isn't mounted.
    */
-  toDataURL: (type?: string, quality?: number) => string | null;
+  toDataURL: (
+    type?: string,
+    quality?: number,
+    options?: { scale?: 'native' | 'css' },
+  ) => string | null;
 }
 
 /**
@@ -112,10 +118,15 @@ function shallowKey(obj: unknown): string {
 
 /**
  * Shallow-equal mapping signature. Returns a stable string that bumps only
- * when the mapping changes by shallow reference. Avoids JSON-stringifying
- * potentially huge fields (`nodes`, `links`, `datasets`) on every render.
- * Nested objects (e.g. `colorMap`) must be referentially stable; consumers
- * passing inline literals there should `useMemo`.
+ * when the mapping changes by shallow content. Primitive-string array
+ * fields (notably `mapping.y` for multi-series charts) are compared
+ * element-wise — these almost always come in as inline literals like
+ * `y: ['revenue', 'cost']`, so reference comparison would treat every
+ * parent re-render as a change and trigger a needless setData (which on
+ * animated charts re-runs the entry transition — observable as a flash
+ * after any unrelated state update). Larger nested objects/arrays
+ * (`nodes`, `links`, `datasets`, `colorMap`) must still be referentially
+ * stable; pass them through `useMemo` from the consumer side.
  */
 function useShallowMappingKey(m: DataMapping | undefined): string {
   const ref = useRef<{ m: any; v: number }>({ m: undefined, v: 0 });
@@ -123,8 +134,30 @@ function useShallowMappingKey(m: DataMapping | undefined): string {
   let same = p === m;
   if (!same && p && m && typeof p === 'object' && typeof m === 'object') {
     const pk = Object.keys(p);
-    same = pk.length === Object.keys(m).length &&
-      pk.every(k => (p as any)[k] === (m as any)[k]);
+    same = pk.length === Object.keys(m).length && pk.every(k => {
+      const av = (p as any)[k];
+      const bv = (m as any)[k];
+      if (av === bv) return true;
+      // Element-wise equality for inline arrays — handles the common
+      // `y: ['a', 'b']` multi-series pattern. Arrays of objects (e.g.
+      // `datasets`) won't match here and still need consumer memoisation.
+      if (Array.isArray(av) && Array.isArray(bv) && av.length === bv.length) {
+        for (let i = 0; i < av.length; i++) {
+          if (av[i] !== bv[i]) return false;
+        }
+        return true;
+      }
+      // One-level deep equality for plain inline objects of primitives —
+      // handles `colorMap: { Promo: '#ff…', Hero: '#5b…' }`.
+      if (av && bv && typeof av === 'object' && typeof bv === 'object' &&
+          !Array.isArray(av) && !Array.isArray(bv)) {
+        const ak = Object.keys(av);
+        if (ak.length !== Object.keys(bv).length) return false;
+        for (const kk of ak) if (av[kk] !== bv[kk]) return false;
+        return true;
+      }
+      return false;
+    });
   }
   if (!same) ref.current = { m, v: ref.current.v + 1 };
   return '' + ref.current.v;
@@ -260,7 +293,8 @@ function makeImperative<T extends BaseChart>(chartRef: RefObject<T | null>): Cha
   return {
     get chart() { return chartRef.current; },
     resize: () => chartRef.current?.resize(),
-    toDataURL: (type, quality) => chartRef.current?.toDataURL(type, quality) ?? null,
+    toDataURL: (type, quality, options) =>
+      chartRef.current?.toDataURL(type, quality, options) ?? null,
   };
 }
 

@@ -1,6 +1,7 @@
 import type {
   BaseChartConfig,
   Theme,
+  ThemeName,
   Padding,
   PlotArea,
   ResolvedData,
@@ -161,7 +162,12 @@ export abstract class BaseChart {
     // Note: no `outline:none` — let the browser draw its native focus ring
     // when the canvas is keyboard-focused. WCAG 2.4.7 requires a visible
     // focus indicator on every interactive element.
-    this.canvas.style.cssText = 'width:100%;height:100%;display:block;';
+    // Assign individual properties instead of cssText so consumers who
+    // post-construction set unrelated styles (z-index, cursor, etc.) don't
+    // get them clobbered if they read style state before/after writes.
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+    this.canvas.style.display = 'block';
 
     // ── Accessibility wiring ───────────────────────────
     // - role="img" lies when the chart is interactive (it implies non-
@@ -374,8 +380,14 @@ export abstract class BaseChart {
     );
   }
 
-  setTheme(name: string): void {
-    this.theme = resolveTheme(name);
+  /**
+   * Switch theme. Accepts a registered theme name (`'midnight'`, `'arctic'`,
+   * `'ember'`, `'forest'`, or any name passed to {@link addTheme}) or a
+   * full {@link Theme} object — same surface that the constructor accepts
+   * via `config.theme`.
+   */
+  setTheme(theme: ThemeName | Theme): void {
+    this.theme = resolveTheme(theme);
     this.tooltip?.setTheme(this.theme);
     this._rebakeColorsForTheme();
     this._draw();
@@ -395,6 +407,11 @@ export abstract class BaseChart {
       return;
     }
     // Apply only defined keys so undefined props from React don't clobber defaults.
+    // TS catches typos at the type level (`Partial<BaseChartConfig>` rejects
+    // unknown keys in object literals via excess-property checking); we don't
+    // re-check at runtime to avoid shipping a per-key allow-list to every
+    // consumer. Pre-clean your patch object if you're constructing it
+    // dynamically and need stricter validation.
     for (const k of Object.keys(arg) as (keyof BaseChartConfig)[]) {
       const v = (arg as any)[k];
       if (v !== undefined) (this.config as any)[k] = v;
@@ -417,9 +434,28 @@ export abstract class BaseChart {
     this._draw();
   }
 
-  /** Export the current chart as a PNG data URL. */
-  toDataURL(type = 'image/png', quality = 0.92): string {
-    return this.canvas.toDataURL(type, quality);
+  /**
+   * Export the current chart as a data URL.
+   *
+   * `canvas.toDataURL()` always returns the *backing-store* bitmap, which
+   * is DPR-multiplied — a 400×300 chart on a DPR=2 display exports as
+   * 800×600. Pass `{ scale: 'css' }` to downscale the export to on-screen
+   * CSS dimensions (typical for "Save as PNG" buttons); the default
+   * `'native'` keeps the full backing-store resolution.
+   */
+  toDataURL(
+    type = 'image/png',
+    quality = 0.92,
+    options?: { scale?: 'native' | 'css' },
+  ): string {
+    if (options?.scale !== 'css') return this.canvas.toDataURL(type, quality);
+    const o = document.createElement('canvas');
+    o.width = Math.max(1, Math.round(this.width));
+    o.height = Math.max(1, Math.round(this.height));
+    const c = o.getContext('2d');
+    if (!c) return this.canvas.toDataURL(type, quality);
+    c.drawImage(this.canvas, 0, 0, o.width, o.height);
+    return o.toDataURL(type, quality);
   }
 
   destroy(): void {
@@ -783,8 +819,25 @@ export abstract class BaseChart {
     const labelMaxPx = stride - 4;
     const rotate = maxW > labelMaxPx;
 
-    // Choose visible step so labels don't overlap.
-    const minSpacing = rotate ? Math.min(maxW + 4, 60) : maxW + 12;
+    // Choose visible step + rotated truncation cooperatively.
+    //
+    // A label rotated -π/4 anchored at its right occupies `width / √2` px
+    // along the x-axis. So for adjacent rotated labels not to overlap we
+    // need `truncatedWidth / √2 + gap ≤ stride * step`. Solve for the
+    // truncation that fits at step=1 first; only fall back to skipping
+    // every Nth label when even the readable minimum (3 chars) won't fit.
+    // CHAR_PX is a conservative 10px-sans width-per-char estimate; the
+    // real measureText is checked at draw time inside _truncate.
+    const CHAR_PX = 6;
+    const GAP_PX = 2;
+    let rotChars = 14;
+    if (rotate) {
+      const budgetPx = stride * Math.SQRT2 - GAP_PX;
+      rotChars = Math.max(3, Math.min(14, Math.floor(budgetPx / CHAR_PX)));
+    }
+    const minSpacing = rotate
+      ? Math.ceil(Math.min(maxW, rotChars * CHAR_PX) / Math.SQRT2) + GAP_PX
+      : maxW + 12;
     const step = Math.max(1, Math.ceil(minSpacing / stride));
 
     this.ctx.fillStyle = this.theme.textMuted;
@@ -810,7 +863,7 @@ export abstract class BaseChart {
         this.ctx.save();
         this.ctx.translate(x, p.y + p.h + 6);
         this.ctx.rotate(-Math.PI / 4);
-        this.ctx.fillText(this._truncate(raw, 14), 0, 0);
+        this.ctx.fillText(this._truncate(raw, rotChars), 0, 0);
         this.ctx.restore();
       } else {
         const fits = this.ctx.measureText(raw).width <= labelMaxPx;

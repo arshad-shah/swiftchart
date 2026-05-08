@@ -333,12 +333,25 @@ export function resolveData(
 
   const datasets: Dataset[] = valueKeys.map((key, i) => ({
     label: config.seriesNames?.[i] || key,
-    data: data.map(d => {
-      const v = d[key];
-      return typeof v === 'number' ? v : parseFloat(v) || 0;
-    }),
+    data: data.map(d => coerceNumeric(d[key], key)),
     ...(perDatumColors ? { colors: perDatumColors } : {}),
   }));
 
   return { labels, datasets };
+}
+
+// One-shot dev warn: a non-numeric value in a value field is silently coerced
+// to 0, which conflates "missing" with a real zero. Pre-clean the data to
+// disambiguate. Single warn keeps the hot path quiet on N rows.
+let _coerceWarned = false;
+function coerceNumeric(v: unknown, key: string): number {
+  if (typeof v === 'number') return v;
+  const n = typeof v === 'string' ? parseFloat(v) : NaN;
+  if (Number.isFinite(n)) return n;
+  if (!_coerceWarned && typeof process !== 'undefined' &&
+      process.env && process.env.NODE_ENV !== 'production') {
+    _coerceWarned = true;
+    console.warn(`[SwiftChart] Non-numeric "${key}" coerced to 0; pre-clean to keep "missing" distinct from zero.`);
+  }
+  return 0;
 }

@@ -144,29 +144,29 @@
       "name": "tree-shaken: LineChart only",
       "path": "dist/esm/index.js",
       "import": "{ LineChart }",
-      "limit": "8 KB"
+      "limit": "8.25 KB"
     },
     {
       "name": "tree-shaken: LineChart + BarChart",
       "path": "dist/esm/index.js",
       "import": "{ LineChart, BarChart }",
-      "limit": "8.5 KB"
+      "limit": "8.75 KB"
     },
     {
       "name": "tree-shaken: 6 common charts",
       "path": "dist/esm/index.js",
       "import": "{ LineChart, BarChart, PieChart, ScatterChart, GaugeChart, RadarChart }",
-      "limit": "11.75 KB"
+      "limit": "12 KB"
     },
     {
       "name": "full barrel (all 23 chart classes + helpers)",
       "path": "dist/esm/index.js",
-      "limit": "22.5 KB"
+      "limit": "22.75 KB"
     },
     {
       "name": "full react bundle",
       "path": "dist/esm/react/index.js",
-      "limit": "22.25 KB"
+      "limit": "22.75 KB"
     }
   ],
   "volta": {

@@ -46,6 +46,59 @@ export function App() {
     return () => window.clearInterval(id);
   }, [streaming]);
 
+  // Memoised so unrelated re-renders (event-log updates from clicks on
+  // other charts) don't replace these data arrays with fresh identities,
+  // which would re-fire setData on every dense chart.
+  const denseQuarters = useMemo(
+    () => Array.from({ length: 30 }).map((_, i) => ({
+      quarter: `2024-Q${(i % 4) + 1}-Region-${String.fromCharCode(65 + (i % 26))}-${i}`,
+      revenue: 100 + ((i * 37) % 200),
+    })),
+    [],
+  );
+  const denseTimestamps = useMemo(
+    () => Array.from({ length: 50 }).map((_, i) => ({
+      t: `2026-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')} 14:35`,
+      v: 50 + Math.sin(i * 0.4) * 30 + i * 1.5,
+    })),
+    [],
+  );
+  const denseDepartments = useMemo(
+    () => Array.from({ length: 24 }).map((_, i) => ({
+      label: `Department-${String.fromCharCode(65 + (i % 26))}${i}-2026`,
+      api: 30 + ((i * 13) % 80),
+      web: 20 + ((i * 7) % 60),
+      mobile: 10 + ((i * 11) % 40),
+    })),
+    [],
+  );
+  const denseShortKeys = useMemo(
+    () => Array.from({ length: 60 }).map((_, i) => ({
+      k: String.fromCharCode(65 + (i % 26)) + (i + 1),
+      v: 50 + ((i * 17) % 150),
+    })),
+    [],
+  );
+
+  // Pre-built `{ labels, datasets }` mapping — memoised so unrelated
+  // re-renders don't replace the inline `datasets` array (which contains
+  // objects whose `data` arrays would also be fresh each render).
+  const prebuiltMapping = useMemo(() => ({
+    labels: monthly.map(m => m.month),
+    datasets: [
+      { label: 'A', data: monthly.map(m => m.revenue), color: '#ff7ab6' },
+      { label: 'B', data: monthly.map(m => m.cost), color: '#7ad7ff' },
+    ],
+  }), []);
+
+  // Gauge value as a stable single-row dataset; the inline literal
+  // `[{v: 60 + (tick % 40)}]` would have a fresh array reference every
+  // parent re-render and re-fire setData → re-animate.
+  const gaugeData = useMemo(
+    () => [{ v: 60 + (tick % 40) }],
+    [tick],
+  );
+
   const liveSeries = useMemo(
     () => monthly.map(row => ({
       ...row,
@@ -54,6 +107,12 @@ export function App() {
     })),
     [tick],
   );
+
+  // Sparkline number arrays — module data + memoised live derivative.
+  const sparklineRevenue = useMemo(() => monthly.map(m => m.revenue), []);
+  const sparklineCost = useMemo(() => monthly.map(m => m.cost), []);
+  const sparklineLive = useMemo(() => liveSeries.map(m => m.revenue), [liveSeries]);
+  const sparklineStatic = useMemo(() => [1, 4, 2, 8, 5, 9, 7, 12], []);
 
   // Ref API: resize() and toDataURL() exercise the imperative handle.
   const lineRef = useRef<ChartRef>(null);
@@ -222,13 +281,7 @@ export function App() {
             </Card>
             <Card title="Pre-built datasets (mapping escape hatch)">
               <Line
-                mapping={{
-                  labels: monthly.map(m => m.month),
-                  datasets: [
-                    { label: 'A', data: monthly.map(m => m.revenue), color: '#ff7ab6' },
-                    { label: 'B', data: monthly.map(m => m.cost), color: '#7ad7ff' },
-                  ],
-                }}
+                mapping={prebuiltMapping}
                 theme={theme}
                 animate={animate}
                 width="100%"
@@ -324,7 +377,7 @@ export function App() {
             </Card>
             <Card title="Gauge w/ segments (live value)">
               <Gauge
-                data={[{ v: 60 + (tick % 40) }]}
+                data={gaugeData}
                 mapping={{ valueField: 'v' }}
                 min={0}
                 max={100}
@@ -538,11 +591,66 @@ export function App() {
               caption="Filled, unfilled, themed, custom color."
             >
               <div style={{ display: 'flex', gap: 16, alignItems: 'center', height: '100%', flexWrap: 'wrap' }}>
-                <SparklineComponent data={monthly.map(m => m.revenue)} height={40} width={140} />
-                <SparklineComponent data={monthly.map(m => m.cost)} filled height={40} width={140} color="#ff7ab6" />
-                <SparklineComponent data={liveSeries.map(m => m.revenue)} filled height={40} width={140} theme={theme} />
-                <SparklineComponent data={[1, 4, 2, 8, 5, 9, 7, 12]} height={40} width={140} animate={false} />
+                <SparklineComponent data={sparklineRevenue} height={40} width={140} />
+                <SparklineComponent data={sparklineCost} filled height={40} width={140} color="#ff7ab6" />
+                <SparklineComponent data={sparklineLive} filled height={40} width={140} theme={theme} />
+                <SparklineComponent data={sparklineStatic} height={40} width={140} animate={false} />
               </div>
+            </Card>
+          </div>
+        </section>
+
+        <section>
+          <h2>Dense x-axis labels — issue #26 sub-item 8</h2>
+          <p style={{ color: '#7a8599', marginTop: 0, fontSize: 13 }}>
+            These charts have many ticks with long labels. Each chart fills
+            its card width — narrow your browser to recreate "narrow viewport"
+            conditions. Watch the rotated labels: if adjacent ones collide,
+            sub-item 8 is still valid.
+          </p>
+          <div className="grid">
+            <Card title="Bar — 30 long quarter labels">
+              <Bar
+                data={denseQuarters}
+                mapping={{ x: 'quarter', y: 'revenue' }}
+                theme={theme}
+                animate={false}
+                showLegend={false}
+                width="100%"
+                height={260}
+              />
+            </Card>
+            <Card title="Line — 50 timestamps">
+              <Line
+                data={denseTimestamps}
+                mapping={{ x: 't', y: 'v' }}
+                theme={theme}
+                animate={false}
+                showLegend={false}
+                width="100%"
+                height={260}
+              />
+            </Card>
+            <Card title="Stacked bar — 24 categories">
+              <StackedBar
+                data={denseDepartments}
+                mapping={{ x: 'label', y: ['api', 'web', 'mobile'] }}
+                theme={theme}
+                animate={false}
+                width="100%"
+                height={260}
+              />
+            </Card>
+            <Card title="Bar — 60 short keys">
+              <Bar
+                data={denseShortKeys}
+                mapping={{ x: 'k', y: 'v' }}
+                theme={theme}
+                animate={false}
+                showLegend={false}
+                width="100%"
+                height={260}
+              />
             </Card>
           </div>
         </section>
