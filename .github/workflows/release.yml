@@ -11,44 +11,46 @@
 #    runs again and publishes the new version to npm + creates a GitHub
 #    release.
 #
-# Required repo secrets:
-#   NPM_TOKEN — npm automation token with publish permission for the
-#               @arshad-shah scope
-# (`GITHUB_TOKEN` is provided automatically by Actions.)
+# Hardening:
+# - All third-party actions are SHA-pinned. Comment after each pin records
+#   the human-readable tag for review purposes.
+# - The publish step runs in the `npm-publish` GitHub Environment with
+#   required reviewers; NPM_TOKEN (if used) is an environment secret.
+# - Trusted publishing (npm OIDC) is the recommended path: once configured
+#   on npmjs.com, NPM_TOKEN can be removed and the `id-token: write`
+#   permission below is sufficient.
 name: Release
 
 on:
   push:
     branches: [main]
 
-# Cancel in-flight runs when a new commit arrives — only the latest matters.
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
-  contents: write       # create release PRs / tags / GitHub releases
-  pull-requests: write  # open the "Version Packages" PR
-  id-token: write       # npm provenance
+  contents: write
+  pull-requests: write
+  id-token: write
 
 jobs:
   release:
     name: Version & publish
     runs-on: ubuntu-latest
-    # Only run on the canonical repo; forks shouldn't try to publish.
     if: github.repository == 'arshad-shah/swiftchart'
+    environment: npm-publish
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
         with:
-          # Full history so changesets can compute changelogs against tags.
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a  # v4.4.0
         with:
           version: 10
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -60,18 +62,17 @@ jobs:
       - name: Validate (typecheck + lint + test + build + size)
         run: pnpm --filter @arshad-shah/swift-chart validate
 
+      - name: Upgrade bundled npm for OIDC support
+        run: npm install -g npm@latest
+
       - name: Create release PR or publish to npm
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@d94a5c301145045a0960133674e003b265942a22  # v1.8.0
         with:
-          # `pnpm release` runs `pnpm build && changeset publish` so the
-          # tarball is fresh.
           publish: pnpm release
-          # Title and commit message for the auto-PR.
           title: 'chore(release): version packages'
           commit: 'chore(release): version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          # Provenance attestation for npm.
           NPM_CONFIG_PROVENANCE: 'true'

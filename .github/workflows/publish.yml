@@ -26,11 +26,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'release' || github.event.inputs.registry == 'github' || github.event.inputs.registry == 'both' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a  # v4.4.0
         with:
           version: 10
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -49,12 +49,13 @@ jobs:
     name: Publish to npm
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.registry == 'npm' || github.event.inputs.registry == 'both' }}
+    environment: npm-publish
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a  # v4.4.0
         with:
           version: 10
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -63,7 +64,9 @@ jobs:
       - run: pnpm --filter @arshad-shah/swift-chart build
       - run: pnpm --filter @arshad-shah/swift-chart publint
       - run: pnpm --filter @arshad-shah/swift-chart attw
+      - name: Upgrade bundled npm for OIDC support
+        run: npm install -g npm@latest
       - name: Publish to npm
-        run: pnpm --filter @arshad-shah/swift-chart publish --no-git-checks --access public
+        run: pnpm --filter @arshad-shah/swift-chart publish --no-git-checks --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
