@@ -18,6 +18,10 @@ const DEFAULT_PADDING: Padding = { top: 30, right: 20, bottom: 40, left: 55 };
 const SSR = typeof document === 'undefined';
 const LEGEND_AXIS_THICKNESS = 28;
 const TITLE_HEIGHT = 32;
+// Maximum delay between a `touchend` and the browser's synthetic `click`
+// during which we'll honour the tap as a click. Mobile browsers typically
+// fire the click within ~300ms; 700ms gives generous headroom.
+const TAP_CLICK_WINDOW_MS = 700;
 
 export abstract class BaseChart {
   container: HTMLElement;
@@ -61,6 +65,13 @@ export abstract class BaseChart {
   private _boundClick: (e: MouseEvent) => void;
   private _boundTouch: (e: TouchEvent) => void;
   private _boundTouchEnd: () => void;
+  private _boundTouchCancel: () => void;
+  // The browser fires a synthetic `click` ~300ms after `touchend` on a tap.
+  // By then `_boundTouchEnd` has reset `hoverIndex` to -1, so the click guard
+  // would always fail. We snapshot the index on touchend and let the click
+  // handler consume it within `_TAP_CLICK_WINDOW_MS`.
+  private _lastTapIndex = -1;
+  private _lastTapAt = 0;
 
   constructor(container: HTMLElement | string, config: BaseChartConfig = {}) {
     if (SSR) {
@@ -117,10 +128,23 @@ export abstract class BaseChart {
       this._draw();
     };
     this._boundClick = (e: MouseEvent) => {
-      if (this.config.onClick && this.hoverIndex >= 0) {
-        const event = this._buildClickEvent(this.hoverIndex, e);
-        this.config.onClick(this.hoverIndex, this.resolved, event);
+      if (!this.config.onClick) return;
+      let idx = this.hoverIndex;
+      // Touch path: hoverIndex was reset by _boundTouchEnd before the
+      // synthetic click arrived. Fall back to the tap-snapshot if it's
+      // still within the window. Mark consumed by clearing _lastTapAt
+      // so a later stray click can't replay the tap.
+      if (idx < 0 && this._lastTapIndex >= 0 &&
+          performance.now() - this._lastTapAt < TAP_CLICK_WINDOW_MS) {
+        idx = this._lastTapIndex;
+        // Reset the snapshot, not the timestamp — `performance.now()` can
+        // return a tiny value (especially in test environments), so a zero
+        // timestamp wouldn't reliably read as "outside the window."
+        this._lastTapIndex = -1;
       }
+      if (idx < 0) return;
+      const event = this._buildClickEvent(idx, e);
+      this.config.onClick(idx, this.resolved, event);
     };
     this._boundTouch = (e: TouchEvent) => {
       const t = e.touches[0];
@@ -130,7 +154,20 @@ export abstract class BaseChart {
         clientX: t.clientX, clientY: t.clientY,
       } as MouseEvent);
     };
-    this._boundTouchEnd = () => this._boundMouseLeave();
+    this._boundTouchEnd = () => {
+      // Snapshot the hovered datum *before* clearing it so the synthetic
+      // click that follows can still resolve to a target.
+      this._lastTapIndex = this.hoverIndex;
+      this._lastTapAt = performance.now();
+      this._boundMouseLeave();
+    };
+    this._boundTouchCancel = () => {
+      // Cancelled gestures (system pull-down, scroll lift) must not be
+      // replayed as a tap when an unrelated click arrives later.
+      this._lastTapIndex = -1;
+      this._lastTapAt = 0;
+      this._boundMouseLeave();
+    };
 
     this.canvas.addEventListener('mousemove', this._boundMouseMove);
     this.canvas.addEventListener('mouseleave', this._boundMouseLeave);
@@ -138,7 +175,7 @@ export abstract class BaseChart {
     this.canvas.addEventListener('touchstart', this._boundTouch, { passive: true });
     this.canvas.addEventListener('touchmove', this._boundTouch, { passive: true });
     this.canvas.addEventListener('touchend', this._boundTouchEnd);
-    this.canvas.addEventListener('touchcancel', this._boundTouchEnd);
+    this.canvas.addEventListener('touchcancel', this._boundTouchCancel);
 
     if (this.config.responsive && typeof ResizeObserver !== 'undefined') {
       this._ro = new ResizeObserver(() => { this._resize(); this._draw(); });
@@ -255,7 +292,7 @@ export abstract class BaseChart {
     this.canvas.removeEventListener('touchstart', this._boundTouch);
     this.canvas.removeEventListener('touchmove', this._boundTouch);
     this.canvas.removeEventListener('touchend', this._boundTouchEnd);
-    this.canvas.removeEventListener('touchcancel', this._boundTouchEnd);
+    this.canvas.removeEventListener('touchcancel', this._boundTouchCancel);
     this.canvas.remove();
   }
 

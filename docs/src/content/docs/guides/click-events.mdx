@@ -3,7 +3,15 @@ title: Click events & drill-down
 description: Wire a chart into analytics, navigation, or user-journey flows with the rich ChartClickEvent payload.
 ---
 
+import ClickDemo from '../../../components/ClickDemo';
+
 Every chart fires `onClick` (vanilla) / `onPointClick` (React) when the user clicks a hovered datum. The handler receives a third argument — a [`ChartClickEvent`](/api/core/interfaces/chartclickevent/) — with everything you need to identify what was clicked.
+
+## Try it
+
+Click any bar with a mouse, or tap one on a touch device. The badge below the chart reports the label, value, modifier keys, and whether the input came from mouse or touch.
+
+<ClickDemo client:visible />
 
 ```ts
 interface ChartClickEvent<TDatum = Record<string, any>> {
@@ -104,6 +112,10 @@ new BarChart('#chart', {
   },
 }).setData(orders, { x: 'region', y: 'revenue' });
 ```
+
+## Touch devices
+
+A finger tap on a chart fires the same `onClick` / `onPointClick` handler with the index of the touched datum — `event.nativeEvent` is the synthetic `MouseEvent` that the browser dispatches after `touchend`, so modifier-key checks (`metaKey`, `ctrlKey`) read as `false` on touch. Use `event.label`, `event.value`, and `event.datum` for routing logic that needs to work on both pointers and touch.
 
 ## Backward compatibility
 

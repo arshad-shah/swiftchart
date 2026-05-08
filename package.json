@@ -156,7 +156,7 @@
       "name": "tree-shaken: 6 common charts",
       "path": "dist/esm/index.js",
       "import": "{ LineChart, BarChart, PieChart, ScatterChart, GaugeChart, RadarChart }",
-      "limit": "10.5 KB"
+      "limit": "10.75 KB"
     },
     {
       "name": "full barrel (all 23 chart classes + helpers)",

@@ -206,3 +206,113 @@ describe('Mouse interactions', () => {
     });
   });
 });
+
+// ═══════════════════════════════════════════════════════
+// Touch interactions
+// Regression: issue #20 — taps did not fire onClick because touchend
+// reset hoverIndex before the synthetic click handler could read it.
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Construct a TouchEvent-shaped DOM event that the chart's handler can
+ * read. JSDOM's `Touch` constructor isn't reliably present, so we build
+ * a plain Event and attach a `touches` array directly.
+ */
+function fireTouchEvent(
+  el: HTMLElement,
+  type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
+  clientX: number,
+  clientY: number,
+) {
+  const e = new Event(type, { bubbles: true, cancelable: true });
+  const touches = type === 'touchend' || type === 'touchcancel'
+    ? []
+    : [{ clientX, clientY }];
+  Object.defineProperty(e, 'touches', { value: touches });
+  el.dispatchEvent(e);
+}
+
+function fireMouseEventLocal(el: HTMLElement, type: string, clientX: number, clientY: number) {
+  el.dispatchEvent(new MouseEvent(type, { clientX, clientY, bubbles: true }));
+}
+
+describe('Touch interactions', () => {
+  let container: HTMLDivElement;
+  beforeEach(() => { container = createContainer(); });
+
+  it('a tap fires onClick with the index of the touched datum', () => {
+    const onClick = vi.fn();
+    const chart = new BarChart(container, { animate: false, onClick });
+    chart.setData(
+      [{ x: 'A', y: 10 }, { x: 'B', y: 20 }, { x: 'C', y: 30 }],
+      { x: 'x', y: 'y' },
+    );
+    const canvas = container.querySelector('canvas')!;
+
+    // Drive hover via the touch handler; force a deterministic index since
+    // the actual hover-from-coords math depends on bar geometry.
+    fireTouchEvent(canvas, 'touchstart', 100, 200);
+    chart.hoverIndex = 1;
+    fireTouchEvent(canvas, 'touchend', 100, 200);
+
+    // touchend resets hoverIndex back to -1, mirroring production. Without
+    // the fix, the click below would now find -1 and bail out silently.
+    expect(chart.hoverIndex).toBe(-1);
+
+    fireMouseEventLocal(canvas, 'click', 100, 200);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClick.mock.calls[0][0]).toBe(1);
+    chart.destroy();
+  });
+
+  it('touchcancel does NOT replay as a click on a subsequent stray click', () => {
+    const onClick = vi.fn();
+    const chart = new BarChart(container, { animate: false, onClick });
+    chart.setData([{ x: 'A', y: 10 }, { x: 'B', y: 20 }], { x: 'x', y: 'y' });
+    const canvas = container.querySelector('canvas')!;
+
+    fireTouchEvent(canvas, 'touchstart', 100, 200);
+    chart.hoverIndex = 1;
+    fireTouchEvent(canvas, 'touchcancel', 100, 200);
+
+    fireMouseEventLocal(canvas, 'click', 100, 200);
+    expect(onClick).not.toHaveBeenCalled();
+    chart.destroy();
+  });
+
+  it('a click outside the tap window does not replay the last tap', async () => {
+    const onClick = vi.fn();
+    const chart = new BarChart(container, { animate: false, onClick });
+    chart.setData([{ x: 'A', y: 10 }, { x: 'B', y: 20 }], { x: 'x', y: 'y' });
+    const canvas = container.querySelector('canvas')!;
+
+    fireTouchEvent(canvas, 'touchstart', 100, 200);
+    chart.hoverIndex = 1;
+    fireTouchEvent(canvas, 'touchend', 100, 200);
+
+    // Roll the clock past the 700ms window. We can't easily mock
+    // performance.now in this suite without disturbing the rAF mock, so
+    // simulate "old" timing by mutating the snapshot directly.
+    (chart as unknown as { _lastTapAt: number })._lastTapAt = performance.now() - 1500;
+
+    fireMouseEventLocal(canvas, 'click', 100, 200);
+    expect(onClick).not.toHaveBeenCalled();
+    chart.destroy();
+  });
+
+  it('the tap snapshot is consumed once — a second click does not re-fire', () => {
+    const onClick = vi.fn();
+    const chart = new BarChart(container, { animate: false, onClick });
+    chart.setData([{ x: 'A', y: 10 }, { x: 'B', y: 20 }], { x: 'x', y: 'y' });
+    const canvas = container.querySelector('canvas')!;
+
+    fireTouchEvent(canvas, 'touchstart', 100, 200);
+    chart.hoverIndex = 0;
+    fireTouchEvent(canvas, 'touchend', 100, 200);
+
+    fireMouseEventLocal(canvas, 'click', 100, 200);
+    fireMouseEventLocal(canvas, 'click', 100, 200);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    chart.destroy();
+  });
+});
