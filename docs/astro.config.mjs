@@ -93,6 +93,7 @@ export default defineConfig({
             { label: 'Responsive', link: '/guides/responsive/' },
             { label: 'React refs', link: '/guides/react-refs/' },
             { label: 'Click events & drill-down', link: '/guides/click-events/' },
+            { label: 'Accessibility', link: '/guides/accessibility/' },
             { label: 'Building custom charts', link: '/guides/custom-charts/' },
           ],
         },
