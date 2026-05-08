@@ -6,7 +6,7 @@ description: Built-in themes and custom theme registration.
 import ChartPreview from '../../../components/ChartPreview';
 import { monthlySales } from '../../../components/ExampleData';
 
-SwiftChart ships with four built-in themes. Each is a complete palette covering background, surface, grid, axes, and series colors.
+SwiftChart ships with four built-in themes. Each is a complete palette covering background, surface, grid, axes, series colors, and the floating tooltip panel.
 
 ## Built-in themes
 
@@ -36,3 +36,33 @@ new LineChart('#chart', { theme: 'neon' });
 ```
 
 You can also pass an inline `Theme` object instead of a name. See the [Core API reference](/api/core/) for the full `Theme` shape.
+
+`addTheme` is also re-exported from `@arshad-shah/swift-chart/react`, so React-only consumers can register themes without importing the core entry:
+
+```ts
+import { addTheme, Line } from '@arshad-shah/swift-chart/react';
+```
+
+## Tooltip colours
+
+The floating tooltip derives its colours from the active theme:
+
+- panel background → `theme.surface`
+- panel border → `theme.axis`
+- primary text → `theme.text`
+- muted/label text → `theme.textMuted`
+
+Switching themes at runtime (`chart.setTheme('arctic')` or `<Line theme="arctic" />`) repaints the tooltip in step. To override any of those independently of the rest of the palette, set the optional `tooltipBg`, `tooltipBorder`, and `tooltipText` fields on a custom theme:
+
+```ts
+addTheme('brand', {
+  bg: '#ffffff', surface: '#fafafa', grid: '#eeeeee',
+  text: '#111111', textMuted: '#666666', axis: '#cccccc',
+  colors: ['#5b8cff', '#ff5b8c', '#5bff8c'],
+  tooltipBg: '#1a1a1a',      // dark tooltip on a light theme
+  tooltipBorder: '#5b8cff',
+  tooltipText: '#ffffff',
+});
+```
+
+The semantic fields `positive`, `negative`, and `onAccent` are also part of the `Theme` shape; if omitted from a custom theme, they default to a green/red/white set so existing themes keep working.

@@ -307,8 +307,10 @@ describe('React onPointClick', () => {
 
   it('passes onPointClick to underlying chart', async () => {
     const handler = vi.fn();
+    const ref = createRef<ChartRef>();
     render(
       <Bar
+        ref={ref}
         data={sampleData}
         mapping={{ x: 'month', y: 'revenue' }}
         onPointClick={handler}
@@ -316,8 +318,74 @@ describe('React onPointClick', () => {
       />
     );
     await settle();
-    // We can't easily simulate canvas clicks in testing-library,
-    // but we verify the handler is wired up via config
+    // The bound click listener on the canvas reads `config.onClick` lazily,
+    // so verifying the handler is attached to the chart's config is enough
+    // to know the wire-up is intact.
+    const chart = ref.current!.chart as unknown as { config: { onClick?: unknown } };
+    expect(chart.config.onClick).toBe(handler);
+  });
+
+  // Regression: issue #19 — React adapter ignored onPointClick prop changes
+  // after mount, so handlers captured the first render's closure forever.
+  it('updates the underlying handler when onPointClick prop changes between renders', async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const ref = createRef<ChartRef>();
+
+    const { rerender } = render(
+      <Bar
+        ref={ref}
+        data={sampleData}
+        mapping={{ x: 'month', y: 'revenue' }}
+        onPointClick={first}
+        animate={false}
+      />
+    );
+    await settle();
+    const chart = ref.current!.chart as unknown as { config: { onClick?: unknown } };
+    expect(chart.config.onClick).toBe(first);
+
+    rerender(
+      <Bar
+        ref={ref}
+        data={sampleData}
+        mapping={{ x: 'month', y: 'revenue' }}
+        onPointClick={second}
+        animate={false}
+      />
+    );
+    await settle();
+    expect(chart.config.onClick).toBe(second);
+    expect(chart.config.onClick).not.toBe(first);
+  });
+
+  it('clears the handler when onPointClick is removed', async () => {
+    const handler = vi.fn();
+    const ref = createRef<ChartRef>();
+
+    const { rerender } = render(
+      <Bar
+        ref={ref}
+        data={sampleData}
+        mapping={{ x: 'month', y: 'revenue' }}
+        onPointClick={handler}
+        animate={false}
+      />
+    );
+    await settle();
+
+    rerender(
+      <Bar
+        ref={ref}
+        data={sampleData}
+        mapping={{ x: 'month', y: 'revenue' }}
+        animate={false}
+      />
+    );
+    await settle();
+
+    const chart = ref.current!.chart as unknown as { config: { onClick?: unknown } };
+    expect(chart.config.onClick).toBeUndefined();
   });
 });
 
