@@ -138,12 +138,22 @@ function useShallowMappingKey(m: DataMapping | undefined): string {
       const av = (p as any)[k];
       const bv = (m as any)[k];
       if (av === bv) return true;
-      // One-level deep equality for primitive-string arrays — the common
-      // `y: ['a', 'b']` inline-literal pattern.
+      // Element-wise equality for inline arrays — handles the common
+      // `y: ['a', 'b']` multi-series pattern. Arrays of objects (e.g.
+      // `datasets`) won't match here and still need consumer memoisation.
       if (Array.isArray(av) && Array.isArray(bv) && av.length === bv.length) {
         for (let i = 0; i < av.length; i++) {
           if (av[i] !== bv[i]) return false;
         }
+        return true;
+      }
+      // One-level deep equality for plain inline objects of primitives —
+      // handles `colorMap: { Promo: '#ff…', Hero: '#5b…' }`.
+      if (av && bv && typeof av === 'object' && typeof bv === 'object' &&
+          !Array.isArray(av) && !Array.isArray(bv)) {
+        const ak = Object.keys(av);
+        if (ak.length !== Object.keys(bv).length) return false;
+        for (const kk of ak) if (av[kk] !== bv[kk]) return false;
         return true;
       }
       return false;

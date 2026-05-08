@@ -80,6 +80,25 @@ export function App() {
     [],
   );
 
+  // Pre-built `{ labels, datasets }` mapping — memoised so unrelated
+  // re-renders don't replace the inline `datasets` array (which contains
+  // objects whose `data` arrays would also be fresh each render).
+  const prebuiltMapping = useMemo(() => ({
+    labels: monthly.map(m => m.month),
+    datasets: [
+      { label: 'A', data: monthly.map(m => m.revenue), color: '#ff7ab6' },
+      { label: 'B', data: monthly.map(m => m.cost), color: '#7ad7ff' },
+    ],
+  }), []);
+
+  // Gauge value as a stable single-row dataset; the inline literal
+  // `[{v: 60 + (tick % 40)}]` would have a fresh array reference every
+  // parent re-render and re-fire setData → re-animate.
+  const gaugeData = useMemo(
+    () => [{ v: 60 + (tick % 40) }],
+    [tick],
+  );
+
   const liveSeries = useMemo(
     () => monthly.map(row => ({
       ...row,
@@ -88,6 +107,12 @@ export function App() {
     })),
     [tick],
   );
+
+  // Sparkline number arrays — module data + memoised live derivative.
+  const sparklineRevenue = useMemo(() => monthly.map(m => m.revenue), []);
+  const sparklineCost = useMemo(() => monthly.map(m => m.cost), []);
+  const sparklineLive = useMemo(() => liveSeries.map(m => m.revenue), [liveSeries]);
+  const sparklineStatic = useMemo(() => [1, 4, 2, 8, 5, 9, 7, 12], []);
 
   // Ref API: resize() and toDataURL() exercise the imperative handle.
   const lineRef = useRef<ChartRef>(null);
@@ -256,13 +281,7 @@ export function App() {
             </Card>
             <Card title="Pre-built datasets (mapping escape hatch)">
               <Line
-                mapping={{
-                  labels: monthly.map(m => m.month),
-                  datasets: [
-                    { label: 'A', data: monthly.map(m => m.revenue), color: '#ff7ab6' },
-                    { label: 'B', data: monthly.map(m => m.cost), color: '#7ad7ff' },
-                  ],
-                }}
+                mapping={prebuiltMapping}
                 theme={theme}
                 animate={animate}
                 width="100%"
@@ -358,7 +377,7 @@ export function App() {
             </Card>
             <Card title="Gauge w/ segments (live value)">
               <Gauge
-                data={[{ v: 60 + (tick % 40) }]}
+                data={gaugeData}
                 mapping={{ valueField: 'v' }}
                 min={0}
                 max={100}
@@ -572,10 +591,10 @@ export function App() {
               caption="Filled, unfilled, themed, custom color."
             >
               <div style={{ display: 'flex', gap: 16, alignItems: 'center', height: '100%', flexWrap: 'wrap' }}>
-                <SparklineComponent data={monthly.map(m => m.revenue)} height={40} width={140} />
-                <SparklineComponent data={monthly.map(m => m.cost)} filled height={40} width={140} color="#ff7ab6" />
-                <SparklineComponent data={liveSeries.map(m => m.revenue)} filled height={40} width={140} theme={theme} />
-                <SparklineComponent data={[1, 4, 2, 8, 5, 9, 7, 12]} height={40} width={140} animate={false} />
+                <SparklineComponent data={sparklineRevenue} height={40} width={140} />
+                <SparklineComponent data={sparklineCost} filled height={40} width={140} color="#ff7ab6" />
+                <SparklineComponent data={sparklineLive} filled height={40} width={140} theme={theme} />
+                <SparklineComponent data={sparklineStatic} height={40} width={140} animate={false} />
               </div>
             </Card>
           </div>
