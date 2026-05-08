@@ -1,5 +1,104 @@
 # Changelog
 
+## 1.3.0
+
+### Minor Changes
+
+- [#32](https://github.com/arshad-shah/swiftchart/pull/32) [`40a46b7`](https://github.com/arshad-shah/swiftchart/commit/40a46b770afdc6bbedd910d5fdebd5e02891ce22) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Accessibility umbrella: keyboard support, honest ARIA roles, live region, reduced-motion respect.
+
+  The chart canvas now adapts to whether it's interactive:
+
+  - **Interactive charts** (with `onClick` / `onPointClick`) drop the misleading `role="img"`, gain `aria-roledescription="interactive chart"`, get `tabIndex=0` plus a native focus ring, and respond to keyboard input — `Enter` / `Space` fire the click handler at the focused datum, `ArrowLeft` / `ArrowRight` walk the focus along the chart's primary axis (driving the existing hover + tooltip pipeline).
+  - **Non-interactive charts** keep `role="img"` and stay out of the tab order — purely-decorative charts no longer pull keyboard focus into a dead element.
+
+  Two more fixes:
+
+  - **`aria-describedby` replaces non-standard `aria-description`.** Setting `ariaDescription` now mounts a hidden element inside the container and wires it via the standard attribute. `update({ ariaDescription })` patches the element in place.
+  - **Polite live region announces data updates.** Each chart appends a hidden `role="status" aria-live="polite"` region; `setData()` writes a one-line summary to it (e.g. `"3 points, 2 series."`) so screen readers announce streaming / React-driven updates.
+  - **`prefers-reduced-motion` is auto-respected.** When the user has `reduce-motion` set and `animate` is unspecified, animations are skipped. Explicit `animate: true` / `false` still wins.
+
+  Adds a new `Accessibility` page to the docs guides covering all of the above.
+
+  Closes [#22](https://github.com/arshad-shah/swiftchart/issues/22).
+
+- [#27](https://github.com/arshad-shah/swiftchart/pull/27) [`e5b53f3`](https://github.com/arshad-shah/swiftchart/commit/e5b53f31684dd91c9763694c4b92160683c3fd4e) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Theme system now reaches the tooltip, and `addTheme()` works from either entry point.
+
+  **Tooltip theming.** The floating tooltip panel previously had hard-coded dark colours that ignored the active theme — light themes like `arctic` rendered a dark tooltip. Tooltip colours now derive from the active theme automatically, and `Theme` gains three optional fields for full control:
+
+  - `tooltipBg` — falls back to `theme.surface`
+  - `tooltipBorder` — falls back to `theme.axis`
+  - `tooltipText` — falls back to `theme.text`
+
+  `BaseChart` propagates the theme into `Tooltip` on construction, on `setTheme()`, and on `update({ theme })`, so live theme switches repaint the tooltip.
+
+  **Cross-bundle theme registry (bug fix).** `addTheme()` was registering into a private map inside the core ESM bundle, while charts imported from `@arshad-shah/swift-chart/react` looked up theme names in a separate map inlined into the React bundle. Custom themes registered at app startup silently fell through to `midnight` when used via `<Line theme="my-theme" />`. The registry now lives on `globalThis`, so both bundles share one source of truth, and `THEMES` / `addTheme` / `resolveTheme` are now also re-exported from `@arshad-shah/swift-chart/react` for consumers who only import from the React entry.
+
+- [#33](https://github.com/arshad-shah/swiftchart/pull/33) [`0efa5e8`](https://github.com/arshad-shah/swiftchart/commit/0efa5e8e4a9c7677604318fa8d9a2c1a4ce0cd0e) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Tooltip mount fixes: Shadow DOM, modals/popovers, and nested scroll containers.
+
+  The floating tooltip used to be appended directly to `document.body` and only listened to `window` scroll/resize. Three failure modes followed:
+
+  - **Shadow DOM encapsulation broken.** A chart inside a web component rendered its tooltip into the light DOM, outside the shadow root.
+  - **Stacking inversion in modals.** A chart inside a modal/popover with its own stacking context could render its tooltip _behind_ the modal, since the body-mounted tooltip wasn't part of that stacking context.
+  - **Scroll on inner panels missed.** `scroll` doesn't bubble, so a single window listener never fired when an `overflow: auto` parent scrolled — the tooltip stayed floating at stale coordinates.
+
+  Now:
+
+  - The tooltip mounts next to the chart by default. Mount target priority: explicit `tooltipContainer` config → the canvas's shadow root if it has one → the chart container.
+  - New `tooltipContainer?: HTMLElement` config option for explicit portal control (Radix-style).
+  - `Tooltip` now walks the canvas ancestry at construction and attaches a `scroll` listener to every scrollable ancestor (any non-`visible` overflow), in addition to the window backstop. All listeners are cleaned up on `destroy()`.
+
+  Closes [#23](https://github.com/arshad-shah/swiftchart/issues/23).
+
+### Patch Changes
+
+- [#31](https://github.com/arshad-shah/swiftchart/pull/31) [`e81ff0d`](https://github.com/arshad-shah/swiftchart/commit/e81ff0d99f68e13357471fea8b66029ca93d0f90) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Fix: per-datum colours from `colorField` / `colorMap` now follow the active theme.
+
+  Categorical values that hashed into the theme palette were baked into `dataset.colors[]` (or, for Pie / Funnel / Treemap, into private `_itemColors`) at `setData` time using the _current_ theme. Subsequent calls to `setTheme()` or `update({ theme })` swapped backgrounds, axes, and grid lines — but the bars, slices, and tiles kept the old palette indefinitely.
+
+  `BaseChart` now exposes a protected `_rebakeColorsForTheme()` hook that re-resolves `colorField` against the new palette without re-animating. The hook is called on both theme-change paths and is overridden by Pie, Funnel, and Treemap to redo their own per-datum bake. Charts without a `colorField` mapping skip the rebake entirely; the pre-built `{ labels, datasets }` shape is also untouched (the consumer owns colours there).
+
+  Explicit `colorMap` entries and verbatim CSS colour strings are still respected — only categorical values that fell through to the palette move.
+
+  Closes [#21](https://github.com/arshad-shah/swiftchart/issues/21).
+
+- [#35](https://github.com/arshad-shah/swiftchart/pull/35) [`ac6abaa`](https://github.com/arshad-shah/swiftchart/commit/ac6abaae126e6bbb9cc7d69356dff48ba9396885) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Documentation: every public export now has JSDoc, and every public field on the cross-chart types has a one-line description.
+
+  The package shipped with thorough docs on the chart-config interfaces but had a handful of top-level exports (`Animator`, `EASINGS`, `EasingFn`, `BaseChart`, `Tooltip`, `TooltipRow`, `TooltipContent`, `RoundedBarOpts`, `THEMES`, `resolveTheme`, `addTheme`, `ChartRef`, perf-layout interfaces, `DrawCommand`, `PathSegment`, `OffscreenRenderResult`) and 50+ public fields (`Padding`, `Dataset`, `ResolvedData`, `PlotArea`, `NiceScale`, `GaugeSegment`, `ScatterPoint`, `WaterfallItem`, `TreemapItem`, `CandlestickItem`, `BoxplotItem`, `FunnelItem`, `SankeyNode`/`Link`, `NetworkNode`/`Link`, `BulletItem`, `TreemapRect`, `SparklineComponentProps`, etc.) that were undocumented.
+
+  All of those now have JSDoc comments — including `@param`, `@example`, and `@see` cross-references where useful — so consumers get hover-help in their IDE and the auto-generated TypeDoc API reference is fully populated. No runtime behaviour changes.
+
+- [#28](https://github.com/arshad-shah/swiftchart/pull/28) [`e05e250`](https://github.com/arshad-shah/swiftchart/commit/e05e250a6b273f668a732047444a363350a314e1) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Fix: React `onPointClick` prop changes are now propagated to the underlying chart after mount.
+
+  Previously, `useChart` excluded `onClick` from its config-diff path (functions don't survive `JSON.stringify`) and the mount-only effect captured the first render's handler into `chart.config.onClick`. Subsequent prop swaps were silently ignored, so any `onPointClick` that closed over component state showed stale values for the chart's lifetime.
+
+  The hook now syncs the latest handler reference into `chart.config.onClick` on every render. The chart's bound click listener already reads `config.onClick` lazily on each click, so no redraw, recreation, or `setData` is triggered — the cost is one assignment per render.
+
+  Closes [#19](https://github.com/arshad-shah/swiftchart/issues/19).
+
+- [#34](https://github.com/arshad-shah/swiftchart/pull/34) [`544e3ae`](https://github.com/arshad-shah/swiftchart/commit/544e3ae5202b03f6c5e846eaf213cb1fec293df4) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Theme system robustness: dev warnings + safe fallbacks for the four most common theme misuses.
+
+  In development builds (`process.env.NODE_ENV !== 'production'`), the theme resolver now surfaces three classes of misuse via `console.warn`:
+
+  - **Unknown theme name.** `theme: 'rd-light'` when no `addTheme('rd-light', …)` has run used to fall through silently to `midnight`. It still falls back, but now logs `[SwiftChart] Theme "rd-light" is not registered — falling back to "midnight". Available themes: …` so the misnaming is visible.
+  - **`addTheme` with missing required fields.** `addTheme('brand', { bg: '#fff' })` left `surface`/`grid`/`text`/`textMuted`/`axis`/`colors` as `undefined`. Subsequent `ctx.fillStyle = undefined` was silently rejected by the canvas (the previous fillStyle was reused), producing baffling renders. Missing fields are now **backfilled from midnight** so production never ships with `undefined` colours, and the dev warning lists which fields were filled in.
+  - **`addTheme` shadowing a built-in name** (`midnight`, `arctic`, `ember`, `forest`). The override still applies — this is intentional flexibility — but a warning fires so accidental overrides aren't silent.
+
+  Production builds drop the warnings entirely.
+
+  Also tightens `Tooltip`'s inline-color sanitiser: the previous `/^[a-zA-Z]+$/` regex let typos like `'foobar'` through (browsers then silently rejected the invalid background). The check now uses `CSS.supports('color', candidate)` when available, with a tighter explicit-prefix fallback for environments that don't expose `CSS.supports`.
+
+  Adds 11 regression tests and a "Diagnostics" section to the Theming guide.
+
+  Closes [#24](https://github.com/arshad-shah/swiftchart/issues/24).
+
+- [#29](https://github.com/arshad-shah/swiftchart/pull/29) [`762cb64`](https://github.com/arshad-shah/swiftchart/commit/762cb642509a9cd5f0f1ddc6a8444d0dec998fa7) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Fix: a finger tap on a chart now fires `onClick` / `onPointClick` on touch devices.
+
+  The chart was resetting `hoverIndex` to `-1` in its `touchend` handler before the browser dispatched the synthetic `click` that follows a tap. The click handler's guard (`hoverIndex >= 0`) therefore always failed and the user's handler never ran. Mouse clicks on desktop were unaffected.
+
+  `touchend` now snapshots the touched index, and the click handler consumes it within a 700 ms window. The snapshot is one-shot (cleared after consumption) and `touchcancel` discards it so an interrupted gesture can't replay as a click later.
+
+  Closes [#20](https://github.com/arshad-shah/swiftchart/issues/20).
+
 ## 1.2.1
 
 ### Patch Changes
