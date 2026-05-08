@@ -221,4 +221,48 @@ describe('A11y: keyboard activation on interactive charts', () => {
     expect(chart.hoverIndex).toBe(-1); // unchanged — handler never wired
     chart.destroy();
   });
+
+  it('ArrowDown / ArrowUp walk hoverSeriesIndex across multi-series charts', () => {
+    const chart = new LineChart(host(), { animate: false, onClick: () => {} });
+    chart.setData(
+      [{ x: 'a', r: 1, c: 4 }, { x: 'b', r: 2, c: 5 }, { x: 'c', r: 3, c: 6 }],
+      { x: 'x', y: ['r', 'c'] }, // two series
+    );
+    expect(chart.resolved.datasets.length).toBe(2);
+    expect(chart.hoverSeriesIndex).toBe(-1); // column-wide initially
+
+    fireKey(chart.canvas, 'ArrowDown'); // -1 → 0
+    expect(chart.hoverSeriesIndex).toBe(0);
+    fireKey(chart.canvas, 'ArrowDown'); // 0 → 1
+    expect(chart.hoverSeriesIndex).toBe(1);
+    fireKey(chart.canvas, 'ArrowDown'); // clamps at last
+    expect(chart.hoverSeriesIndex).toBe(1);
+    fireKey(chart.canvas, 'ArrowUp');   // 1 → 0
+    expect(chart.hoverSeriesIndex).toBe(0);
+    chart.destroy();
+  });
+
+  it('ArrowUp from column-wide state jumps to the last series', () => {
+    const chart = new LineChart(host(), { animate: false, onClick: () => {} });
+    chart.setData(
+      [{ x: 'a', r: 1, c: 4, p: 7 }, { x: 'b', r: 2, c: 5, p: 8 }],
+      { x: 'x', y: ['r', 'c', 'p'] }, // three series
+    );
+    expect(chart.hoverSeriesIndex).toBe(-1);
+    fireKey(chart.canvas, 'ArrowUp'); // -1 → last (2)
+    expect(chart.hoverSeriesIndex).toBe(2);
+    chart.destroy();
+  });
+
+  it('ArrowUp / ArrowDown are no-op on single-series charts', () => {
+    const chart = new BarChart(host(), { animate: false, onClick: () => {} });
+    chart.setData([{ x: 'a', y: 1 }, { x: 'b', y: 2 }], { x: 'x', y: 'y' });
+    expect(chart.resolved.datasets.length).toBe(1);
+    chart.hoverSeriesIndex = -1;
+    fireKey(chart.canvas, 'ArrowDown');
+    expect(chart.hoverSeriesIndex).toBe(-1);
+    fireKey(chart.canvas, 'ArrowUp');
+    expect(chart.hoverSeriesIndex).toBe(-1);
+    chart.destroy();
+  });
 });

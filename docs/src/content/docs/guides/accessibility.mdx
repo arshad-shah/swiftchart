@@ -43,8 +43,9 @@ When you pass an `onClick` (vanilla) or `onPointClick` (React), the chart become
 | `Tab` / `Shift+Tab` | Move focus to / from the chart |
 | `Enter` or `Space` | Fire `onPointClick` for the focused datum |
 | `ArrowRight` / `ArrowLeft` | Step the focused datum along the chart's primary axis |
+| `ArrowDown` / `ArrowUp` | Step *across* series on multi-series charts (no-op on single-series) |
 
-`ArrowRight` from an unfocused chart starts at the first datum; `ArrowLeft` starts at the last. The focused index also drives the existing tooltip + hover highlight, so screen reader users hear the announced label and sighted keyboard users see the same hover state as a mouse pointer would produce.
+`ArrowRight` from an unfocused chart starts at the first datum; `ArrowLeft` starts at the last. `ArrowDown` from the default column-wide state (no series pinpointed) drops into the first series; `ArrowUp` jumps to the last. The focused index and series both drive the existing tooltip + hover highlight, so screen reader users hear the announced label and sighted keyboard users see the same hover state as a mouse pointer would produce.
 
 Non-interactive charts skip all of this: no `tabIndex`, no key listeners, just `role="img"` + the accessible name.
 

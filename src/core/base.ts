@@ -432,10 +432,18 @@ export abstract class BaseChart {
   }
 
   /**
-   * Keyboard handler for interactive charts. Enter/Space activate the
-   * focused datum; ArrowLeft/Right walk the index along
-   * `resolved.labels`. Sets `hoverIndex` so the existing draw + tooltip
-   * pipeline highlights the focused datum.
+   * Keyboard handler for interactive charts.
+   *
+   * - `Enter` / `Space` activate the focused datum (hoverIndex; falls back to 0).
+   * - `ArrowLeft` / `ArrowRight` walk the index along `resolved.labels`
+   *   (the chart's primary axis).
+   * - `ArrowUp` / `ArrowDown` walk `hoverSeriesIndex` between datasets so
+   *   keyboard users can move *across* the chart on multi-series shapes
+   *   (grouped bars, multi-line, stacked area, etc.). No-op when the chart
+   *   has only one series.
+   *
+   * All key handlers update the existing hover state so the draw + tooltip
+   * pipeline highlights the focused datum / series.
    */
   private _onKeydown(e: KeyboardEvent): void {
     const len = this.resolved.labels?.length ?? 0;
@@ -455,6 +463,19 @@ export abstract class BaseChart {
       const dir = e.key === 'ArrowRight' ? 1 : -1;
       const cur = this.hoverIndex < 0 ? (dir === 1 ? -1 : len) : this.hoverIndex;
       this.hoverIndex = Math.max(0, Math.min(len - 1, cur + dir));
+      this._draw();
+      return;
+    }
+
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      const sLen = this.resolved.datasets?.length ?? 0;
+      if (sLen <= 1) return;
+      e.preventDefault();
+      const dir = e.key === 'ArrowDown' ? 1 : -1;
+      // From the column-wide state (hoverSeriesIndex === -1), step into the
+      // first or last series depending on direction.
+      const cur = this.hoverSeriesIndex < 0 ? (dir === 1 ? -1 : sLen) : this.hoverSeriesIndex;
+      this.hoverSeriesIndex = Math.max(0, Math.min(sLen - 1, cur + dir));
       this._draw();
     }
   }
