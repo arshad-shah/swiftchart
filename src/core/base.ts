@@ -55,6 +55,12 @@ export abstract class BaseChart {
    * fed pre-built `{ labels, datasets }` (no rows ever existed).
    */
   protected _rawData: any[] | undefined;
+  /**
+   * The most recent `mapping` argument passed to {@link setData}. Stashed so
+   * `_rebakeColorsForTheme()` can re-resolve `colorField` / `colorMap` against
+   * the new theme palette without forcing a full re-animation.
+   */
+  protected _lastMapping: DataMapping | undefined;
   width = 0;
   height = 0;
   padding: Padding;
@@ -229,6 +235,7 @@ export abstract class BaseChart {
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
     this._rawData = Array.isArray(data) ? data : undefined;
+    this._lastMapping = mapping;
     this.resolved = resolveData(
       data,
       { ...this.config, ...mapping } as DataMapping,
@@ -237,9 +244,31 @@ export abstract class BaseChart {
     this._animate();
   }
 
+  /**
+   * Re-resolve any data colours that were baked at `setData` time against
+   * the *current* theme palette. Default implementation handles the
+   * `colorField` / `colorMap` path through {@link resolveData}; chart
+   * subclasses that bake colours in their own `setData` (Pie, Funnel,
+   * Treemap) override this to redo their bake without re-animating.
+   *
+   * No-op when no rows are stored (pre-built `{ labels, datasets }` path —
+   * the consumer owns colours there) or when the last mapping had no
+   * `colorField`.
+   */
+  protected _rebakeColorsForTheme(): void {
+    if (!this._rawData) return;
+    if (!this._lastMapping?.colorField) return;
+    this.resolved = resolveData(
+      this._rawData,
+      { ...this.config, ...this._lastMapping } as DataMapping,
+      this.theme.colors,
+    );
+  }
+
   setTheme(name: string): void {
     this.theme = resolveTheme(name);
     this.tooltip?.setTheme(this.theme);
+    this._rebakeColorsForTheme();
     this._draw();
   }
 
@@ -264,6 +293,7 @@ export abstract class BaseChart {
     if (arg.theme) {
       this.theme = resolveTheme(arg.theme);
       this.tooltip?.setTheme(this.theme);
+      this._rebakeColorsForTheme();
     }
     if (arg.padding) this.padding = { ...this.padding, ...arg.padding };
     if (arg.animDuration) this.animator.duration = arg.animDuration;

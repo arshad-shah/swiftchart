@@ -37,6 +37,25 @@ export class TreemapChart extends BaseChart {
 
   setData(data: Record<string, any>[] | null | undefined, mapping?: DataMapping): void {
     this._rawData = Array.isArray(data) ? data : undefined;
+    this._lastMapping = mapping;
+    this._buildItems(data, mapping);
+    this._animate();
+  }
+
+  /**
+   * Rebake per-tile colours against the current theme palette without
+   * re-animating. No-op when there's no `colorField` to resolve.
+   */
+  protected _rebakeColorsForTheme(): void {
+    if (!this._rawData) return;
+    if (!this._lastMapping?.colorField) return;
+    this._buildItems(this._rawData, this._lastMapping);
+  }
+
+  private _buildItems(
+    data: Record<string, any>[] | null | undefined,
+    mapping?: DataMapping,
+  ): void {
     // Backward-compatible default: support `name` *or* `label` as the label key.
     const labelKey = mapping?.labelField
       || (data && data[0] && 'label' in data[0] ? 'label' : 'name');
@@ -63,7 +82,6 @@ export class TreemapChart extends BaseChart {
 
     this._items = enriched.map(({ label, value }) => ({ label, value }));
     this._itemColors = cf ? enriched.map(d => d._color) : undefined;
-    this._animate();
   }
 
   _onMouse(e: MouseEvent): void {
