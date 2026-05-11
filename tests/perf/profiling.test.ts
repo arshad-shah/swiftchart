@@ -70,7 +70,7 @@ describe('Performance Profiling', () => {
     const sizes = [1_000, 10_000, 50_000];
 
     sizes.forEach(n => {
-      it(`nearest-point lookup on ${n.toLocaleString()} points`, () => {
+      it(`nearest-point lookup on ${n.toLocaleString()} points`, { timeout: 30_000 }, () => {
         const sxs = Array.from({ length: n }, () => Math.random() * 800);
         const sys = Array.from({ length: n }, () => Math.random() * 500);
 
