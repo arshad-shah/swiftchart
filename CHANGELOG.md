@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1
+
+### Patch Changes
+
+- [#48](https://github.com/arshad-shah/swiftchart/pull/48) [`7347797`](https://github.com/arshad-shah/swiftchart/commit/734779740c3eda40ccc7cde032ffb23d97b76958) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Internal: bump dev tooling to resolve advisories. Updates `canvas` 2→3, `jsdom` 25→29, `vitest` 2→4, playground `vite` 5→8, docs `astro` 5→6 and `@astrojs/starlight` 0.32→0.39. No runtime or API changes — the published bundle is unaffected.
+
 ## 1.3.0
 
 ### Minor Changes
