@@ -20,9 +20,13 @@ export default defineConfig({
         replacesTitle: false,
       },
       favicon: '/favicon.svg',
-      social: {
-        github: 'https://github.com/arshad-shah/swiftchart',
-      },
+      social: [
+        {
+          icon: 'github',
+          label: 'GitHub',
+          href: 'https://github.com/arshad-shah/swiftchart',
+        },
+      ],
       components: {
         SiteTitle: './src/components/SiteTitle.astro',
         Footer: './src/components/Footer.astro',
@@ -100,7 +104,7 @@ export default defineConfig({
         },
         {
           label: 'Charts',
-          autogenerate: { directory: 'charts' },
+          items: [{ autogenerate: { directory: 'charts' } }],
         },
         coreSidebar,
         reactSidebar,

@@ -7,6 +7,7 @@
   },
   "author": "Arshad Shah",
   "license": "MIT",
+  "packageManager": "pnpm@10.33.2",
   "keywords": [
     "chart",
     "charts",
@@ -79,7 +80,7 @@
   ],
   "sideEffects": false,
   "engines": {
-    "node": "^18.18.0 || ^20.0.0 || >=22.0.0"
+    "node": "^20.0.0 || ^22.0.0 || >=24.0.0"
   },
   "scripts": {
     "build": "tsup",
@@ -120,16 +121,17 @@
     "@size-limit/preset-small-lib": "^11.1.6",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
+    "@types/node": "^25.6.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
-    "@vitest/coverage-v8": "^2.1.8",
-    "canvas": "^2.11.2",
+    "@vitest/coverage-v8": "^4.1.5",
+    "canvas": "^3.2.3",
     "eslint": "^9.17.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.14.0",
-    "jsdom": "^25.0.1",
+    "jsdom": "^29.1.1",
     "publint": "^0.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -137,7 +139,7 @@
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.5"
   },
   "size-limit": [
     {
