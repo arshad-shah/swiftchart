@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   LineChart, BarChart, PieChart, ScatterChart, RadarChart,
   HBarChart, StackedAreaChart, WaterfallChart, TreemapChart, Sparkline,
+  ComboChart, FunnelChart,
   Tooltip, StreamBuffer, executeCommands, escapeHtml, hexToRgba,
   arrayMin, arrayMax, arraysExtent,
 } from '../../src';
@@ -306,5 +307,87 @@ describe('Regression: floating-point grid drift', () => {
     );
     chart.destroy();
     // Soft assertion — if the loop drifted it would render NaN or skipped ticks.
+  });
+});
+
+describe('Regression: ComboChart all-negative data', () => {
+  it('keeps bars inside the plot area (zero baseline clamped)', () => {
+    const div = host();
+    const chart = new ComboChart(div, { animate: false });
+    chart.setData(
+      [{ k: 'a', v: -10 }, { k: 'b', v: -20 }, { k: 'c', v: -5 }],
+      { x: 'k', y: 'v' },
+    );
+    const p = chart.plotArea;
+    const bars = (chart.ctx as any).getCallsFor('roundRect') as { args: number[] }[];
+    expect(bars.length).toBeGreaterThan(0);
+    // Without the `maxV < 0 → 0` clamp, the zero baseline falls above the plot
+    // and every bar is drawn starting off the top edge (y < p.y).
+    for (const { args } of bars) {
+      const [, y, , h] = args;
+      expect(y).toBeGreaterThanOrEqual(p.y - 1);
+      expect(y + h).toBeLessThanOrEqual(p.y + p.h + 1);
+    }
+    chart.destroy();
+  });
+});
+
+describe('Regression: FunnelChart pyramid hit-testing', () => {
+  function build(pyramid: boolean) {
+    const div = host();
+    const chart = new FunnelChart(div, { animate: false, pyramid });
+    chart.setData(
+      [
+        { stage: 'Visited', value: 1000 },
+        { stage: 'Signup', value: 600 },
+        { stage: 'Active', value: 300 },
+        { stage: 'Paid', value: 100 },
+      ],
+      { labelField: 'stage', valueField: 'value' },
+    );
+    return chart;
+  }
+
+  it('standard funnel maps top slot to the first (widest) stage', () => {
+    const chart = build(false);
+    const p = chart.plotArea;
+    chart._onMouse({ clientX: p.x + p.w / 2, clientY: p.y + 5 } as MouseEvent);
+    expect(chart.hoverIndex).toBe(0);
+    chart._onMouse({ clientX: p.x + p.w / 2, clientY: p.y + p.h - 5 } as MouseEvent);
+    expect(chart.hoverIndex).toBe(3);
+    chart.destroy();
+  });
+
+  it('pyramid funnel inverts the slot so the top apex resolves to the last stage', () => {
+    const chart = build(true);
+    const p = chart.plotArea;
+    // Top of the plot is the narrow apex — data index 3 in pyramid mode.
+    chart._onMouse({ clientX: p.x + p.w / 2, clientY: p.y + 5 } as MouseEvent);
+    expect(chart.hoverIndex).toBe(3);
+    // Bottom is the wide base — data index 0.
+    chart._onMouse({ clientX: p.x + p.w / 2, clientY: p.y + p.h - 5 } as MouseEvent);
+    expect(chart.hoverIndex).toBe(0);
+    chart.destroy();
+  });
+});
+
+describe('Regression: StackedAreaChart ragged (pre-built) datasets', () => {
+  it('does not emit NaN coordinates when a series is shorter than labels', () => {
+    const div = host();
+    const chart = new StackedAreaChart(div, { animate: false });
+    // Pre-built path: second series is short, leaving holes that used to
+    // propagate NaN through the additive stack and blank the chart.
+    chart.setData(null, {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      datasets: [
+        { label: 'api', data: [5, 10, 15, 20, 25] },
+        { label: 'web', data: [1, 2, 3] },
+      ],
+    } as any);
+    const lineYs = (chart.ctx as any).getCallsFor('lineTo')
+      .map((c: { args: number[] }) => c.args[1]) as number[];
+    expect(lineYs.length).toBeGreaterThan(0);
+    for (const y of lineYs) expect(Number.isFinite(y)).toBe(true);
+    chart.destroy();
   });
 });

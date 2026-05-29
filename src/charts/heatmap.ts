@@ -106,6 +106,15 @@ export class HeatmapChart extends BaseChart {
     if (!xn || !yn) return;
     const cw = a.w / xn;
     const ch = a.h / yn;
+    // When the legend leaves no room for cells, cw/ch collapse to 0 and the
+    // index math yields NaN (which slips past the `>= xn` bounds check),
+    // poisoning hoverIndex. Bail cleanly.
+    if (!(cw > 0) || !(ch > 0)) {
+      this.hoverIndex = -1;
+      this.tooltip?.hide();
+      this._draw();
+      return;
+    }
     const xi = Math.floor((mx - a.x) / cw);
     const yi = Math.floor((my - a.y) / ch);
     if (xi < 0 || xi >= xn || yi < 0 || yi >= yn) {

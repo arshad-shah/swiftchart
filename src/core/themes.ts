@@ -8,7 +8,6 @@ const __DEV__ =
 
 function devWarn(message: string): void {
   if (!__DEV__) return;
-  // eslint-disable-next-line no-console
   console.warn(`[SwiftChart] ${message}`);
 }
 

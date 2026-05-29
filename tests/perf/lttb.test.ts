@@ -54,6 +54,15 @@ describe('lttbIndices', () => {
     expect(minVal).toBeLessThan(-90);
   });
 
+  it('anchors the last interior bucket on the final point, not (0,0)', () => {
+    // Regression: the final interior bucket's "next bucket" is empty, so the
+    // next-point average was left at (0,0), skewing triangle-area selection
+    // away from the real peak. With n=6/target=5 the last interior bucket
+    // chooses between indices 3 and 4; index 4 is the peak (value 15) and must
+    // be selected. The (0,0) bug picked index 3 (value 0), dropping the peak.
+    expect(lttbIndices([0, 0, 10, 0, 15, 0], 5)).toEqual([0, 1, 2, 4, 5]);
+  });
+
   it('handles flat data', () => {
     const data = new Array(1000).fill(42);
     const indices = lttbIndices(data, 20);

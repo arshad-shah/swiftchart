@@ -48,9 +48,12 @@ export class ComboChart extends BaseChart {
     this._drawBg();
     this._drawTitle();
 
-    // eslint-disable-next-line prefer-const
     let [minV, maxV] = arraysExtent(datasets.map((d) => d.data));
+    // Anchor the scale at zero so bars have a baseline. Clamp both ends:
+    // without `maxV < 0 → 0`, all-negative data leaves 0 outside the scale
+    // and every bar renders below the plot area.
     if (minV > 0) minV = 0;
+    if (maxV < 0) maxV = 0;
     const scale = niceScale(minV, maxV);
     const p = this.plotArea;
     this._drawGrid(scale);

@@ -29,7 +29,7 @@ export class StackedAreaChart extends BaseChart {
         const color = ds.color || this.theme.colors[i % this.theme.colors.length];
         return {
           label: ds.label || `Series ${i + 1}`,
-          value: this._fmtVal(ds.data[this.hoverIndex]),
+          value: this._fmtVal(ds.data[this.hoverIndex] ?? 0),
           color,
         };
       });
@@ -49,7 +49,11 @@ export class StackedAreaChart extends BaseChart {
     this._drawTitle();
     this._drawLegend();
     const n = labels.length;
-    const stacked = datasets.map((ds) => [...ds.data]);
+    // Coerce holes to 0 while stacking: an `undefined`/NaN in a ragged
+    // pre-built dataset would otherwise poison every layer above it (NaN
+    // propagates additively) and silently blank the chart.
+    const norm = (v: number) => (Number.isFinite(v) ? v : 0);
+    const stacked = datasets.map((ds) => Array.from({ length: n }, (_, i) => norm(ds.data[i])));
     for (let si = 1; si < stacked.length; si++) {
       for (let i = 0; i < n; i++) stacked[si][i] += stacked[si - 1][i];
     }

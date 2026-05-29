@@ -92,7 +92,11 @@ export class FunnelChart extends BaseChart {
 
   _onMouse(e: MouseEvent): void {
     const n = this._items.length;
-    this.hoverIndex = this._idxFromY(e, n);
+    // `_idxFromY` returns the slot index top→bottom. In pyramid mode item `i`
+    // is drawn at slot `n-1-i`, so invert the slot back to the data index —
+    // otherwise the tooltip/highlight resolves to the wrong (mirrored) stage.
+    const slot = this._idxFromY(e, n);
+    this.hoverIndex = slot >= 0 && this.config.pyramid ? n - 1 - slot : slot;
     if (this.hoverIndex >= 0 && this.tooltip) {
       const p = this.plotArea;
       const slot = p.h / n;
