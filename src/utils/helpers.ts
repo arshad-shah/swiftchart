@@ -106,7 +106,7 @@ export function shortNum(n: number): string {
 
 /**
  * Convert a CSS colour string to rgba.
- * Accepts: #RGB, #RRGGBB, #RRGGBBAA, rgb(r,g,b), rgba(r,g,b,a).
+ * Accepts: #RGB, #RGBA, #RRGGBB, #RRGGBBAA, rgb(r,g,b), rgba(r,g,b,a).
  * Returns rgba() with the requested alpha (overrides any existing alpha).
  */
 export function hexToRgba(input: string, a: number): string {
@@ -115,7 +115,7 @@ export function hexToRgba(input: string, a: number): string {
 
   if (s.startsWith('#')) {
     let hex = s.slice(1);
-    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    if (hex.length === 3 || hex.length === 4) hex = hex.split('').map(c => c + c).join('');
     if (hex.length === 8) hex = hex.slice(0, 6);
     if (hex.length !== 6) return `rgba(0,0,0,${a})`;
     const r = parseInt(hex.slice(0, 2), 16);
@@ -161,7 +161,7 @@ function parseRgb(input: string): [number, number, number] {
   const s = input.trim();
   if (s.startsWith('#')) {
     let hex = s.slice(1);
-    if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    if (hex.length === 3 || hex.length === 4) hex = hex.split('').map(c => c + c).join('');
     if (hex.length === 8) hex = hex.slice(0, 6);
     if (hex.length !== 6) return [0, 0, 0];
     const r = parseInt(hex.slice(0, 2), 16);

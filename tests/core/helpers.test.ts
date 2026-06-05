@@ -124,8 +124,20 @@ describe('hexToRgba()', () => {
     expect(hexToRgba('#0f0', 0.5)).toBe('rgba(0,255,0,0.5)');
   });
 
+  it('converts 4-digit shorthand hex (#RGBA), dropping its alpha', () => {
+    // #f008 expands to #ff000088 → rgb part #ff0000; the requested alpha wins.
+    expect(hexToRgba('#f008', 1)).toBe('rgba(255,0,0,1)');
+    expect(hexToRgba('#0f0a', 0.5)).toBe('rgba(0,255,0,0.5)');
+  });
+
+  it('converts 8-digit hex (#RRGGBBAA), dropping its alpha', () => {
+    expect(hexToRgba('#ff000080', 1)).toBe('rgba(255,0,0,1)');
+  });
+
   it('handles invalid hex gracefully', () => {
     expect(hexToRgba('invalid', 1)).toBe('rgba(0,0,0,1)');
+    expect(hexToRgba('#ff', 1)).toBe('rgba(0,0,0,1)');
+    expect(hexToRgba('#fffff', 1)).toBe('rgba(0,0,0,1)');
   });
 
   it('preserves alpha precision', () => {
@@ -243,6 +255,15 @@ describe('lerpColor()', () => {
   it('parses 3-digit hex', () => {
     // #f00 → #ff0000
     expect(lerpColor('#000', '#f00', 1)).toBe('rgb(255,0,0)');
+  });
+
+  it('parses 4-digit hex (#RGBA), ignoring its alpha', () => {
+    // #f00f → #ff0000ff → rgb #ff0000
+    expect(lerpColor('#000', '#f00f', 1)).toBe('rgb(255,0,0)');
+  });
+
+  it('parses 8-digit hex (#RRGGBBAA), ignoring its alpha', () => {
+    expect(lerpColor('#000000', '#ff000080', 1)).toBe('rgb(255,0,0)');
   });
 
   it('does not crash on named colours / hsl() / unfamiliar syntax', () => {
