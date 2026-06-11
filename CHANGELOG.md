@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.1
+
+### Patch Changes
+
+- [#60](https://github.com/arshad-shah/swiftchart/pull/60) [`6b1621b`](https://github.com/arshad-shah/swiftchart/commit/6b1621b228421722edd0a151951765983cf51819) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Internal: resolve two transitive advisories flagged by `pnpm audit` via `pnpm.overrides` — `devalue` (GHSA-77vg-94rm-hx3p, high; pulled in by the docs site through `@astrojs/react`) is pinned to `>=5.8.1`, and `brace-expansion` (GHSA-jxxr-4gwj-5jf2, moderate; pulled in by `@typescript-eslint`) to `>=5.0.6`. Both are dev/build-only dependencies — the published bundle is unaffected.
+
+- [#48](https://github.com/arshad-shah/swiftchart/pull/48) [`7347797`](https://github.com/arshad-shah/swiftchart/commit/734779740c3eda40ccc7cde032ffb23d97b76958) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Internal: bump dev tooling to resolve advisories. Updates `canvas` 2→3, `jsdom` 25→29, `vitest` 2→4, playground `vite` 5→8, docs `astro` 5→6 and `@astrojs/starlight` 0.32→0.39. No runtime or API changes — the published bundle is unaffected.
+
+- [#60](https://github.com/arshad-shah/swiftchart/pull/60) [`6b1621b`](https://github.com/arshad-shah/swiftchart/commit/6b1621b228421722edd0a151951765983cf51819) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Fix: 4-digit shorthand hex colours (`#RGBA`, e.g. `#f008`) are now parsed correctly instead of silently falling back to black. Both the tooltip/fill helper (`hexToRgba`) and the colour-interpolation path (`lerpColor`, used by heatmap/choropleth gradients) now expand 4-digit hex the same way browsers do — doubling each digit and dropping the alpha channel. No API changes.
+
 ## 1.3.0
 
 ### Minor Changes
