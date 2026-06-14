@@ -25,8 +25,8 @@ describe('Quadtree', () => {
       const qt = new Quadtree({ x: 0, y: 0, w: 100, h: 100 });
       const pts = Array.from({ length: 20 }, (_, i) => makePt(i * 5, i * 5, i));
       qt.insertAll(pts);
-      // Points on subdivision boundaries may be counted in multiple children
-      expect(qt.size).toBeGreaterThanOrEqual(20);
+      // Each point lands in exactly one child quadrant — no double-counting.
+      expect(qt.size).toBe(20);
     });
 
     it('ignores points outside bounds', () => {
@@ -152,7 +152,7 @@ describe('Quadtree', () => {
       for (let i = 0; i < 20; i++) {
         qt.insert(makePt(50 + i * 0.1, 50 + i * 0.1, i));
       }
-      expect(qt.size).toBeGreaterThanOrEqual(20);
+      expect(qt.size).toBe(20);
       const found = qt.nearest(50, 50);
       expect(found).not.toBeNull();
     });
@@ -162,8 +162,36 @@ describe('Quadtree', () => {
       for (let i = 0; i < 100; i++) {
         qt.insert(makePt(50, 50, i));
       }
-      // Points at exact same spot appear in multiple leaf nodes after subdivision
-      expect(qt.size).toBeGreaterThanOrEqual(100);
+      // Coincident points collapse into a single max-depth leaf — counted once
+      // each, never duplicated across quadrants.
+      expect(qt.size).toBe(100);
+    });
+
+    it('does not duplicate points lying on internal split lines', () => {
+      // Force a subdivision (>MAX_POINTS), then probe points sitting exactly on
+      // the centre split lines (x=50 and y=50). The inclusive `_contains`
+      // bounds used to file these into multiple children, inflating size and
+      // returning duplicates from queryRect.
+      const qt = new Quadtree({ x: 0, y: 0, w: 100, h: 100 });
+      const onLines: QTPoint[] = [
+        makePt(50, 25, 0), // on vertical split
+        makePt(50, 75, 1), // on vertical split
+        makePt(25, 50, 2), // on horizontal split
+        makePt(75, 50, 3), // on horizontal split
+        makePt(50, 50, 4), // dead centre (all four quadrants)
+      ];
+      // Padding points to guarantee at least one subdivision occurs.
+      for (let i = 0; i < 12; i++) qt.insert(makePt(10 + i, 10 + i, 100 + i));
+      qt.insertAll(onLines);
+
+      expect(qt.size).toBe(12 + onLines.length);
+
+      // Every boundary point must appear exactly once in a covering rect.
+      const all = qt.queryRect(0, 0, 100, 100);
+      for (const target of onLines) {
+        const hits = all.filter((p) => p.index === target.index);
+        expect(hits.length).toBe(1);
+      }
     });
   });
 });

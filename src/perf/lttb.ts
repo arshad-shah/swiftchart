@@ -53,6 +53,12 @@ export function lttbIndices(data: number[], target: number): number[] {
     if (nextCount > 0) {
       avgX /= nextCount;
       avgY /= nextCount;
+    } else {
+      // Last interior bucket: the "next bucket" collapses onto the final
+      // fixed point (index n-1). Anchor the triangle there instead of the
+      // origin (0,0), which would otherwise skew the selection.
+      avgX = n - 1;
+      avgY = data[n - 1];
     }
 
     // Find the point in current bucket that forms the largest triangle
@@ -128,7 +134,14 @@ export function lttbDownsampleXY(
       avgY += ys[i];
       count++;
     }
-    if (count > 0) { avgX /= count; avgY /= count; }
+    if (count > 0) {
+      avgX /= count;
+      avgY /= count;
+    } else {
+      // Last interior bucket: anchor on the final fixed point, not (0,0).
+      avgX = xs[n - 1];
+      avgY = ys[n - 1];
+    }
 
     const pX = xs[prevSelected];
     const pY = ys[prevSelected];

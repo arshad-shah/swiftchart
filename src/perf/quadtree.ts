@@ -38,7 +38,11 @@ class QTNode {
     if (!this._contains(pt)) return;
 
     if (this.children) {
-      for (const child of this.children) child.insert(pt);
+      // Route to exactly one child. `_contains` is inclusive on all edges, so
+      // a point lying on an internal split line satisfies two (or four)
+      // children — inserting into each would duplicate it in queryRect/size
+      // results. Pick the single quadrant via the split midlines instead.
+      this.children[this._childIndexFor(pt)].insert(pt);
       return;
     }
 
@@ -127,6 +131,19 @@ class QTNode {
     return pt.sx >= b.x && pt.sx <= b.x + b.w && pt.sy >= b.y && pt.sy <= b.y + b.h;
   }
 
+  /**
+   * Index of the single child quadrant a point belongs to, matching the
+   * child order `[TL, TR, BL, BR]` created in {@link _subdivide}. Points on
+   * an internal split line are routed to the high-side (right/bottom) child
+   * so each point lands in exactly one quadrant.
+   */
+  private _childIndexFor(pt: QTPoint): number {
+    const b = this.bounds;
+    const right = pt.sx >= b.x + b.w / 2 ? 1 : 0;
+    const bottom = pt.sy >= b.y + b.h / 2 ? 1 : 0;
+    return bottom * 2 + right;
+  }
+
   private _subdivide(): void {
     const { x, y, w, h } = this.bounds;
     const hw = w / 2, hh = h / 2;
@@ -138,7 +155,7 @@ class QTNode {
       new QTNode({ x: x + hw, y: y + hh, w: hw, h: hh }, nd),
     ];
     for (const pt of this.points) {
-      for (const child of this.children) child.insert(pt);
+      this.children[this._childIndexFor(pt)].insert(pt);
     }
     this.points = [];
   }
