@@ -1,5 +1,12 @@
 # swiftchart-playground
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`6b1621b`](https://github.com/arshad-shah/swiftchart/commit/6b1621b228421722edd0a151951765983cf51819), [`a7f8c6d`](https://github.com/arshad-shah/swiftchart/commit/a7f8c6d02649b0299ff9ea82f44254cf1213cf3d), [`7347797`](https://github.com/arshad-shah/swiftchart/commit/734779740c3eda40ccc7cde032ffb23d97b76958), [`6b1621b`](https://github.com/arshad-shah/swiftchart/commit/6b1621b228421722edd0a151951765983cf51819)]:
+  - @arshad-shah/swift-chart@1.3.1
+
 ## 0.0.4
 
 ### Patch Changes
