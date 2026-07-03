@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.3.1
+
+### Patch Changes
+
+- [#60](https://github.com/arshad-shah/swiftchart/pull/60) [`6b1621b`](https://github.com/arshad-shah/swiftchart/commit/6b1621b228421722edd0a151951765983cf51819) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Internal: resolve two transitive advisories flagged by `pnpm audit` via `pnpm.overrides` — `devalue` (GHSA-77vg-94rm-hx3p, high; pulled in by the docs site through `@astrojs/react`) is pinned to `>=5.8.1`, and `brace-expansion` (GHSA-jxxr-4gwj-5jf2, moderate; pulled in by `@typescript-eslint`) to `>=5.0.6`. Both are dev/build-only dependencies — the published bundle is unaffected.
+
+- [#53](https://github.com/arshad-shah/swiftchart/pull/53) [`a7f8c6d`](https://github.com/arshad-shah/swiftchart/commit/a7f8c6d02649b0299ff9ea82f44254cf1213cf3d) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Bug fixes and a clean dependency audit.
+
+  - **LTTB downsampling**: the final interior bucket's "next bucket" is empty, so the next-point average was left at `(0, 0)`, skewing triangle-area selection and dropping the last significant feature (e.g. a trailing peak). It now anchors on the final data point. Affects `lttbIndices`/`lttbDownsampleXY`.
+  - **Quadtree**: points lying exactly on an internal split line were filed into multiple child quadrants, double-counting them in `queryRect`/`size`. Each point is now routed to a single quadrant.
+  - **ComboChart**: all-negative datasets left the zero baseline outside the scale, drawing every bar off the top of the plot. The scale now clamps both ends to include zero (matching `BarChart`).
+  - **FunnelChart**: in `pyramid` mode hit-testing was vertically inverted, so tooltips/highlights resolved to the mirrored stage. The slot index is now inverted back to the data index.
+  - **StackedAreaChart**: a hole in a ragged pre-built dataset propagated `NaN` through the additive stack and blanked the chart. Holes are now coerced to `0`.
+  - **HeatmapChart**: when the legend left no room for cells the index math produced a `NaN` hover index; this is now guarded.
+
+  Dependencies: added `pnpm.overrides` to pull patched `devalue` (>=5.8.1, GHSA-77vg-94rm-hx3p) and `brace-expansion` (>=5.0.6, GHSA-jxxr-4gwj-5jf2) into the dev/docs tree. `pnpm audit` is clean. No runtime API changes; the published bundle is unaffected by the dep overrides.
+
+- [#48](https://github.com/arshad-shah/swiftchart/pull/48) [`7347797`](https://github.com/arshad-shah/swiftchart/commit/734779740c3eda40ccc7cde032ffb23d97b76958) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Internal: bump dev tooling to resolve advisories. Updates `canvas` 2→3, `jsdom` 25→29, `vitest` 2→4, playground `vite` 5→8, docs `astro` 5→6 and `@astrojs/starlight` 0.32→0.39. No runtime or API changes — the published bundle is unaffected.
+
+- [#60](https://github.com/arshad-shah/swiftchart/pull/60) [`6b1621b`](https://github.com/arshad-shah/swiftchart/commit/6b1621b228421722edd0a151951765983cf51819) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Fix: 4-digit shorthand hex colours (`#RGBA`, e.g. `#f008`) are now parsed correctly instead of silently falling back to black. Both the tooltip/fill helper (`hexToRgba`) and the colour-interpolation path (`lerpColor`, used by heatmap/choropleth gradients) now expand 4-digit hex the same way browsers do — doubling each digit and dropping the alpha channel. No API changes.
+
 ## 1.3.0
 
 ### Minor Changes
