@@ -414,11 +414,14 @@ export interface BaseChartConfig {
 export interface LineChartConfig extends BaseChartConfig {
   /** Fill the area under the line with a soft gradient. */
   area?: boolean;
-  /** Use cubic Bézier interpolation between points instead of straight segments. */
+  /**
+   * Use cubic Bézier interpolation between points instead of straight segments.
+   * Default `true`. Ignored (forced off) when `step` is set.
+   */
   smooth?: boolean;
-  /** Render a dot at each data point. */
+  /** Render a dot at each data point. Default `true`. */
   dots?: boolean;
-  /** Stroke width in pixels. Default `2`. */
+  /** Stroke width in pixels. Default `2.5`. */
   lineWidth?: number;
   /**
    * Render as a step line. Mutually exclusive with `smooth`.
@@ -440,7 +443,7 @@ export interface LineChartConfig extends BaseChartConfig {
 export interface PieChartConfig extends BaseChartConfig {
   /** Render as a donut (centre cutout). */
   donut?: boolean;
-  /** Cutout ratio (0–1). Lower values produce a thicker ring. Default `0.6`. */
+  /** Cutout ratio (0–1). Lower values produce a thicker ring. Default `0.55`. */
   donutWidth?: number;
 }
 
@@ -452,9 +455,9 @@ export interface PieChartConfig extends BaseChartConfig {
  * new GaugeChart('#chart', {
  *   min: 0, max: 100,
  *   segments: [
- *     { from: 0,  to: 60,  color: '#5b8cff' },
- *     { from: 60, to: 85,  color: '#ffa45b' },
- *     { from: 85, to: 100, color: '#ff5b5b' },
+ *     { to: 60,  color: '#5b8cff' },
+ *     { to: 85,  color: '#ffa45b' },
+ *     { to: 100, color: '#ff5b5b' },
  *   ],
  * });
  * chart.setData([72]);

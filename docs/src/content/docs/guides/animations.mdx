@@ -19,13 +19,14 @@ Animations are on by default. Three options control them:
   kind="bar"
   data={monthlySales}
   mapping={{ x: 'month', y: 'revenue' }}
-  options={{ theme: 'midnight', animDuration: 1200, animEasing: 'easeOutBounce' }}
+  options={{ theme: 'midnight', animDuration: 1200, animEasing: 'easeOutBack' }}
   height={300}
 />
 
-The full list of easing names lives in `EASINGS`. Common picks:
+The full list of easing names lives in `EASINGS`. All five:
 
 - `linear` — uniform speed
 - `easeOutCubic` — gentle deceleration (default)
-- `easeOutQuart` — sharper deceleration
-- `easeOutBounce` — playful overshoot
+- `easeInOutQuart` — slow start and end
+- `easeOutBack` — slight overshoot
+- `easeOutElastic` — playful bounce

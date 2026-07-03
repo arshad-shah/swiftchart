@@ -33,7 +33,11 @@ The ref shape:
 interface ChartRef {
   chart: BaseChart | null;
   resize: () => void;
-  toDataURL: (type?: string, quality?: number) => string | null;
+  toDataURL: (
+    type?: string,
+    quality?: number,
+    options?: { scale?: 'native' | 'css' },
+  ) => string | null;
 }
 ```
 
