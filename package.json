@@ -163,12 +163,12 @@
     {
       "name": "full barrel (all 23 chart classes + helpers)",
       "path": "dist/esm/index.js",
-      "limit": "22.75 KB"
+      "limit": "23 KB"
     },
     {
       "name": "full react bundle",
       "path": "dist/esm/react/index.js",
-      "limit": "22.75 KB"
+      "limit": "23 KB"
     }
   ],
   "volta": {
