@@ -452,9 +452,9 @@ export const Radar = forwardRef<ChartRef, RadarComponentProps>(function Radar(pr
  *   value={72}
  *   min={0} max={100}
  *   segments={[
- *     { from: 0,  to: 60,  color: '#5b8cff' },
- *     { from: 60, to: 85,  color: '#ffa45b' },
- *     { from: 85, to: 100, color: '#ff5b5b' },
+ *     { to: 60,  color: '#5b8cff' },
+ *     { to: 85,  color: '#ffa45b' },
+ *     { to: 100, color: '#ff5b5b' },
  *   ]}
  * />
  * ```

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// SwiftChart v1.0.0
+// SwiftChart
 // Lightning-fast, zero-dependency Canvas 2D charting
 // ═══════════════════════════════════════════════════════
 

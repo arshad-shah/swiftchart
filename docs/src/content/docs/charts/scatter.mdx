@@ -11,7 +11,7 @@ import { scatterClusters } from '../../../components/ExampleData';
   client:visible
   kind="scatter"
   data={scatterClusters}
-  mapping={{ x: 'x', y: 'y', group: 'group', size: 'size' }}
+  mapping={{ x: 'x', y: 'y', groupField: 'group', sizeField: 'size' }}
   options={{ theme: 'midnight' }}
   height={360}
 />
@@ -22,7 +22,7 @@ import { scatterClusters } from '../../../components/ExampleData';
     import { ScatterChart } from '@arshad-shah/swift-chart';
 
     const chart = new ScatterChart('#chart', { theme: 'midnight' });
-    chart.setData(points, { x: 'x', y: 'y', group: 'group', size: 'size' });
+    chart.setData(points, { x: 'x', y: 'y', groupField: 'group', sizeField: 'size' });
     ```
   </TabItem>
   <TabItem label="React">
@@ -31,7 +31,7 @@ import { scatterClusters } from '../../../components/ExampleData';
 
     <Scatter
       data={points}
-      mapping={{ x: 'x', y: 'y', group: 'group', size: 'size' }}
+      mapping={{ x: 'x', y: 'y', groupField: 'group', sizeField: 'size' }}
       theme="midnight"
       height={360}
     />
