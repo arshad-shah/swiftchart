@@ -54,6 +54,34 @@ export class LineChart extends BaseChart {
   /** Downsample threshold — auto if 0 */
   downsampleTarget = 0;
 
+  /**
+   * Cached per-dataset LTTB indices and y-extent. Both are O(n) over the
+   * raw data, so recomputing them inside `_draw` made every animation frame
+   * and every hover redraw pay the full 100k-point cost. Rebuilt only when
+   * the resolved data, plot width, or downsample target actually change.
+   */
+  private _prep: {
+    datasets: readonly unknown[];
+    pW: number;
+    target: number;
+    indices: (number[] | null)[];
+    extent: [number, number];
+  } | null = null;
+
+  private _prepare(pW: number): NonNullable<LineChart['_prep']> {
+    const { datasets } = this.resolved;
+    const t = this.downsampleTarget;
+    const c = this._prep;
+    if (c && c.datasets === datasets && c.pW === pW && c.target === t) return c;
+    const indices = datasets.map(ds => {
+      const target = t || autoTarget(ds.data.length, pW);
+      return ds.data.length > target ? lttbIndices(ds.data, target) : null;
+    });
+    const extent = arraysExtent(datasets.map(d => d.data));
+    this._prep = { datasets, pW, target: t, indices, extent };
+    return this._prep;
+  }
+
   constructor(container: HTMLElement | string, config: LineChartConfig = {}) {
     super(container, config);
   }
@@ -82,9 +110,10 @@ export class LineChart extends BaseChart {
     this._drawBg();
     this._drawTitle();
 
-    const [minV, maxV] = arraysExtent(datasets.map(d => d.data));
-    const scale = niceScale(minV, maxV);
     const p = this.plotArea;
+    const prep = this._prepare(p.w);
+    const [minV, maxV] = prep.extent;
+    const scale = niceScale(minV, maxV);
 
     this._drawGrid(scale);
     this._drawXLabels(labels, /*centered=*/false);
@@ -104,21 +133,23 @@ export class LineChart extends BaseChart {
       // overrides apply to the *dots* below, where it's well-defined.
       const color = seriesColor(this.theme, ds, si);
 
-      // ── LTTB downsampling ───────────────────────────
-      const target = this.downsampleTarget || autoTarget(ds.data.length, p.w);
-      const indices = ds.data.length > target
-        ? lttbIndices(ds.data, target)
-        : null;
-
-      const srcIndices = indices || Array.from({ length: ds.data.length }, (_, i) => i);
-      const allPoints = srcIndices.map(i => ({
-        x: p.x + i * stepW,
-        y: p.y + p.h - ((ds.data[i] - scale.min) / range) * p.h,
-        origIdx: i,
-      }));
+      // ── LTTB downsampling (indices cached in _prepare) ──
+      const indices = prep.indices[si];
+      const count = indices ? indices.length : ds.data.length;
+      const allPoints: { x: number; y: number; origIdx: number }[] = new Array(count);
+      const screenXs: number[] = new Array(count);
+      for (let k = 0; k < count; k++) {
+        const i = indices ? indices[k] : k;
+        const x = p.x + i * stepW;
+        allPoints[k] = {
+          x,
+          y: p.y + p.h - ((ds.data[i] - scale.min) / range) * p.h,
+          origIdx: i,
+        };
+        screenXs[k] = x;
+      }
 
       // ── Viewport culling ────────────────────────────
-      const screenXs = allPoints.map(pt => pt.x);
       const [vStart, vEnd] = visibleRange(screenXs, p.x, p.x + p.w * t);
       const points = allPoints.slice(vStart, vEnd + 1);
 
@@ -186,8 +217,13 @@ export class LineChart extends BaseChart {
       }
 
       if (this._dots) {
+        // Below ~4px spacing the 3px-radius dots overlap into a solid strip —
+        // unreadable, and several canvas ops per point. Skip them at that
+        // density; the hover highlight stays so interaction still reads.
+        const dense = points.length > p.w / 4;
         points.forEach((pt) => {
           const isHover = pt.origIdx === this.hoverIndex;
+          if (dense && !isHover) return;
           // Dot ring matches the line, but the *fill* (and hover halo) use the
           // per-datum colour so consumers can highlight individual points.
           const dotColor = datumColor(this.theme, ds, si, pt.origIdx, colorFn);

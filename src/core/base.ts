@@ -808,10 +808,13 @@ export abstract class BaseChart {
     this.ctx.save();
     this.ctx.font = `400 10px ${ff}`;
 
-    // Measure max label width to decide stride / rotation.
+    // Measure max label width to decide stride / rotation. Sample a bounded,
+    // evenly-strided subset — measureText is expensive and measuring all of a
+    // 100k-point dataset's labels would dominate every frame's budget.
     let maxW = 0;
-    for (const l of labels) {
-      const w = this.ctx.measureText(String(l)).width;
+    const measureStride = Math.max(1, Math.ceil(n / 200));
+    for (let i = 0; i < n; i += measureStride) {
+      const w = this.ctx.measureText(String(labels[i])).width;
       if (w > maxW) maxW = w;
     }
     const stride = centered ? p.w / n : p.w / Math.max(1, n - 1);
@@ -844,17 +847,20 @@ export abstract class BaseChart {
     this.ctx.strokeStyle = this.theme.axis;
     this.ctx.lineWidth = 1;
 
-    for (let i = 0; i < n; i++) {
+    // Tick marks, batched into a single path/stroke. Density is capped at
+    // one tick per 2px — anything denser renders as a solid smear along the
+    // axis while costing a canvas op per datum (ruinous at 100k points).
+    const tickStep = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(p.w / 2))));
+    this.ctx.beginPath();
+    for (let i = 0; i < n; i += tickStep) {
       const x = p.x + i * stride + offset;
-
-      // Tick mark on the x-axis at every position.
-      this.ctx.beginPath();
       this.ctx.moveTo(x, p.y + p.h);
       this.ctx.lineTo(x, p.y + p.h + 4);
-      this.ctx.stroke();
+    }
+    this.ctx.stroke();
 
-      if (i % step !== 0) continue;
-
+    for (let i = 0; i < n; i += step) {
+      const x = p.x + i * stride + offset;
       const raw = String(labels[i]);
       this.ctx.textAlign = rotate ? 'right' : 'center';
       this.ctx.textBaseline = rotate ? 'middle' : 'top';

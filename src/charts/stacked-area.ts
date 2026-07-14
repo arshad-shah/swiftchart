@@ -1,5 +1,6 @@
 import { BaseChart } from '../core/base';
 import { niceScale, hexToRgba, clamp, arrayMax } from '../utils/helpers';
+import { lttbIndices, autoTarget } from '../perf/lttb';
 
 /**
  * Canvas 2D stacked-area chart — shows total + per-component contribution.
@@ -13,6 +14,42 @@ import { niceScale, hexToRgba, clamp, arrayMax } from '../utils/helpers';
  * ```
  */
 export class StackedAreaChart extends BaseChart {
+  /**
+   * Cached cumulative stack + shared downsample indices. Stacking is
+   * O(n × series) and was rebuilt on every animation frame / hover redraw;
+   * with 100k points that alone caused visible jank. Indices are chosen by
+   * LTTB on the stack *top* (the visually dominant edge) and shared across
+   * all layers so layer boundaries stay vertically aligned.
+   */
+  private _prep: {
+    datasets: readonly unknown[];
+    pW: number;
+    stacked: number[][];
+    indices: number[] | null;
+    maxVal: number;
+  } | null = null;
+
+  private _prepare(pW: number): NonNullable<StackedAreaChart['_prep']> {
+    const { labels, datasets } = this.resolved;
+    const c = this._prep;
+    if (c && c.datasets === datasets && c.pW === pW) return c;
+    const n = labels.length;
+    // Coerce holes to 0 while stacking: an `undefined`/NaN in a ragged
+    // pre-built dataset would otherwise poison every layer above it (NaN
+    // propagates additively) and silently blank the chart.
+    const norm = (v: number) => (Number.isFinite(v) ? v : 0);
+    const stacked = datasets.map((ds) => Array.from({ length: n }, (_, i) => norm(ds.data[i])));
+    for (let si = 1; si < stacked.length; si++) {
+      for (let i = 0; i < n; i++) stacked[si][i] += stacked[si - 1][i];
+    }
+    const top = stacked[stacked.length - 1] || [];
+    const maxVal = arrayMax(top);
+    const target = autoTarget(n, pW);
+    const indices = n > target ? lttbIndices(top, target) : null;
+    this._prep = { datasets, pW, stacked, indices, maxVal };
+    return this._prep;
+  }
+
   _onMouse(e: MouseEvent): void {
     const rect = this.canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
@@ -49,18 +86,9 @@ export class StackedAreaChart extends BaseChart {
     this._drawTitle();
     this._drawLegend();
     const n = labels.length;
-    // Coerce holes to 0 while stacking: an `undefined`/NaN in a ragged
-    // pre-built dataset would otherwise poison every layer above it (NaN
-    // propagates additively) and silently blank the chart.
-    const norm = (v: number) => (Number.isFinite(v) ? v : 0);
-    const stacked = datasets.map((ds) => Array.from({ length: n }, (_, i) => norm(ds.data[i])));
-    for (let si = 1; si < stacked.length; si++) {
-      for (let i = 0; i < n; i++) stacked[si][i] += stacked[si - 1][i];
-    }
-    const top = stacked[stacked.length - 1] || [];
-    const maxVal = arrayMax(top);
-    const scale = niceScale(0, Math.max(maxVal, 1));
     const p = this.plotArea;
+    const { stacked, indices, maxVal } = this._prepare(p.w);
+    const scale = niceScale(0, Math.max(maxVal, 1));
     const stepW = p.w / Math.max(1, n - 1);
     const t = this.animProgress;
     const range = scale.max - scale.min || 1;
@@ -68,17 +96,24 @@ export class StackedAreaChart extends BaseChart {
     this._drawXLabels(labels, /*centered=*/ false);
     if (this.hoverIndex >= 0) this._drawCrosshair(this.hoverIndex);
 
+    const count = indices ? indices.length : n;
+    const toPts = (layer: number[]): { x: number; y: number }[] => {
+      const pts: { x: number; y: number }[] = new Array(count);
+      for (let k = 0; k < count; k++) {
+        const i = indices ? indices[k] : k;
+        pts[k] = {
+          x: p.x + i * stepW,
+          y: p.y + p.h - ((layer[i] - scale.min) / range) * p.h * t,
+        };
+      }
+      return pts;
+    };
+
     for (let si = stacked.length - 1; si >= 0; si--) {
       const color = datasets[si].color || this.theme.colors[si % this.theme.colors.length];
-      const topPts = stacked[si].map((v, i) => ({
-        x: p.x + i * stepW,
-        y: p.y + p.h - ((v - scale.min) / range) * p.h * t,
-      }));
+      const topPts = toPts(stacked[si]);
       const bottomPts = si > 0
-        ? stacked[si - 1].map((v, i) => ({
-            x: p.x + i * stepW,
-            y: p.y + p.h - ((v - scale.min) / range) * p.h * t,
-          }))
+        ? toPts(stacked[si - 1])
         : topPts.map((pt) => ({ x: pt.x, y: p.y + p.h }));
 
       this.ctx.beginPath();
